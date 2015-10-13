@@ -62,7 +62,7 @@ namespace Dapplo.Addons.Implementation.Internals
 				}
 				catch (Exception ex)
 				{
-					LOG.Error(string.Format("Error loading {0}", file), ex);
+					LOG.Error(ex, "Error loading {0}", file);
 				}
 			}
 		}

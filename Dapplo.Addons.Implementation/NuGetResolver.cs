@@ -99,7 +99,7 @@ namespace Dapplo.Addons.Implementation
 			}
 			catch (Exception ex)
 			{
-				LOG.Warn("Problem using NuGet find an unresolved assembly", ex);
+				LOG.Warn(ex, "Problem using NuGet find an unresolved assembly");
 			}
 			return null;
 		}
