@@ -21,6 +21,7 @@
 
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
+using System.Reflection;
 
 namespace Dapplo.Addons.Implementation
 {
@@ -30,21 +31,19 @@ namespace Dapplo.Addons.Implementation
 	/// </summary>
 	public abstract class CompositionBootstrapper
 	{
+		/// <summary>
+		/// The AggregateCatalog contains all the catalogs with the assemblies in it.
+		/// </summary>
 		protected AggregateCatalog AggregateCatalog
 		{
 			get;
 			private set;
-		}
+		} = new AggregateCatalog();
 
 		public CompositionContainer Container
 		{
 			get;
 			private set;
-		}
-
-		protected CompositionBootstrapper()
-		{
-			AggregateCatalog = new AggregateCatalog();
 		}
 
 		/// <summary>
@@ -54,12 +53,28 @@ namespace Dapplo.Addons.Implementation
 		{
 		}
 
+		/// <summary>
+		/// Configure the container
+		/// </summary>
 		protected virtual void ConfigureContainer()
 		{
 			// Export the container itself
 			Container.ComposeExportedValue(Container);
 		}
 
+		/// <summary>
+		/// Add an assembly as AssemblyCatalog to the AggregateCatalog.Catalogs
+		/// In english: make the items in the assembly discoverable
+		/// </summary>
+		/// <param name="assembly">Assembly to add</param>
+		protected void Add(Assembly assembly)
+		{
+			AggregateCatalog.Catalogs.Add(new AssemblyCatalog(assembly));
+		}
+
+		/// <summary>
+		/// Start the bootstrapper
+		/// </summary>
 		public void Run()
 		{
 			ConfigureAggregateCatalog();

@@ -37,12 +37,26 @@ namespace Dapplo.Addons.Implementation.Internals
 		private static readonly Logger LOG = LogManager.GetCurrentClassLogger();
 		private readonly AggregateCatalog _catalog;
 
+		/// <summary>
+		/// Constructor for DLL's in a directory
+		/// </summary>
+		/// <param name="directory"></param>
 		public SafeDirectoryCatalog(string directory)
 			: this(directory, "*.dll")
 		{
 		}
+
+		/// <summary>
+		/// Constructor for files which don't end on .dll
+		/// </summary>
+		/// <param name="directory"></param>
+		/// <param name="pattern"></param>
 		public SafeDirectoryCatalog(string directory, string pattern)
 		{
+			if (!Directory.Exists(directory))
+			{
+				throw new ArgumentException("Directory doesn't exist: " + directory);
+			}
 			var files = Directory.EnumerateFiles(directory, pattern, SearchOption.AllDirectories);
 
 			_catalog = new AggregateCatalog();
@@ -67,6 +81,9 @@ namespace Dapplo.Addons.Implementation.Internals
 			}
 		}
 
+		/// <summary>
+		/// Retrieve the parts of catalog
+		/// </summary>
 		public override IQueryable<ComposablePartDefinition> Parts
 		{
 			get
