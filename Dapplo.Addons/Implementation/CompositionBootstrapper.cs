@@ -19,8 +19,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace Dapplo.Addons.Implementation
@@ -47,6 +51,22 @@ namespace Dapplo.Addons.Implementation
 		}
 
 		/// <summary>
+		/// List of all known assemblies
+		/// </summary>
+		public IList<Assembly> AddonAssemblies
+		{
+			get;
+		} = new List<Assembly>();
+
+		/// <summary>
+		/// Get a list of all found files
+		/// </summary>
+		public IList<string> AddonFiles
+		{
+			get;
+		} = new List<string>();
+
+		/// <summary>
 		/// Override this method to extend what is loaded into the Catalog
 		/// </summary>
 		protected virtual void ConfigureAggregateCatalog()
@@ -63,13 +83,74 @@ namespace Dapplo.Addons.Implementation
 		}
 
 		/// <summary>
-		/// Add an assembly as AssemblyCatalog to the AggregateCatalog.Catalogs
+		/// Add an assembly to the AggregateCatalog.Catalogs
 		/// In english: make the items in the assembly discoverable
 		/// </summary>
 		/// <param name="assembly">Assembly to add</param>
-		protected void Add(Assembly assembly)
+		public void Add(Assembly assembly)
 		{
-			AggregateCatalog.Catalogs.Add(new AssemblyCatalog(assembly));
+			if (assembly == null)
+			{
+				return;
+			}
+			var assemblyCatalog = new AssemblyCatalog(assembly);
+			Add(assemblyCatalog);
+		}
+
+		/// <summary>
+		/// Add an AssemblyCatalog AggregateCatalog.Catalogs
+		/// But only if the AssemblyCatalog has parts
+		/// </summary>
+		/// <param name="assemblyCatalog">AssemblyCatalog to add</param>
+		public void Add(AssemblyCatalog assemblyCatalog)
+		{
+			if (AddonAssemblies.Contains(assemblyCatalog.Assembly))
+			{
+				return;
+			}
+			if (assemblyCatalog.Parts.ToList().Count > 0)
+			{
+				AggregateCatalog.Catalogs.Add(assemblyCatalog);
+				AddonAssemblies.Add(assemblyCatalog.Assembly);
+				AddonFiles.Add(assemblyCatalog.Assembly.Location);
+            }
+		}
+
+		/// <summary>
+		/// Add the assemblies (with parts) found in the specified directory
+		/// </summary>
+		/// <param name="directory">Directory to scan</param>
+		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
+		public void Add(string directory, string pattern = "*.dll")
+		{
+			if (!Directory.Exists(directory))
+			{
+				throw new ArgumentException("Directory doesn't exist: " + directory);
+			}
+			var files = Directory.EnumerateFiles(directory, pattern, SearchOption.AllDirectories);
+
+			foreach (var file in files)
+			{
+				try
+				{
+					var assemblyCatalog = new AssemblyCatalog(file);
+					Add(assemblyCatalog);
+				}
+				catch (Exception)
+				{
+					// Ignore
+				}
+			}
+		}
+
+		/// <summary>
+		/// Add the assembly for the specified type
+		/// </summary>
+		/// <param name="type">The assembly for the type is retrieved add added via the Add(Assembly) method</param>
+		public void Add(Type type)
+		{
+			var typeAssembly = Assembly.GetAssembly(type);
+			Add(typeAssembly);
 		}
 
 		/// <summary>

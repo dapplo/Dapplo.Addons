@@ -19,7 +19,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Dapplo.Addons.Implementation;
+using Dapplo.Addons.TestAddon;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace Dapplo.Addons.Tests
 {
@@ -29,7 +32,16 @@ namespace Dapplo.Addons.Tests
 		[TestMethod]
 		public void TestStartup()
 		{
+			var bootstrapper = new SimpleBootstrapper();
+			bootstrapper.Add(".");
+			Assert.IsTrue(bootstrapper.AddonFiles.Count(addon => addon.EndsWith("TestAddon.dll")) > 0);
+			bootstrapper.Run();
 
-		}
+			// Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
+			Assert.IsNotNull(bootstrapper.GetExport<SomeAddon>().Value);
+
+			// Test localization of a IStartupAction with meta-data, which is exported via [StartupAction(DoNotAwait = true)]
+			Assert.IsTrue(bootstrapper.GetExport<IStartupAction, IStartupActionMetadata>().Metadata.DoNotAwait);
+        }
 	}
 }

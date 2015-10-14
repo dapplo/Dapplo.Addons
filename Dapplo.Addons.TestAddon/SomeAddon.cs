@@ -20,11 +20,14 @@
  */
 
 using System;
+using System.ComponentModel.Composition;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Dapplo.Addons.TestAddon
 {
+	[Export]
+	[StartupAction(DoNotAwait = true)]
     public class SomeAddon : IStartupAction
 	{
 	    public Task StartAsync(CancellationToken token = new CancellationToken())

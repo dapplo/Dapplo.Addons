@@ -26,7 +26,8 @@ namespace Dapplo.Addons
 {
 
 	/// <summary>
-	/// The IStartupAction describes modules that are called on startup, th
+	/// The IStartupAction is an interface for modules that can be started when the application starts
+	/// Extend you module with this interface, and use the StartupActionAttribute to annotate the module
 	/// </summary>
 	public interface IStartupAction : IModule
 	{

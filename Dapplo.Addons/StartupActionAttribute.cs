@@ -44,7 +44,7 @@ namespace Dapplo.Addons
 		{
 			get;
 			set;
-		}
+		} = 1;
 
 		/// <summary>
 		/// this property describes if the StartAsync NEEDS an await, in general this is true.
@@ -55,6 +55,6 @@ namespace Dapplo.Addons
 		{
 			get;
 			set;
-		}
+		} = true;
 	}
 }

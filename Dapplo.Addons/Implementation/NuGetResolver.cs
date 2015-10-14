@@ -19,7 +19,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using NLog;
 using NuGet;
 using System;
 using System.Collections.Generic;
@@ -34,8 +33,6 @@ namespace Dapplo.Addons.Implementation
 	/// </summary>
 	internal class NuGetResolver
 	{
-		private static readonly Logger LOG = LogManager.GetCurrentClassLogger();
-
 		/// <summary>
 		/// Location where the local packages will be stored
 		/// </summary>
@@ -74,7 +71,7 @@ namespace Dapplo.Addons.Implementation
 				return null;
 			}
 			var assemblyName = new AssemblyName(resolveEventArgs.Name);
-			LOG.Info("Trying to resolve {0}", assemblyName.Name);
+			//LOG.Info("Trying to resolve {0}", assemblyName.Name);
 
 			try
 			{
@@ -97,9 +94,9 @@ namespace Dapplo.Addons.Implementation
 				}
 				return ReturnAssemblyFromRepository(packageManager, assemblyName);
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
-				LOG.Warn(ex, "Problem using NuGet find an unresolved assembly");
+				//LOG.Warn(ex, "Problem using NuGet find an unresolved assembly");
 			}
 			return null;
 		}
@@ -137,7 +134,7 @@ namespace Dapplo.Addons.Implementation
 				string dllPath = Directory.EnumerateFiles(basePath, assemblyName.Name + ".dll", SearchOption.AllDirectories).OrderBy(path => path).LastOrDefault();
 				if (!string.IsNullOrEmpty(dllPath))
 				{
-					LOG.Info("Dll found in Package {0}, installed here {1}", assemblyName.Name, dllPath);
+					//LOG.Info("Dll found in Package {0}, installed here {1}", assemblyName.Name, dllPath);
 					if (File.Exists(dllPath))
 					{
 						return Assembly.LoadFrom(dllPath);

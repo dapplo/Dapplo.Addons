@@ -36,6 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -52,6 +53,16 @@
   <ItemGroup>
     <Compile Include="AddonTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dapplo.Addons.TestAddon\Dapplo.Addons.TestAddon.csproj">
+      <Project>{450ba0dc-f37c-45f5-b250-0b20f4b1d594}</Project>
+      <Name>Dapplo.Addons.TestAddon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Dapplo.Addons\Dapplo.Addons.csproj">
+      <Project>{66106beb-d338-4887-af47-125abb31555f}</Project>
+      <Name>Dapplo.Addons</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
