@@ -35,7 +35,11 @@ namespace Dapplo.Addons.Tests
 			var bootstrapper = new SimpleBootstrapper();
 			bootstrapper.Add(".", "Dapplo.*.dll");
 			// Add test project, without having a direct reference
+#if DEBUG
 			bootstrapper.Add(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug", "Dapplo.*.dll");
+#else
+			bootstrapper.Add(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release", "Dapplo.*.dll");
+#endif
 			Assert.IsTrue(bootstrapper.AddonFiles.Count(addon => addon.EndsWith("TestAddon.dll")) > 0);
 			bootstrapper.Run();
 
