@@ -20,9 +20,9 @@
  */
 
 using Dapplo.Addons.Implementation;
-using Dapplo.Addons.TestAddon;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Dapplo.Addons.Tests
 {
@@ -30,18 +30,22 @@ namespace Dapplo.Addons.Tests
 	public class AddonTest
 	{
 		[TestMethod]
-		public void TestStartup()
+		public async Task TestStartup()
 		{
 			var bootstrapper = new SimpleBootstrapper();
-			bootstrapper.Add(".");
+			bootstrapper.Add(".", "Dapplo.*.dll");
+			// Add test project, without having a direct reference
+			bootstrapper.Add(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug", "Dapplo.*.dll");
 			Assert.IsTrue(bootstrapper.AddonFiles.Count(addon => addon.EndsWith("TestAddon.dll")) > 0);
 			bootstrapper.Run();
 
 			// Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
-			Assert.IsNotNull(bootstrapper.GetExport<SomeAddon>().Value);
+			Assert.IsNotNull(bootstrapper.GetExport<IStartupAction>().Value);
 
 			// Test localization of a IStartupAction with meta-data, which is exported via [StartupAction(DoNotAwait = true)]
-			Assert.IsTrue(bootstrapper.GetExport<IStartupAction, IStartupActionMetadata>().Metadata.DoNotAwait);
+			var lazy = bootstrapper.GetExport<IStartupAction, IStartupActionMetadata>();
+            Assert.IsTrue(lazy.Metadata.DoNotAwait);
+			await lazy.Value.StartAsync();
         }
 	}
 }
