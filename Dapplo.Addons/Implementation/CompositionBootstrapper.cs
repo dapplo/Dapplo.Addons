@@ -44,7 +44,10 @@ namespace Dapplo.Addons.Implementation
 			private set;
 		} = new AggregateCatalog();
 
-		public CompositionContainer Container
+		/// <summary>
+		/// The CompositionContainer
+		/// </summary>
+		protected CompositionContainer Container
 		{
 			get;
 			private set;
@@ -79,7 +82,23 @@ namespace Dapplo.Addons.Implementation
 		protected virtual void ConfigureContainer()
 		{
 			// Export the container itself
-			Container.ComposeExportedValue(Container);
+			Export(Container);
+		}
+
+		/// <summary>
+		/// Export an object, without using Attribute
+		/// </summary>
+		public void Export<T>(T obj)
+		{
+			Container.ComposeExportedValue(obj);
+		}
+
+		/// <summary>
+		/// Export an object, without using Attribute
+		/// </summary>
+		public void Export<T>(string contractName, T obj)
+		{
+			Container.ComposeExportedValue(contractName, obj);
 		}
 
 		/// <summary>
@@ -87,7 +106,7 @@ namespace Dapplo.Addons.Implementation
 		/// In english: make the items in the assembly discoverable
 		/// </summary>
 		/// <param name="assembly">Assembly to add</param>
-		public virtual void Add(Assembly assembly)
+		public void Add(Assembly assembly)
 		{
 			if (assembly == null)
 			{
@@ -102,7 +121,7 @@ namespace Dapplo.Addons.Implementation
 		/// But only if the AssemblyCatalog has parts
 		/// </summary>
 		/// <param name="assemblyCatalog">AssemblyCatalog to add</param>
-		public virtual void Add(AssemblyCatalog assemblyCatalog)
+		public void Add(AssemblyCatalog assemblyCatalog)
 		{
 			if (AddonAssemblies.Contains(assemblyCatalog.Assembly))
 			{
@@ -121,7 +140,7 @@ namespace Dapplo.Addons.Implementation
 		/// </summary>
 		/// <param name="directory">Directory to scan</param>
 		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
-		public virtual void Add(string directory, string pattern = "*.dll")
+		public void Add(string directory, string pattern = "*.dll")
 		{
 			if (!Directory.Exists(directory))
 			{
@@ -147,7 +166,7 @@ namespace Dapplo.Addons.Implementation
 		/// Add the assembly for the specified type
 		/// </summary>
 		/// <param name="type">The assembly for the type is retrieved add added via the Add(Assembly) method</param>
-		public virtual void Add(Type type)
+		public void Add(Type type)
 		{
 			var typeAssembly = Assembly.GetAssembly(type);
 			Add(typeAssembly);
@@ -157,7 +176,7 @@ namespace Dapplo.Addons.Implementation
 		/// Fill all the imports in the object isntance
 		/// </summary>
 		/// <param name="importingObject">object to fill the imports for</param>
-		public virtual void FillImports(object importingObject)
+		public void FillImports(object importingObject)
 		{
 			Container.SatisfyImportsOnce(importingObject);
         }
