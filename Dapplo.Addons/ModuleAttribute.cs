@@ -19,25 +19,34 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System.ComponentModel;
+using System;
+using System.ComponentModel.Composition;
 
 namespace Dapplo.Addons
 {
 	/// <summary>
-	/// Meta-data belonging to the StartupActionAttribute, which makes it possible to specify type-safe meta-data.
+	/// This is the Module attribute which can be used to specify type-safe meta-data
+	/// Currently there are none in here, but it was made available so it's possible to add them at a later time
+	/// In general it is bad to import via a specific type, always try to use contract interfaces.
+	/// As the IModule is pretty much only a marker interface, it is not very usefull and this is why the attribute is abstract
 	/// </summary>
-	public interface IStartupActionMetadata
+	[MetadataAttribute]
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+	public abstract class ModuleAttribute : ExportAttribute
 	{
-		[DefaultValue(1)]
-		int StartupOrder
+		/// <summary>
+		/// Constructor with a contractname, and a type
+		/// </summary>
+		public ModuleAttribute(string contractname, Type type) : base(contractname, type)
 		{
-			get;
 		}
 
-		[DefaultValue(false)]
-		bool DoNotAwait
+		/// <summary>
+		/// Constructor with the type
+		/// </summary>
+		/// <param name="type"></param>
+		public ModuleAttribute(Type type) : base(type)
 		{
-			get;
 		}
 	}
 }

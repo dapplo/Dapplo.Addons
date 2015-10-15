@@ -54,12 +54,14 @@
     <Compile Include="IModule.cs" />
     <Compile Include="Implementation\CompositionBootstrapper.cs" />
     <Compile Include="Implementation\NuGetResolver.cs" />
+    <Compile Include="Implementation\StartupShutdownBootstrapper.cs" />
     <Compile Include="Implementation\SimpleBootstrapper.cs" />
     <Compile Include="IShutdownAction.cs" />
     <Compile Include="IShutdownActionMetadata.cs" />
     <Compile Include="IStartupAction.cs" />
     <Compile Include="IStartupActionMetadata.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ModuleAttribute.cs" />
     <Compile Include="ShutdownActionAttribute.cs" />
     <Compile Include="StartupActionAttribute.cs" />
   </ItemGroup>

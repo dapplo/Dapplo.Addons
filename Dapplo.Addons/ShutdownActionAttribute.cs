@@ -29,9 +29,13 @@ namespace Dapplo.Addons
 	/// </summary>
 	[MetadataAttribute]
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-	public class ShutdownActionAttribute : ExportAttribute, IShutdownActionMetadata
+	public class ShutdownActionAttribute : ModuleAttribute, IShutdownActionMetadata
 	{
 		public ShutdownActionAttribute() : base(typeof(IShutdownAction))
+		{
+		}
+
+		public ShutdownActionAttribute(string contractName) : base(contractName, typeof(IShutdownAction))
 		{
 		}
 

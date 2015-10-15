@@ -20,24 +20,29 @@
  */
 
 using NLog;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Dapplo.Addons.TestAddon
 {
-	[Export]
-	[StartupAction(DoNotAwait = true)]
-    public class SomeAddon : IStartupAction
+	[StartupAction(DoNotAwait = false)]
+	[ShutdownAction]
+	public class SomeAddon : IStartupAction, IShutdownAction
 	{
 		private static readonly Logger LOG = LogManager.GetCurrentClassLogger();
 
-	    public async Task StartAsync(CancellationToken token = new CancellationToken())
+		public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
+		{
+			await Task.Delay(100);
+			Debug.WriteLine("ShutdownAsync called!");
+		}
+
+		public async Task StartAsync(CancellationToken token = new CancellationToken())
 	    {
 			LOG.Debug("This shoud not give an exception!");
 			await Task.Delay(100);
-            Debug.WriteLine("This shoud be outputted!");
+            Debug.WriteLine("StartAsync called!");
 		}
 	}
 }

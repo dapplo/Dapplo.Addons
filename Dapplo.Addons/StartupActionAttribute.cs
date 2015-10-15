@@ -25,16 +25,26 @@ using System.ComponentModel.Composition;
 namespace Dapplo.Addons
 {
 	/// <summary>
-	/// This is the attribute which can be used for the type-safe meta-data
+	/// This is the attribute for a IStartupAction module
 	/// </summary>
 	[MetadataAttribute]
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-	public class StartupActionAttribute : ExportAttribute, IStartupActionMetadata
+	public class StartupActionAttribute : ModuleAttribute, IStartupActionMetadata
 	{
 		public StartupActionAttribute() : base(typeof(IStartupAction))
 		{
 
 		}
+
+		/// <summary>
+		/// Use a specific contract name for the IStartupAction
+		/// </summary>
+		/// <param name="contractName"></param>
+		public StartupActionAttribute(string contractName) : base(contractName, typeof(IStartupAction))
+		{
+
+		}
+
 
 		/// <summary>
 		/// Here the order of the startup action can be specified, starting with low values and ending with high.

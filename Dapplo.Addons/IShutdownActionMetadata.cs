@@ -24,7 +24,7 @@ using System.ComponentModel;
 namespace Dapplo.Addons
 {
 	/// <summary>
-	/// This is the interface for the MEF meta-data
+	/// Meta-data belonging to the ShutdownActionAttribute, which makes it possible to specify type-safe meta-data.
 	/// </summary>
 	public interface IShutdownActionMetadata
 	{
