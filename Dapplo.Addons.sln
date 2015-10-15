@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.Tests", "Dapp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.TestAddon", "Dapplo.Addons.TestAddon\Dapplo.Addons.TestAddon.csproj", "{450BA0DC-F37C-45F5-B250-0B20F4B1D594}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.NuGet", "Dapplo.Addons.NuGet\Dapplo.Addons.NuGet.csproj", "{B835F9A9-3778-43F3-8A2A-81F1608FBC67}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{450BA0DC-F37C-45F5-B250-0B20F4B1D594}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{450BA0DC-F37C-45F5-B250-0B20F4B1D594}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{450BA0DC-F37C-45F5-B250-0B20F4B1D594}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B835F9A9-3778-43F3-8A2A-81F1608FBC67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B835F9A9-3778-43F3-8A2A-81F1608FBC67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B835F9A9-3778-43F3-8A2A-81F1608FBC67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B835F9A9-3778-43F3-8A2A-81F1608FBC67}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

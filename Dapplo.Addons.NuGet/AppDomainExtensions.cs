@@ -21,7 +21,7 @@
 
 using System;
 
-namespace Dapplo.Addons.Implementation
+namespace Dapplo.Addons.NuGet
 {
 	public static class AppDomainExtensions
 	{

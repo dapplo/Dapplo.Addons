@@ -26,7 +26,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace Dapplo.Addons.Implementation
+namespace Dapplo.Addons.NuGet
 {
 	/// <summary>
 	/// The nuget resolver can handle "ResolveEvents" by checking if the missing Assembly can be downloaded from Nuget
