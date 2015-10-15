@@ -87,7 +87,7 @@ namespace Dapplo.Addons.Implementation
 		/// In english: make the items in the assembly discoverable
 		/// </summary>
 		/// <param name="assembly">Assembly to add</param>
-		public void Add(Assembly assembly)
+		public virtual void Add(Assembly assembly)
 		{
 			if (assembly == null)
 			{
@@ -102,7 +102,7 @@ namespace Dapplo.Addons.Implementation
 		/// But only if the AssemblyCatalog has parts
 		/// </summary>
 		/// <param name="assemblyCatalog">AssemblyCatalog to add</param>
-		public void Add(AssemblyCatalog assemblyCatalog)
+		public virtual void Add(AssemblyCatalog assemblyCatalog)
 		{
 			if (AddonAssemblies.Contains(assemblyCatalog.Assembly))
 			{
@@ -121,7 +121,7 @@ namespace Dapplo.Addons.Implementation
 		/// </summary>
 		/// <param name="directory">Directory to scan</param>
 		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
-		public void Add(string directory, string pattern = "*.dll")
+		public virtual void Add(string directory, string pattern = "*.dll")
 		{
 			if (!Directory.Exists(directory))
 			{
@@ -147,16 +147,25 @@ namespace Dapplo.Addons.Implementation
 		/// Add the assembly for the specified type
 		/// </summary>
 		/// <param name="type">The assembly for the type is retrieved add added via the Add(Assembly) method</param>
-		public void Add(Type type)
+		public virtual void Add(Type type)
 		{
 			var typeAssembly = Assembly.GetAssembly(type);
 			Add(typeAssembly);
 		}
 
 		/// <summary>
+		/// Fill all the imports in the object isntance
+		/// </summary>
+		/// <param name="importingObject">object to fill the imports for</param>
+		public virtual void FillImports(object importingObject)
+		{
+			Container.SatisfyImportsOnce(importingObject);
+        }
+
+		/// <summary>
 		/// Start the bootstrapper
 		/// </summary>
-		public void Run()
+		public virtual void Run()
 		{
 			ConfigureAggregateCatalog();
 			Container = new CompositionContainer(AggregateCatalog, CompositionOptions.DisableSilentRejection);

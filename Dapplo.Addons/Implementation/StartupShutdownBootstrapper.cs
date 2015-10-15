@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
 using System;
+using System.ComponentModel.Composition;
 
 namespace Dapplo.Addons.Implementation
 {
@@ -32,6 +33,12 @@ namespace Dapplo.Addons.Implementation
 	/// </summary>
 	public class StartupShutdownBootstrapper : SimpleBootstrapper
 	{
+		[ImportMany]
+		private IEnumerable<Lazy<IStartupAction, IStartupActionMetadata>> _startupActions = null;
+
+		[ImportMany]
+		private IEnumerable<Lazy<IShutdownAction, IShutdownActionMetadata>> _shutdownActions = null;
+
 		/// <summary>
 		/// Startup all "Startup actions"
 		/// Call this after run, it will find all IStartupAction's and start them in the specified order
@@ -40,8 +47,7 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>Task</returns>
 		public async Task StartupAsync(CancellationToken token = default(CancellationToken))
 		{
-			var startupActions = GetExports<IStartupAction, IStartupActionMetadata>();
-            var orderedActions = from export in startupActions orderby export.Metadata.StartupOrder ascending select export;
+            var orderedActions = from export in _startupActions orderby export.Metadata.StartupOrder ascending select export;
 
 			var tasks = new List<Task>();
 
@@ -95,9 +101,7 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>Task</returns>
 		public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
 		{
-			var shutdownActions = GetExports<IShutdownAction, IShutdownActionMetadata>();
-
-			var orderedActions = from export in shutdownActions orderby export.Metadata.ShutdownOrder ascending select export;
+			var orderedActions = from export in _shutdownActions orderby export.Metadata.ShutdownOrder ascending select export;
 
 			var tasks = new List<Task>();
 
@@ -137,6 +141,15 @@ namespace Dapplo.Addons.Implementation
 			{
 				await Task.WhenAll(tasks);
 			}
+		}
+
+		/// <summary>
+		/// Override the run to make sure "this" is injected
+		/// </summary>
+		public override void Run()
+		{
+			base.Run();
+			FillImports(this);
 		}
 	}
 }
