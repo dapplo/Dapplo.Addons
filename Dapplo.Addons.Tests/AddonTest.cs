@@ -43,6 +43,12 @@ namespace Dapplo.Addons.Tests
 			// Test if our test addon was loaded
 			Assert.IsTrue(bootstrapper.AddonFiles.Count(addon => addon.EndsWith("TestAddon.dll")) > 0);
 
+			// Initialize, so we can export
+			bootstrapper.Initialize();
+
+			// test Export
+			bootstrapper.Export(this);
+
 			// Start the composition
 			bootstrapper.Run();
 

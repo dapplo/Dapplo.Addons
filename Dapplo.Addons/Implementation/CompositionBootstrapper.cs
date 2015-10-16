@@ -35,6 +35,7 @@ namespace Dapplo.Addons.Implementation
 	/// </summary>
 	public abstract class CompositionBootstrapper
 	{
+		private bool _initialized;
 		/// <summary>
 		/// The AggregateCatalog contains all the catalogs with the assemblies in it.
 		/// </summary>
@@ -90,6 +91,10 @@ namespace Dapplo.Addons.Implementation
 		/// </summary>
 		public void Export<T>(T obj)
 		{
+			if (!_initialized)
+			{
+				throw new InvalidOperationException("Bootstrapper is not initialized");
+            }
 			Container.ComposeExportedValue(obj);
 		}
 
@@ -98,6 +103,10 @@ namespace Dapplo.Addons.Implementation
 		/// </summary>
 		public void Export<T>(string contractName, T obj)
 		{
+			if (!_initialized)
+			{
+				throw new InvalidOperationException("Bootstrapper is not initialized");
+			}
 			Container.ComposeExportedValue(contractName, obj);
 		}
 
@@ -178,16 +187,32 @@ namespace Dapplo.Addons.Implementation
 		/// <param name="importingObject">object to fill the imports for</param>
 		public void FillImports(object importingObject)
 		{
+			if (!_initialized)
+			{
+				throw new InvalidOperationException("Bootstrapper is not initialized");
+			}
 			Container.SatisfyImportsOnce(importingObject);
         }
 
 		/// <summary>
-		/// Start the bootstrapper
+		/// Initialize the bootstrapper
+		/// </summary>
+		public virtual void Initialize()
+		{
+			_initialized = true;
+			ConfigureAggregateCatalog();
+			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags);
+		}
+
+		/// <summary>
+		/// Start the bootstrapper, initialize if needed
 		/// </summary>
 		public virtual void Run()
 		{
-			ConfigureAggregateCatalog();
-			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags);
+			if (!_initialized)
+			{
+				Initialize();
+            }
 			Container.ComposeParts();
 		}
 	}
