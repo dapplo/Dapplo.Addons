@@ -70,19 +70,19 @@ namespace Dapplo.Addons.Implementation
 		} = new List<string>();
 
 		/// <summary>
+		/// Specify how the composition is made, is used in the Run()
+		/// </summary>
+		protected CompositionOptions CompositionOptionFlags
+		{
+			get;
+			set;
+		} = CompositionOptions.DisableSilentRejection;
+
+		/// <summary>
 		/// Override this method to extend what is loaded into the Catalog
 		/// </summary>
 		protected virtual void ConfigureAggregateCatalog()
 		{
-		}
-
-		/// <summary>
-		/// Configure the container
-		/// </summary>
-		protected virtual void ConfigureContainer()
-		{
-			// Export the container itself
-			Export(Container);
 		}
 
 		/// <summary>
@@ -187,8 +187,7 @@ namespace Dapplo.Addons.Implementation
 		public virtual void Run()
 		{
 			ConfigureAggregateCatalog();
-			Container = new CompositionContainer(AggregateCatalog, CompositionOptions.DisableSilentRejection);
-			ConfigureContainer();
+			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags);
 			Container.ComposeParts();
 		}
 	}
