@@ -193,6 +193,15 @@ namespace Dapplo.Addons.Implementation
 		}
 
 		/// <summary>
+		/// Add the ExportProvider to the export providers which are used in the CompositionContainer
+		/// </summary>
+		/// <param name="exportProvider">ExportProvider</param>
+		public void Add(ExportProvider exportProvider)
+		{
+			ExportProviders.Add(exportProvider);
+		}
+
+		/// <summary>
 		/// Fill all the imports in the object isntance
 		/// </summary>
 		/// <param name="importingObject">object to fill the imports for</param>
