@@ -23,16 +23,23 @@ using Dapplo.Addons.Implementation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 using System.Threading.Tasks;
+using Dapplo.Config.Ini;
 
 namespace Dapplo.Addons.Tests
 {
 	[TestClass]
 	public class AddonTest
 	{
+		private const string ApplicationName = "Dapplo";
+
 		[TestMethod]
 		public async Task TestStartupShutdown()
 		{
-			var bootstrapper = new StartupShutdownBootstrapper();
+			var bootstrapper = new ApplicationBootstrapper(ApplicationName);
+
+			var iniConfig = new IniConfig(ApplicationName, "test");
+			bootstrapper.IniConfig = iniConfig;
+
 			bootstrapper.Add(".", "Dapplo.*.dll");
 			// Add test project, without having a direct reference
 #if DEBUG

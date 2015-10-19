@@ -31,6 +31,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Dapplo.Config, Version=0.1.98.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapplo.Config.0.1.98.0\lib\net45\Dapplo.Config.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
@@ -43,6 +47,7 @@
   <ItemGroup>
     <Compile Include="IAction.cs" />
     <Compile Include="IModule.cs" />
+    <Compile Include="Implementation\ApplicationBootstrapper.cs" />
     <Compile Include="Implementation\CompositionBootstrapper.cs" />
     <Compile Include="Implementation\StartupShutdownBootstrapper.cs" />
     <Compile Include="Implementation\SimpleBootstrapper.cs" />
@@ -54,6 +59,9 @@
     <Compile Include="ModuleAttribute.cs" />
     <Compile Include="ShutdownActionAttribute.cs" />
     <Compile Include="StartupActionAttribute.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -34,9 +34,11 @@ namespace Dapplo.Addons.Implementation
 	public class StartupShutdownBootstrapper : SimpleBootstrapper
 	{
 		[ImportMany]
+		// ReSharper disable once FieldCanBeMadeReadOnly.Local
 		private IEnumerable<Lazy<IStartupAction, IStartupActionMetadata>> _startupActions = null;
 
 		[ImportMany]
+		// ReSharper disable once FieldCanBeMadeReadOnly.Local
 		private IEnumerable<Lazy<IShutdownAction, IShutdownActionMetadata>> _shutdownActions = null;
 
 		/// <summary>

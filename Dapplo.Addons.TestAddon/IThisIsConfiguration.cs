@@ -19,39 +19,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System.ComponentModel.Composition;
-using NLog;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
+using System.ComponentModel;
+using Dapplo.Config.Ini;
 
 namespace Dapplo.Addons.TestAddon
 {
-	[StartupAction(DoNotAwait = false)]
-	[ShutdownAction]
-	public class SomeAddon : IStartupAction, IShutdownAction
+	public interface IThisIsConfiguration : IIniSection
 	{
-		private static readonly Logger LOG = LogManager.GetCurrentClassLogger();
-
-		[Import]
-		public IThisIsConfiguration MyConfig
+		[DefaultValue("Robin")]
+		string Name
 		{
 			get;
 			set;
-		}
-
-		public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
-		{
-			await Task.Delay(100);
-			Debug.WriteLine("ShutdownAsync called!");
-		}
-
-		public async Task StartAsync(CancellationToken token = new CancellationToken())
-	    {
-			LOG.Debug("This shoud not give an exception!");
-			await Task.Delay(100);
-            Debug.WriteLine("StartAsync called!");
-			Debug.WriteLine($"Value: {MyConfig.Name}");
 		}
 	}
 }
