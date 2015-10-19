@@ -88,7 +88,11 @@ namespace Dapplo.Addons.Implementation
 		/// </summary>
 		protected override void ConfigureAggregateCatalog()
 		{
-			base.ConfigureAggregateCatalog();
+			if (_aggregateCatalogConfigured)
+			{
+				return;
+			}
+            base.ConfigureAggregateCatalog();
 
 			// Add the base assemblies, but not the current (as this is Dapplo.Addons)
 			var entryAssembly = Assembly.GetEntryAssembly();

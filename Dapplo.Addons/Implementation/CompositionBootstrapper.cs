@@ -35,7 +35,9 @@ namespace Dapplo.Addons.Implementation
 	/// </summary>
 	public abstract class CompositionBootstrapper
 	{
-		private bool _initialized;
+		protected bool _aggregateCatalogConfigured;
+		protected bool _initialized;
+
 		/// <summary>
 		/// The AggregateCatalog contains all the catalogs with the assemblies in it.
 		/// </summary>
@@ -53,6 +55,14 @@ namespace Dapplo.Addons.Implementation
 			get;
 			private set;
 		}
+
+		/// <summary>
+		/// List of ExportProviders
+		/// </summary>
+		protected IList<ExportProvider> ExportProviders
+		{
+			get;
+		} = new List<ExportProvider>();
 
 		/// <summary>
 		/// List of all known assemblies
@@ -84,7 +94,8 @@ namespace Dapplo.Addons.Implementation
 		/// </summary>
 		protected virtual void ConfigureAggregateCatalog()
 		{
-		}
+			_aggregateCatalogConfigured = true;
+        }
 
 		/// <summary>
 		/// Export an object, without using Attribute
@@ -201,7 +212,7 @@ namespace Dapplo.Addons.Implementation
 		{
 			_initialized = true;
 			ConfigureAggregateCatalog();
-			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags);
+			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags, ExportProviders.ToArray());
 		}
 
 		/// <summary>
