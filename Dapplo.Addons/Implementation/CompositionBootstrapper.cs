@@ -151,9 +151,10 @@ namespace Dapplo.Addons.Implementation
 			if (assemblyCatalog.Parts.ToList().Count > 0)
 			{
 				AggregateCatalog.Catalogs.Add(assemblyCatalog);
-				AddonAssemblies.Add(assemblyCatalog.Assembly);
 				AddonFiles.Add(assemblyCatalog.Assembly.Location);
-            }
+			}
+			// Always add the assembly, even if there are no parts, so we can resolve certain "non" parts in ExportProviders.
+			AddonAssemblies.Add(assemblyCatalog.Assembly);
 		}
 
 		/// <summary>
