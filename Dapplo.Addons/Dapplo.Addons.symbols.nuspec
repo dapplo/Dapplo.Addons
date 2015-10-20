@@ -20,6 +20,5 @@
 		<file src="bin\release\Dapplo.Addons.pdb" target="lib\net451" />
 		<file src="bin\release\Dapplo.Addons.dll" target="lib\net451" />
 		<file src="**\*.cs" exclude="**\obj\**\*.cs;**\release\**\*.cs" target="src" />
-	</files>
-		
+	</files>	
 </package>

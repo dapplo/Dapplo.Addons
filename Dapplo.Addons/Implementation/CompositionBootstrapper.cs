@@ -19,6 +19,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Dapplo.Config.Support;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -33,7 +34,7 @@ namespace Dapplo.Addons.Implementation
 	/// A bootstrapper for making it possible to load Addons to Dapplo applications.
 	/// This uses MEF for loading and managing the Addons.
 	/// </summary>
-	public abstract class CompositionBootstrapper
+	public abstract class CompositionBootstrapper : IServiceLocator
 	{
 		protected bool _aggregateCatalogConfigured;
 		protected bool _initialized;
@@ -87,7 +88,7 @@ namespace Dapplo.Addons.Implementation
 		{
 			get;
 			set;
-		} = CompositionOptions.DisableSilentRejection;
+		} = CompositionOptions.DisableSilentRejection | CompositionOptions.ExportCompositionService;
 
 		/// <summary>
 		/// Override this method to extend what is loaded into the Catalog
@@ -215,6 +216,47 @@ namespace Dapplo.Addons.Implementation
         }
 
 		/// <summary>
+		/// Simple "service-locater"
+		/// </summary>
+		/// <typeparam name="T">Type to locate</typeparam>
+		/// <returns>Lazy T</returns>
+		public Lazy<T> GetExport<T>()
+		{
+			return Container.GetExport<T>();
+		}
+
+		/// <summary>
+		/// Simple "service-locater" with meta-data
+		/// </summary>
+		/// <typeparam name="T">Type to locate</typeparam>
+		/// <typeparam name="TMetaData">Type for the meta-data</typeparam>
+		/// <returns>Lazy T,TMetaData</returns>
+		public Lazy<T, TMetaData> GetExport<T, TMetaData>()
+		{
+			return Container.GetExport<T, TMetaData>();
+		}
+
+		/// <summary>
+		/// Simple "service-locater" to get multiple exports
+		/// </summary>
+		/// <typeparam name="T">Type to locate</typeparam>
+		/// <returns>IEnumerable of Lazy T</returns>
+		public IEnumerable<Lazy<T>> GetExports<T>()
+		{
+			return Container.GetExports<T>();
+		}
+
+		/// <summary>
+		/// Simple "service-locater" to get multiple exports with meta-data
+		/// </summary>
+		/// <typeparam name="T">Type to locate</typeparam>
+		/// <typeparam name="TMetaData">Type for the meta-data</typeparam>
+		/// <returns>IEnumerable of Lazy T,TMetaData</returns>
+		public IEnumerable<Lazy<T, TMetaData>> GetExports<T, TMetaData>()
+		{
+			return Container.GetExports<T, TMetaData>();
+		}
+		/// <summary>
 		/// Initialize the bootstrapper
 		/// </summary>
 		public virtual void Initialize()
@@ -222,6 +264,8 @@ namespace Dapplo.Addons.Implementation
 			_initialized = true;
 			ConfigureAggregateCatalog();
 			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags, ExportProviders.ToArray());
+			// Make sure we export ourselves as the IServiceLocator
+			Export<IServiceLocator>(this);
 		}
 
 		/// <summary>

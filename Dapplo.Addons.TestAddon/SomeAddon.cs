@@ -24,6 +24,8 @@ using NLog;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Dapplo.Config.Ini;
 
 namespace Dapplo.Addons.TestAddon
 {
@@ -40,6 +42,13 @@ namespace Dapplo.Addons.TestAddon
 			set;
 		}
 
+		[ImportMany]
+		public IEnumerable<IIniSection> MyConfigs
+		{
+			get;
+			set;
+		}
+
 		public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
 		{
 			await Task.Delay(100);
@@ -48,6 +57,11 @@ namespace Dapplo.Addons.TestAddon
 
 		public async Task StartAsync(CancellationToken token = new CancellationToken())
 	    {
+			foreach (var iniSection in MyConfigs)
+			{
+				var name = iniSection.GetSectionName();
+                Debug.WriteLine(name);
+			}
 			LOG.Debug("This shoud not give an exception!");
 			await Task.Delay(100);
             Debug.WriteLine("StartAsync called!");

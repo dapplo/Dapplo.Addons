@@ -24,6 +24,7 @@ using Dapplo.Config.Ini;
 
 namespace Dapplo.Addons.TestAddon
 {
+	[IniSection("MySectionName")]
 	public interface IThisIsConfiguration : IIniSection
 	{
 		[DefaultValue("Robin")]

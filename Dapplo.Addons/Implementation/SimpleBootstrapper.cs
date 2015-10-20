@@ -20,7 +20,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -107,48 +106,6 @@ namespace Dapplo.Addons.Implementation
 				var executingAssembly = Assembly.GetExecutingAssembly();
 				Add(executingAssembly);
             }
-		}
-
-		/// <summary>
-		/// Simple "service-locater"
-		/// </summary>
-		/// <typeparam name="T">Type to locate</typeparam>
-		/// <returns>Lazy T</returns>
-		public Lazy<T> GetExport<T>()
-		{
-			return Container.GetExport<T>();
-		}
-
-		/// <summary>
-		/// Simple "service-locater" with meta-data
-		/// </summary>
-		/// <typeparam name="T">Type to locate</typeparam>
-		/// <typeparam name="TMetaData">Type for the meta-data</typeparam>
-		/// <returns>Lazy T,TMetaData</returns>
-		public Lazy<T, TMetaData> GetExport<T, TMetaData>()
-		{
-			return Container.GetExport<T, TMetaData>();
-		}
-
-		/// <summary>
-		/// Simple "service-locater" to get multiple exports
-		/// </summary>
-		/// <typeparam name="T">Type to locate</typeparam>
-		/// <returns>IEnumerable of Lazy T</returns>
-		public IEnumerable<Lazy<T>> GetExports<T>()
-		{
-			return Container.GetExports<T>();
-		}
-
-		/// <summary>
-		/// Simple "service-locater" to get multiple exports with meta-data
-		/// </summary>
-		/// <typeparam name="T">Type to locate</typeparam>
-		/// <typeparam name="TMetaData">Type for the meta-data</typeparam>
-		/// <returns>IEnumerable of Lazy T,TMetaData</returns>
-		public IEnumerable<Lazy<T, TMetaData>> GetExports<T, TMetaData>()
-		{
-			return Container.GetExports<T, TMetaData>();
 		}
 	}
 }
