@@ -93,19 +93,12 @@ namespace Dapplo.Addons.Implementation
 			}
             base.ConfigureAggregateCatalog();
 
-			// Add the base assemblies, but not the current (as this is Dapplo.Addons)
+			// Add the entry assembly, which should be the application, but not the calling or executing (as this is Dapplo.Addons)
 			var entryAssembly = Assembly.GetEntryAssembly();
-			Add(entryAssembly);
-			var callingAssembly = Assembly.GetCallingAssembly();
-			if (callingAssembly != entryAssembly)
+			if (entryAssembly != null && entryAssembly != GetType().Assembly)
 			{
-				Add(callingAssembly);
+				Add(entryAssembly);
 			}
-			if (callingAssembly == null && entryAssembly == null)
-			{
-				var executingAssembly = Assembly.GetExecutingAssembly();
-				Add(executingAssembly);
-            }
 		}
 	}
 }
