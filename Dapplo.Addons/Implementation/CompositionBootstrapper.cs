@@ -103,19 +103,17 @@ namespace Dapplo.Addons.Implementation
 		/// Export an object
 		/// </summary>
 		/// <typeparam name="T">Type to export</typeparam>
-		/// <param name="contractName">contractName under which the object of Type T is registered</param>
 		/// <param name="obj">object to add</param>
+		/// <param name="metadata">Metadata for the export</param>
 		/// <returns>ComposablePart, this can be used to remove the export later</returns>
-		public ComposablePart Export<T>(T obj)
+		public ComposablePart Export<T>(T obj, IDictionary<string, object> metadata = null)
 		{
 			if (!_initialized)
 			{
 				throw new InvalidOperationException("Bootstrapper is not initialized");
             }
-			var batch = new CompositionBatch();
-			var part = batch.AddExportedValue<T>(obj);
-			Container.Compose(batch);
-			return part;
+			string contractName = AttributedModelServices.GetContractName(typeof(T));
+			return Export(contractName, obj);
 		}
 
 		/// <summary>
@@ -124,15 +122,64 @@ namespace Dapplo.Addons.Implementation
 		/// <typeparam name="T">Type to export</typeparam>
 		/// <param name="contractName">contractName under which the object of Type T is registered</param>
 		/// <param name="obj">object to add</param>
+		/// <param name="metadata">Metadata for the export</param>
 		/// <returns>ComposablePart, this can be used to remove the export later</returns>
-		public ComposablePart Export<T>(string contractName, T obj)
+		public ComposablePart Export<T>(string contractName, T obj, IDictionary<string, object> metadata = null)
 		{
 			if (!_initialized)
 			{
 				throw new InvalidOperationException("Bootstrapper is not initialized");
 			}
+
+			if (obj == null)
+			{
+				throw new ArgumentNullException("obj");
+			}
+
+			string typeIdentity = AttributedModelServices.GetTypeIdentity(typeof(T));
+			if (metadata == null)
+			{
+				metadata = new Dictionary<string, object>();
+			}
+			if (!metadata.ContainsKey(CompositionConstants.ExportTypeIdentityMetadataName))
+			{
+				metadata.Add(CompositionConstants.ExportTypeIdentityMetadataName, typeIdentity);
+			}
+
+			// TODO: Maybe this could be simplified, but this was currently the only way to get the meta-data from all attributes
+			var partDefinition = AttributedModelServices.CreatePartDefinition(obj.GetType(), null);
+			if (partDefinition.ExportDefinitions.Count() > 0)
+			{
+				var partMetadata = partDefinition.ExportDefinitions.First().Metadata;
+                foreach (var key in partMetadata.Keys)
+				{
+					if (!metadata.ContainsKey(key))
+					{
+						metadata.Add(key, partMetadata[key]);
+					}
+				}
+			}
+			else
+			{
+				// If there wasn't an export, the ExportMetadataAttribute is not checked... so we do it ourselves
+				var exportMetadataAttributes = obj.GetType().GetCustomAttributes<ExportMetadataAttribute>(true);
+				if (exportMetadataAttributes != null)
+				{
+					foreach (var exportMetadataAttribute in exportMetadataAttributes)
+					{
+						if (!metadata.ContainsKey(exportMetadataAttribute.Name))
+						{
+							metadata.Add(exportMetadataAttribute.Name, exportMetadataAttribute.Value);
+						}
+					}
+				}
+
+			}
+
+			// We probaby could use the export-definition from the partDefinition directly...
+			var export = new Export(contractName, metadata, () => obj);
 			var batch = new CompositionBatch();
-			var part = batch.AddExportedValue<T>(contractName, obj);
+			var part = batch.AddExport(export);
 			Container.Compose(batch);
 			return part;
 		}

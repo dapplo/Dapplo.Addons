@@ -16,7 +16,7 @@
 		<copyright>Dapplo</copyright>
 		<tags>MEF bootstrap</tags>
 		<dependencies>
-			<dependency id="Dapplo.Config" version="0.1.115" />
+			<dependency id="Dapplo.Config" version="0.1.116" />
 		</dependencies>
 		<frameworkAssemblies>
 			<frameworkAssembly assemblyName="System.ComponentModel.Composition" targetFramework="net45" />

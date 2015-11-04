@@ -27,8 +27,7 @@ namespace Dapplo.Addons
 	/// <summary>
 	/// This is the attribute for a IStartupAction module
 	/// </summary>
-	[MetadataAttribute]
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+	[MetadataAttribute, AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 	public class StartupActionAttribute : ModuleAttribute, IStartupActionMetadata
 	{
 		public StartupActionAttribute() : base(typeof(IStartupAction))
