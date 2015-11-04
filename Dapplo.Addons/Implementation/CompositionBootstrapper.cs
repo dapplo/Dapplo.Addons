@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
+using System.ComponentModel.Composition.Primitives;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -99,27 +100,56 @@ namespace Dapplo.Addons.Implementation
         }
 
 		/// <summary>
-		/// Export an object, without using Attribute
+		/// Export an object
 		/// </summary>
-		public void Export<T>(T obj)
+		/// <typeparam name="T">Type to export</typeparam>
+		/// <param name="contractName">contractName under which the object of Type T is registered</param>
+		/// <param name="obj">object to add</param>
+		/// <returns>ComposablePart, this can be used to remove the export later</returns>
+		public ComposablePart Export<T>(T obj)
 		{
 			if (!_initialized)
 			{
 				throw new InvalidOperationException("Bootstrapper is not initialized");
             }
-			Container.ComposeExportedValue(obj);
+			var batch = new CompositionBatch();
+			var part = batch.AddExportedValue<T>(obj);
+			Container.Compose(batch);
+			return part;
 		}
 
 		/// <summary>
-		/// Export an object, without using Attribute
+		/// Export an object
 		/// </summary>
-		public void Export<T>(string contractName, T obj)
+		/// <typeparam name="T">Type to export</typeparam>
+		/// <param name="contractName">contractName under which the object of Type T is registered</param>
+		/// <param name="obj">object to add</param>
+		/// <returns>ComposablePart, this can be used to remove the export later</returns>
+		public ComposablePart Export<T>(string contractName, T obj)
 		{
 			if (!_initialized)
 			{
 				throw new InvalidOperationException("Bootstrapper is not initialized");
 			}
-			Container.ComposeExportedValue(contractName, obj);
+			var batch = new CompositionBatch();
+			var part = batch.AddExportedValue<T>(contractName, obj);
+			Container.Compose(batch);
+			return part;
+		}
+
+		/// <summary>
+		/// Release an export which was previously added with the Export method
+		/// </summary>
+		/// <param name="part">ComposablePart from Export call</param>
+		public void Release(ComposablePart part)
+		{
+			if (!_initialized)
+			{
+				throw new InvalidOperationException("Bootstrapper is not initialized");
+			}
+			CompositionBatch batch = new CompositionBatch();
+			batch.RemovePart(part);
+			Container.Compose(batch);
 		}
 
 		/// <summary>

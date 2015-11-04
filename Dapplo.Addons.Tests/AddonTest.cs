@@ -53,11 +53,18 @@ namespace Dapplo.Addons.Tests
 			// Initialize, so we can export
 			bootstrapper.Initialize();
 
-			// test Export
-			bootstrapper.Export(this);
-
 			// Start the composition
 			bootstrapper.Run();
+
+			// test Export
+			var part = bootstrapper.Export(this);
+
+			// test import
+			Assert.IsNotNull(bootstrapper.GetExport<AddonTest>().Value);
+
+			// test release
+			bootstrapper.Release(part);
+            Assert.IsFalse(bootstrapper.GetExports<AddonTest>().Count() > 0);
 
 			// Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
 			Assert.IsNotNull(bootstrapper.GetExport<IStartupAction>().Value);
