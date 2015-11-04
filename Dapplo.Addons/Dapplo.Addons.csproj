@@ -31,8 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Dapplo.Config, Version=0.1.116.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Config.0.1.116.0\lib\net45\Dapplo.Config.dll</HintPath>
+    <Reference Include="Dapplo.Config, Version=0.1.117.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapplo.Config.0.1.117.0\lib\net45\Dapplo.Config.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -46,12 +46,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExportProviders\IniConfigExportProvider.cs" />
+    <Compile Include="ExportProviders\LanguageExportProvider.cs" />
     <Compile Include="IAction.cs" />
     <Compile Include="IModule.cs" />
     <Compile Include="Implementation\ApplicationBootstrapper.cs" />
     <Compile Include="Implementation\CompositionBootstrapper.cs" />
     <Compile Include="Implementation\StartupShutdownBootstrapper.cs" />
     <Compile Include="Implementation\SimpleBootstrapper.cs" />
+    <Compile Include="IServiceLocator.cs" />
     <Compile Include="IShutdownAction.cs" />
     <Compile Include="IShutdownActionMetadata.cs" />
     <Compile Include="IStartupAction.cs" />

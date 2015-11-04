@@ -22,6 +22,8 @@
 using System;
 using Dapplo.Config.Ini;
 using Dapplo.Config.Language;
+using IniConfigExportProvider = Dapplo.Addons.ExportProviders.IniConfigExportProvider;
+using LanguageExportProvider = Dapplo.Addons.ExportProviders.LanguageExportProvider;
 
 namespace Dapplo.Addons.Implementation
 {
@@ -60,7 +62,7 @@ namespace Dapplo.Addons.Implementation
 					throw new InvalidOperationException("IniConfig already set.");
 				}
 				_iniConfig = value;
-				var exportProvider = new IniConfigExportProvider(_applicationName, value, AddonAssemblies, this);
+				var exportProvider = new IniConfigExportProvider(value, AddonAssemblies, this);
 				Add(exportProvider);
 			}
 		}
@@ -81,7 +83,7 @@ namespace Dapplo.Addons.Implementation
 					throw new InvalidOperationException("LanguageLoader already set.");
 				}
 				_languageLoader = value;
-				var exportProvider = new LanguageExportProvider(_applicationName, value, AddonAssemblies, this);
+				var exportProvider = new LanguageExportProvider(value, AddonAssemblies, this);
 				Add(exportProvider);
 			}
 		}
