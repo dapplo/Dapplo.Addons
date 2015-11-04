@@ -37,8 +37,8 @@ namespace Dapplo.Addons.Implementation
 	/// </summary>
 	public abstract class CompositionBootstrapper : IServiceLocator
 	{
-		protected bool _aggregateCatalogConfigured;
-		protected bool _initialized;
+		protected bool IsAggregateCatalogConfigured;
+		protected bool IsInitialized;
 
 		/// <summary>
 		/// The AggregateCatalog contains all the catalogs with the assemblies in it.
@@ -46,7 +46,7 @@ namespace Dapplo.Addons.Implementation
 		protected AggregateCatalog AggregateCatalog
 		{
 			get;
-			private set;
+			set;
 		} = new AggregateCatalog();
 
 		/// <summary>
@@ -55,7 +55,7 @@ namespace Dapplo.Addons.Implementation
 		protected CompositionContainer Container
 		{
 			get;
-			private set;
+			set;
 		}
 
 		/// <summary>
@@ -96,7 +96,7 @@ namespace Dapplo.Addons.Implementation
 		/// </summary>
 		protected virtual void ConfigureAggregateCatalog()
 		{
-			_aggregateCatalogConfigured = true;
+			IsAggregateCatalogConfigured = true;
         }
 
 		/// <summary>
@@ -108,7 +108,7 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>ComposablePart, this can be used to remove the export later</returns>
 		public ComposablePart Export<T>(T obj, IDictionary<string, object> metadata = null)
 		{
-			if (!_initialized)
+			if (!IsInitialized)
 			{
 				throw new InvalidOperationException("Bootstrapper is not initialized");
             }
@@ -126,14 +126,14 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>ComposablePart, this can be used to remove the export later</returns>
 		public ComposablePart Export<T>(string contractName, T obj, IDictionary<string, object> metadata = null)
 		{
-			if (!_initialized)
+			if (!IsInitialized)
 			{
 				throw new InvalidOperationException("Bootstrapper is not initialized");
 			}
 
 			if (obj == null)
 			{
-				throw new ArgumentNullException("obj");
+				throw new ArgumentNullException(nameof(obj));
 			}
 
 			string typeIdentity = AttributedModelServices.GetTypeIdentity(typeof(T));
@@ -148,7 +148,7 @@ namespace Dapplo.Addons.Implementation
 
 			// TODO: Maybe this could be simplified, but this was currently the only way to get the meta-data from all attributes
 			var partDefinition = AttributedModelServices.CreatePartDefinition(obj.GetType(), null);
-			if (partDefinition.ExportDefinitions.Count() > 0)
+			if (partDefinition != null && partDefinition.ExportDefinitions.Any())
 			{
 				var partMetadata = partDefinition.ExportDefinitions.First().Metadata;
                 foreach (var key in partMetadata.Keys)
@@ -190,7 +190,7 @@ namespace Dapplo.Addons.Implementation
 		/// <param name="part">ComposablePart from Export call</param>
 		public void Release(ComposablePart part)
 		{
-			if (!_initialized)
+			if (!IsInitialized)
 			{
 				throw new InvalidOperationException("Bootstrapper is not initialized");
 			}
@@ -286,7 +286,7 @@ namespace Dapplo.Addons.Implementation
 		/// <param name="importingObject">object to fill the imports for</param>
 		public void FillImports(object importingObject)
 		{
-			if (!_initialized)
+			if (!IsInitialized)
 			{
 				throw new InvalidOperationException("Bootstrapper is not initialized");
 			}
@@ -339,7 +339,7 @@ namespace Dapplo.Addons.Implementation
 		/// </summary>
 		public virtual void Initialize()
 		{
-			_initialized = true;
+			IsInitialized = true;
 			ConfigureAggregateCatalog();
 			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags, ExportProviders.ToArray());
 			// Make sure we export ourselves as the IServiceLocator
@@ -351,7 +351,7 @@ namespace Dapplo.Addons.Implementation
 		/// </summary>
 		public virtual void Run()
 		{
-			if (!_initialized)
+			if (!IsInitialized)
 			{
 				Initialize();
             }

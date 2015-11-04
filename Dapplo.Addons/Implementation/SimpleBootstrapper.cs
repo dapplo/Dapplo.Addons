@@ -87,7 +87,7 @@ namespace Dapplo.Addons.Implementation
 		/// </summary>
 		protected override void ConfigureAggregateCatalog()
 		{
-			if (_aggregateCatalogConfigured)
+			if (IsAggregateCatalogConfigured)
 			{
 				return;
 			}
