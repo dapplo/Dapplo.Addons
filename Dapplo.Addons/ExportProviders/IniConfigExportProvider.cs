@@ -47,7 +47,6 @@ namespace Dapplo.Addons.ExportProviders
 		/// <param name="iniConfig">IniConfig needed for the registering, can be null for the current</param>
 		/// <param name="assemblies">List of assemblies used for finding the type</param>
 		/// <param name="serviceLocator"></param>
-		/// 
 		public IniConfigExportProvider(IniConfig iniConfig, IList<Assembly> assemblies, IServiceLocator serviceLocator)
 		{
 			_iniConfig = iniConfig ?? IniConfig.Current;

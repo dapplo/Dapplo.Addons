@@ -38,7 +38,7 @@ namespace Dapplo.Addons.Tests
 			var bootstrapper = new ApplicationBootstrapper(ApplicationName);
 
 			var iniConfig = new IniConfig(ApplicationName, "test");
-			bootstrapper.IniConfig = iniConfig;
+			bootstrapper.IniConfigForExport = iniConfig;
 
 			bootstrapper.Add(".", "Dapplo.*.dll");
 			// Add test project, without having a direct reference
@@ -64,7 +64,7 @@ namespace Dapplo.Addons.Tests
 
 			// test release
 			bootstrapper.Release(part);
-            Assert.IsFalse(bootstrapper.GetExports<AddonTest>().Count() > 0);
+            Assert.IsFalse(bootstrapper.GetExports<AddonTest>().Any());
 
 			// Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
 			Assert.IsNotNull(bootstrapper.GetExport<IStartupAction>().Value);

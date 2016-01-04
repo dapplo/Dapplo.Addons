@@ -37,6 +37,19 @@ namespace Dapplo.Addons.Implementation
 		private LanguageLoader _languageLoader;
 		private IniConfig _iniConfig;
 
+		public override void Initialize()
+		{
+			base.Initialize();
+			if (IniConfigForExport == null)
+			{
+				IniConfigForExport = IniConfig.Current;
+			}
+			if (LanguageLoaderForExport == null)
+			{
+				LanguageLoaderForExport = LanguageLoader.Current;
+			}
+		}
+
 		/// <summary>
 		/// Create the application bootstrapper, for the specified application name
 		/// </summary>
@@ -49,7 +62,7 @@ namespace Dapplo.Addons.Implementation
 		/// <summary>
 		/// Use this to set the IniConfig which is used to resolv IIniSection imports
 		/// </summary>
-		public IniConfig IniConfig
+		public IniConfig IniConfigForExport
 		{
 			get
 			{
@@ -70,7 +83,7 @@ namespace Dapplo.Addons.Implementation
 		/// <summary>
 		/// Use this to set the LanguageLoader which is used resolv ILanguage imports
 		/// </summary>
-		public LanguageLoader LanguageLoader
+		public LanguageLoader LanguageLoaderForExport
 		{
 			get
 			{

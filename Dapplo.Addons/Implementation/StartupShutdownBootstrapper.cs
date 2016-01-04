@@ -90,7 +90,7 @@ namespace Dapplo.Addons.Implementation
 				}
 			}
 			// Await all remaining tasks
-			if (tasks.Count > 0)
+			if (tasks.Any())
 			{
 				await Task.WhenAll(tasks);
 			}

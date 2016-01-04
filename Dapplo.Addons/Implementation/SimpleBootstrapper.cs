@@ -52,7 +52,6 @@ namespace Dapplo.Addons.Implementation
 
             foreach (var directory in addonDirectories)
 			{
-
 				var assemblyFile = Path.Combine(directory, GetAssemblyName(resolveEventArgs) + ".dll");
 				if (!File.Exists(assemblyFile))
 				{
@@ -70,10 +69,11 @@ namespace Dapplo.Addons.Implementation
 		/// <returns></returns>
 		private string GetAssemblyName(ResolveEventArgs args)
 		{
-			String name;
-			if (args.Name.IndexOf(",") > -1)
+			string name;
+			var indexOf = args.Name.IndexOf(",", StringComparison.Ordinal);
+			if (indexOf > -1)
 			{
-				name = args.Name.Substring(0, args.Name.IndexOf(","));
+				name = args.Name.Substring(0, indexOf);
 			}
 			else
 			{

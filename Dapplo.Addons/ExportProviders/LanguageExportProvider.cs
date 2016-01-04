@@ -42,7 +42,7 @@ namespace Dapplo.Addons.ExportProviders
 		private readonly Type _languageType = typeof(ILanguage);
 
 		/// <summary>
-		/// Create a IniConfigExportProvider which is for the specified applicatio, iniconfig and works with the supplied assemblies
+		/// Create a LanguageExportProvider which is for the specified languageloader and works with the supplied assemblies
 		/// </summary>
 		/// <param name="languageLoader">LanguageLoader needed for the registering, can be null for the current</param>
 		/// <param name="assemblies">List of assemblies used for finding the type</param>

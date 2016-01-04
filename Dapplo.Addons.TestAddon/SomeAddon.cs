@@ -33,7 +33,7 @@ namespace Dapplo.Addons.TestAddon
 	[ShutdownAction]
 	public class SomeAddon : IStartupAction, IShutdownAction
 	{
-		private static readonly Logger LOG = LogManager.GetCurrentClassLogger();
+		private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
 		[Import]
 		public IThisIsConfiguration MyConfig
@@ -51,7 +51,7 @@ namespace Dapplo.Addons.TestAddon
 
 		public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
 		{
-			await Task.Delay(100);
+			await Task.Delay(100, token);
 			Debug.WriteLine("ShutdownAsync called!");
 		}
 
@@ -62,8 +62,8 @@ namespace Dapplo.Addons.TestAddon
 				var name = iniSection.GetSectionName();
                 Debug.WriteLine(name);
 			}
-			LOG.Debug("This shoud not give an exception!");
-			await Task.Delay(100);
+			Log.Debug("This shoud not give an exception!");
+			await Task.Delay(100, token);
             Debug.WriteLine("StartAsync called!");
 			Debug.WriteLine($"Value: {MyConfig.Name}");
 		}
