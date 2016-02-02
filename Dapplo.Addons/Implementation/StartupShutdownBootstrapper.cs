@@ -1,22 +1,24 @@
 ﻿/*
- * dapplo - building blocks for desktop applications
- * Copyright (C) Dapplo 2015-2016
- * 
- * For more information see: http://dapplo.net/
- * dapplo repositories are hosted on GitHub: https://github.com/dapplo
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 1 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+	Dapplo - building blocks for desktop applications
+	Copyright (C) 2015-2016 Dapplo
+
+	For more information see: http://dapplo.net/
+	Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+
+	This file is part of Dapplo.Addons
+
+	Dapplo.Addons is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	Dapplo.Addons is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System.Threading;
@@ -25,6 +27,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System;
 using System.ComponentModel.Composition;
+using Dapplo.LogFacade;
 
 namespace Dapplo.Addons.Implementation
 {
@@ -33,6 +36,8 @@ namespace Dapplo.Addons.Implementation
 	/// </summary>
 	public class StartupShutdownBootstrapper : SimpleBootstrapper
 	{
+		private static readonly LogSource Log = new LogSource();
+
 		[ImportMany]
 		// ReSharper disable once FieldCanBeMadeReadOnly.Local
 		private IEnumerable<Lazy<IStartupAction, IStartupActionMetadata>> _startupActions = null;
@@ -69,6 +74,8 @@ namespace Dapplo.Addons.Implementation
 						// Clean the tasks, we are finished.
 						tasks.Clear();
 					}
+					Log.Debug().WriteLine("Starting {0}", startupAction.Value.GetType());
+
 					// Create a task (it will start running, but we don't await it yet)
 					var task = startupAction.Value.StartAsync(token);
 					// add the task to an await list, but only if needed!
@@ -77,15 +84,15 @@ namespace Dapplo.Addons.Implementation
 						tasks.Add(task);
 					}
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
 					if (startupAction.IsValueCreated)
 					{
-						//LOG.Error(ex, "Exception executing startupAction {0}: ", startupAction.Value.GetType());
+						Log.Error().WriteLine(ex, "Exception executing startupAction {0}: ", startupAction.Value.GetType());
 					}
 					else
 					{
-						//LOG.Error(ex, "Exception instantiating startupAction: ");
+						Log.Error().WriteLine(ex, "Exception instantiating startupAction {0}: ", startupAction.Value.GetType());
 					}
 				}
 			}
@@ -123,18 +130,19 @@ namespace Dapplo.Addons.Implementation
 						// Clean the tasks, we are finished.
 						tasks.Clear();
 					}
+					Log.Debug().WriteLine("Stopping {0}", shutdownAction.Value.GetType());
 					// Create a task (it will start running, but we don't await it yet)
 					tasks.Add(shutdownAction.Value.ShutdownAsync(token));
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
 					if (shutdownAction.IsValueCreated)
 					{
-						//LOG.Error(ex, "Exception executing startupAction {0}: ", shutdownAction.Value.GetType());
+						Log.Error().WriteLine(ex, "Exception executing shutdownAction {0}: ", shutdownAction.Value.GetType());
 					}
 					else
 					{
-						//LOG.Error(ex, "Exception instantiating startupAction: ");
+						Log.Error().WriteLine(ex, "Exception instantiating shutdownAction {0}: ", shutdownAction.Value.GetType());
 					}
 				}
 			}

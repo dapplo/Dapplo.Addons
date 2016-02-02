@@ -1,22 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
-        <id>Dapplo.Addons</id>
+        <id>$id$</id>
         <version>$version$</version>
-        <title>Dapplo.Addons</title>
-        <authors>Robin Krom</authors>
-        <owners>dapplo</owners>
+        <authors>$author$</authors>
         <licenseUrl>https://en.wikipedia.org/wiki/GNU_General_Public_License</licenseUrl>
         <projectUrl>http://www.dapplo.net/blocks/Dapplo.Addons.html</projectUrl>
         <iconUrl>http://www.dapplo.net/favicon.ico</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Dapplo.Addons takes care of bootstrapping with MEF</description>
-		<summary>A library with code to use Addons in your application.</summary>
+		<summary>A library with code to use addons in your application.</summary>
         <language>en-us</language>
 		<copyright>Dapplo</copyright>
 		<tags>MEF bootstrap</tags>
 		<dependencies>
-			<dependency id="Dapplo.Config" version="0.1.121" />
+			<dependency id="Dapplo.Config" version="0.1.125" />
 		</dependencies>
 		<frameworkAssemblies>
 			<frameworkAssembly assemblyName="System.ComponentModel.Composition" targetFramework="net45" />

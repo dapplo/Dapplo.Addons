@@ -1,22 +1,24 @@
 ﻿/*
- * dapplo - building blocks for desktop applications
- * Copyright (C) Dapplo 2015-2016
- * 
- * For more information see: http://dapplo.net/
- * dapplo repositories are hosted on GitHub: https://github.com/dapplo
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 1 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+	Dapplo - building blocks for desktop applications
+	Copyright (C) 2015-2016 Dapplo
+
+	For more information see: http://dapplo.net/
+	Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+
+	This file is part of Dapplo.Addons
+
+	Dapplo.Addons is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	Dapplo.Addons is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
@@ -27,6 +29,7 @@ using System.ComponentModel.Composition.Primitives;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Dapplo.LogFacade;
 
 namespace Dapplo.Addons.Implementation
 {
@@ -36,6 +39,7 @@ namespace Dapplo.Addons.Implementation
 	/// </summary>
 	public abstract class CompositionBootstrapper : IServiceLocator
 	{
+		private static readonly LogSource Log = new LogSource();
 		protected bool IsAggregateCatalogConfigured;
 		protected bool IsInitialized;
 
@@ -95,6 +99,7 @@ namespace Dapplo.Addons.Implementation
 		/// </summary>
 		protected virtual void ConfigureAggregateCatalog()
 		{
+			Log.Debug().WriteLine("Configuring");
 			IsAggregateCatalogConfigured = true;
         }
 
@@ -111,7 +116,7 @@ namespace Dapplo.Addons.Implementation
 			{
 				throw new InvalidOperationException("Bootstrapper is not initialized");
             }
-			string contractName = AttributedModelServices.GetContractName(typeof(T));
+			var contractName = AttributedModelServices.GetContractName(typeof(T));
 			return Export(contractName, obj);
 		}
 
@@ -133,6 +138,11 @@ namespace Dapplo.Addons.Implementation
 			if (obj == null)
 			{
 				throw new ArgumentNullException(nameof(obj));
+			}
+
+			if (Log.IsDebugEnabled())
+			{
+				Log.Debug().WriteLine("Exporting {0}", contractName);
 			}
 
 			string typeIdentity = AttributedModelServices.GetTypeIdentity(typeof(T));
@@ -193,7 +203,14 @@ namespace Dapplo.Addons.Implementation
 			{
 				throw new InvalidOperationException("Bootstrapper is not initialized");
 			}
-			CompositionBatch batch = new CompositionBatch();
+
+			if (Log.IsDebugEnabled())
+			{
+				var contracts = part.ExportDefinitions.Select(x => x.ContractName);
+				Log.Debug().WriteLine("Releasing {0}", string.Join(",", contracts));
+			}
+
+			var batch = new CompositionBatch();
 			batch.RemovePart(part);
 			Container.Compose(batch);
 		}
@@ -227,8 +244,10 @@ namespace Dapplo.Addons.Implementation
 			if (assemblyCatalog.Parts.ToList().Count > 0)
 			{
 				AggregateCatalog.Catalogs.Add(assemblyCatalog);
+				Log.Debug().WriteLine("Adding file {0}", assemblyCatalog.Assembly.Location);
 				AddonFiles.Add(assemblyCatalog.Assembly.Location);
 			}
+			Log.Debug().WriteLine("Adding assembly {0}", assemblyCatalog.Assembly.FullName);
 			// Always add the assembly, even if there are no parts, so we can resolve certain "non" parts in ExportProviders.
 			AddonAssemblies.Add(assemblyCatalog.Assembly);
 		}
@@ -244,6 +263,7 @@ namespace Dapplo.Addons.Implementation
 			{
 				throw new ArgumentException("Directory doesn't exist: " + directory);
 			}
+			Log.Debug().WriteLine("Scanning directory {0} with pattern {1}", directory, pattern);
 			var files = Directory.EnumerateFiles(directory, pattern, SearchOption.AllDirectories);
 
 			foreach (var file in files)
@@ -276,6 +296,7 @@ namespace Dapplo.Addons.Implementation
 		/// <param name="exportProvider">ExportProvider</param>
 		public void Add(ExportProvider exportProvider)
 		{
+			Log.Debug().WriteLine("Adding ExportProvider");
 			ExportProviders.Add(exportProvider);
 		}
 
@@ -289,6 +310,10 @@ namespace Dapplo.Addons.Implementation
 			{
 				throw new InvalidOperationException("Bootstrapper is not initialized");
 			}
+			if (Log.IsDebugEnabled())
+			{
+				Log.Debug().WriteLine("Filling imports of {0}", importingObject.GetType());
+			}
 			Container.SatisfyImportsOnce(importingObject);
         }
 
@@ -299,6 +324,10 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>Lazy T</returns>
 		public Lazy<T> GetExport<T>()
 		{
+			if (Log.IsDebugEnabled())
+			{
+				Log.Debug().WriteLine("Getting export for {0}", typeof(T));
+			}
 			return Container.GetExport<T>();
 		}
 
@@ -310,6 +339,10 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>Lazy T,TMetaData</returns>
 		public Lazy<T, TMetaData> GetExport<T, TMetaData>()
 		{
+			if (Log.IsDebugEnabled())
+			{
+				Log.Debug().WriteLine("Getting export for {0}", typeof(T));
+			}
 			return Container.GetExport<T, TMetaData>();
 		}
 
@@ -320,6 +353,10 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>IEnumerable of Lazy T</returns>
 		public IEnumerable<Lazy<T>> GetExports<T>()
 		{
+			if (Log.IsDebugEnabled())
+			{
+				Log.Debug().WriteLine("Getting exports for {0}", typeof(T));
+			}
 			return Container.GetExports<T>();
 		}
 
@@ -331,13 +368,19 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>IEnumerable of Lazy T,TMetaData</returns>
 		public IEnumerable<Lazy<T, TMetaData>> GetExports<T, TMetaData>()
 		{
+			if (Log.IsDebugEnabled())
+			{
+				Log.Debug().WriteLine("Getting export for {0}", typeof(T));
+			}
 			return Container.GetExports<T, TMetaData>();
 		}
+
 		/// <summary>
 		/// Initialize the bootstrapper
 		/// </summary>
 		public virtual void Initialize()
 		{
+			Log.Debug().WriteLine("Starting initialize");
 			IsInitialized = true;
 			ConfigureAggregateCatalog();
 			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags, ExportProviders.ToArray());
@@ -350,6 +393,7 @@ namespace Dapplo.Addons.Implementation
 		/// </summary>
 		public virtual void Run()
 		{
+			Log.Debug().WriteLine("Starting");
 			if (!IsInitialized)
 			{
 				Initialize();

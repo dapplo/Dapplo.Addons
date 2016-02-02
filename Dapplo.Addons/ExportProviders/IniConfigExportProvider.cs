@@ -1,22 +1,24 @@
 ﻿/*
- * dapplo - building blocks for desktop applications
- * Copyright (C) Dapplo 2015-2016
- * 
- * For more information see: http://dapplo.net/
- * dapplo repositories are hosted on GitHub: https://github.com/dapplo
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 1 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+	Dapplo - building blocks for desktop applications
+	Copyright (C) 2015-2016 Dapplo
+
+	For more information see: http://dapplo.net/
+	Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+
+	This file is part of Dapplo.Addons
+
+	Dapplo.Addons is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	Dapplo.Addons is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/>.
  */
 
 using System;
@@ -26,6 +28,7 @@ using System.ComponentModel.Composition.Hosting;
 using System.ComponentModel.Composition.Primitives;
 using System.Reflection;
 using Dapplo.Config.Ini;
+using Dapplo.LogFacade;
 
 namespace Dapplo.Addons.ExportProviders
 {
@@ -35,6 +38,7 @@ namespace Dapplo.Addons.ExportProviders
 	/// </summary>
 	public class IniConfigExportProvider : ExportProvider
 	{
+		private static readonly LogSource Log = new LogSource();
 		private readonly IniConfig _iniConfig;
 		private readonly IList<Assembly> _assemblies;
 		private readonly IDictionary<string, Export> _loopup = new Dictionary<string, Export>();
@@ -78,6 +82,9 @@ namespace Dapplo.Addons.ExportProviders
 				{
 					// Make an AssemblyQualifiedName from the contract name
 					var assemblyQualifiedName = $"{definition.ContractName}, {assembly.FullName}";
+
+					Log.Verbose().WriteLine("Checking {0}", assemblyQualifiedName);
+
 					// Try to get it, don't throw an exception if not found
 					Type contractType;
 					try
