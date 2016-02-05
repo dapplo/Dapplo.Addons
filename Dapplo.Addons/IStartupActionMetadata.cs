@@ -30,12 +30,18 @@ namespace Dapplo.Addons
 	/// </summary>
 	public interface IStartupActionMetadata
 	{
+		/// <summary>
+		/// Order in which IStartupAction.StartAsync is called
+		/// </summary>
 		[DefaultValue(1)]
 		int StartupOrder
 		{
 			get;
 		}
 
+		/// <summary>
+		/// Specify that the StartAsync is not awaited, this is not adviced as exceptions will not be noticed!
+		/// </summary>
 		[DefaultValue(false)]
 		bool DoNotAwait
 		{

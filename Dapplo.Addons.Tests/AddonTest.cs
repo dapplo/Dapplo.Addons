@@ -39,55 +39,61 @@ namespace Dapplo.Addons.Tests
 		[TestInitialize]
 		public void Initialize()
 		{
-			LogSettings.Logger = new TraceLogger {Level = LogLevel.Verbose};
+			LogSettings.Logger = new TraceLogger { Level = LogLevel.Verbose };
 		}
 
 		[TestMethod]
 		public async Task TestStartupShutdown()
 		{
-			var bootstrapper = new ApplicationBootstrapper(ApplicationName);
+			using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
+			{
 
-			var iniConfig = new IniConfig(ApplicationName, "test");
-			bootstrapper.IniConfigForExport = iniConfig;
+				var iniConfig = new IniConfig(ApplicationName, "test");
 
-			bootstrapper.Add(".", "Dapplo.*.dll");
-			// Add test project, without having a direct reference
+				// Only do this if there al multiple configs, as the IniConfig.Current is requested
+				// bootstrapper.IniConfigForExport = iniConfig;
+
+				bootstrapper.Add(".", "Dapplo.*.dll");
+				// Add test project, without having a direct reference
 #if DEBUG
-			bootstrapper.Add(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug", "Dapplo.*.dll");
+				bootstrapper.Add(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug", "Dapplo.*.dll");
 #else
-			bootstrapper.Add(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release", "Dapplo.*.dll");
+				bootstrapper.Add(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release", "Dapplo.*.dll");
 #endif
-			// Test if our test addon was loaded
-			Assert.IsTrue(bootstrapper.AddonFiles.Count(addon => addon.EndsWith("TestAddon.dll")) > 0);
+				// Test if our test addon was loaded
+				Assert.IsTrue(bootstrapper.AddonFiles.Count(addon => addon.EndsWith("TestAddon.dll")) > 0);
 
-			// Initialize, so we can export
-			bootstrapper.Initialize();
+				// Initialize, so we can export
+				if (!await bootstrapper.InitializeAsync())
+				{
+					Assert.Fail("Not initialized");
+				}
 
-			// Start the composition
-			bootstrapper.Run();
+				// test Export, this should work before Run as some of the addons might need some stuff.
 
-			// test Export
-			var part = bootstrapper.Export(this);
+				var part = bootstrapper.Export(this);
 
-			// test import
-			Assert.IsNotNull(bootstrapper.GetExport<AddonTest>().Value);
+				// Start the composition, and IStartupActions
+				if (!await bootstrapper.RunAsync())
+				{
+					Assert.Fail("Couldn't run");
+				}
 
-			// test release
-			bootstrapper.Release(part);
-            Assert.IsFalse(bootstrapper.GetExports<AddonTest>().Any());
+				// test import
+				Assert.IsNotNull(bootstrapper.GetExport<AddonTest>().Value);
 
-			// Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
-			Assert.IsNotNull(bootstrapper.GetExport<IStartupAction>().Value);
+				// test release
+				bootstrapper.Release(part);
+				Assert.IsFalse(bootstrapper.GetExports<AddonTest>().Any());
 
-			// Test localization of a IStartupAction with meta-data, which is exported via [StartupAction(DoNotAwait = true)]
-			var lazy = bootstrapper.GetExport<IStartupAction, IStartupActionMetadata>();
-            Assert.IsFalse(lazy.Metadata.DoNotAwait);
+				// Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
+				Assert.IsNotNull(bootstrapper.GetExport<IStartupAction>().Value);
 
-			// Test startup
-			await bootstrapper.StartupAsync();
-
-			// Test shutdown
-			await bootstrapper.ShutdownAsync();
+				// Test localization of a IStartupAction with meta-data, which is exported via [StartupAction(DoNotAwait = true)]
+				var lazy = bootstrapper.GetExport<IStartupAction, IStartupActionMetadata>();
+				Assert.IsFalse(lazy.Metadata.DoNotAwait);
+			}
+			// Dispose automatically calls IShutdownActions
 		}
 	}
 }

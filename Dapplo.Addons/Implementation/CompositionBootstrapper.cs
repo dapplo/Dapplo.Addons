@@ -30,6 +30,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Dapplo.LogFacade;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace Dapplo.Addons.Implementation
 {
@@ -37,11 +39,12 @@ namespace Dapplo.Addons.Implementation
 	/// A bootstrapper for making it possible to load Addons to Dapplo applications.
 	/// This uses MEF for loading and managing the Addons.
 	/// </summary>
-	public abstract class CompositionBootstrapper : IServiceLocator
+	public abstract class CompositionBootstrapper : IBootstrapper
 	{
 		private static readonly LogSource Log = new LogSource();
 		protected bool IsAggregateCatalogConfigured;
 		protected bool IsInitialized;
+		private TaskScheduler _taskScheduler;
 
 		/// <summary>
 		/// The AggregateCatalog contains all the catalogs with the assemblies in it.
@@ -99,7 +102,7 @@ namespace Dapplo.Addons.Implementation
 		/// </summary>
 		protected virtual void ConfigureAggregateCatalog()
 		{
-			Log.Debug().WriteLine("Configuring");
+			Log.Verbose().WriteLine("Configuring");
 			IsAggregateCatalogConfigured = true;
         }
 
@@ -296,7 +299,7 @@ namespace Dapplo.Addons.Implementation
 		/// <param name="exportProvider">ExportProvider</param>
 		public void Add(ExportProvider exportProvider)
 		{
-			Log.Debug().WriteLine("Adding ExportProvider");
+			Log.Verbose().WriteLine("Adding ExportProvider");
 			ExportProviders.Add(exportProvider);
 		}
 
@@ -324,9 +327,9 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>Lazy T</returns>
 		public Lazy<T> GetExport<T>()
 		{
-			if (Log.IsDebugEnabled())
+			if (Log.IsVerboseEnabled())
 			{
-				Log.Debug().WriteLine("Getting export for {0}", typeof(T));
+				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
 			}
 			return Container.GetExport<T>();
 		}
@@ -339,9 +342,9 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>Lazy T,TMetaData</returns>
 		public Lazy<T, TMetaData> GetExport<T, TMetaData>()
 		{
-			if (Log.IsDebugEnabled())
+			if (Log.IsVerboseEnabled())
 			{
-				Log.Debug().WriteLine("Getting export for {0}", typeof(T));
+				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
 			}
 			return Container.GetExport<T, TMetaData>();
 		}
@@ -353,9 +356,9 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>IEnumerable of Lazy T</returns>
 		public IEnumerable<Lazy<T>> GetExports<T>()
 		{
-			if (Log.IsDebugEnabled())
+			if (Log.IsVerboseEnabled())
 			{
-				Log.Debug().WriteLine("Getting exports for {0}", typeof(T));
+				Log.Verbose().WriteLine("Getting exports for {0}", typeof(T));
 			}
 			return Container.GetExports<T>();
 		}
@@ -368,9 +371,9 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>IEnumerable of Lazy T,TMetaData</returns>
 		public IEnumerable<Lazy<T, TMetaData>> GetExports<T, TMetaData>()
 		{
-			if (Log.IsDebugEnabled())
+			if (Log.IsVerboseEnabled())
 			{
-				Log.Debug().WriteLine("Getting export for {0}", typeof(T));
+				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
 			}
 			return Container.GetExports<T, TMetaData>();
 		}
@@ -378,27 +381,77 @@ namespace Dapplo.Addons.Implementation
 		/// <summary>
 		/// Initialize the bootstrapper
 		/// </summary>
-		public virtual void Initialize()
+		public virtual Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			Log.Debug().WriteLine("Starting initialize");
+			Log.Debug().WriteLine("Initializing");
 			IsInitialized = true;
 			ConfigureAggregateCatalog();
 			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags, ExportProviders.ToArray());
 			// Make sure we export ourselves as the IServiceLocator
 			Export<IServiceLocator>(this);
+			return Task.FromResult(IsInitialized);
 		}
 
 		/// <summary>
 		/// Start the bootstrapper, initialize if needed
 		/// </summary>
-		public virtual void Run()
+		public virtual async Task<bool> RunAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			Log.Debug().WriteLine("Starting");
 			if (!IsInitialized)
 			{
-				Initialize();
+				await InitializeAsync(cancellationToken);
             }
+			if (!IsInitialized)
+			{
+				throw new NotSupportedException("Can't run if IsInitialized is false!");
+			}
 			Container.ComposeParts();
+			return IsInitialized;
 		}
+
+		/// <summary>
+		/// Stop the bootstrapper
+		/// </summary>
+		public virtual Task<bool> StopAsync(CancellationToken cancellationToken = default(CancellationToken))
+		{
+			if (IsInitialized)
+			{
+				Log.Debug().WriteLine("Stopped");
+				IsInitialized = false;
+			}
+			return Task.FromResult(!IsInitialized);
+		}
+
+		#region IDisposable Support
+		// To detect redundant calls
+		private bool _disposedValue = false;
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!_disposedValue)
+			{
+				if (disposing)
+				{
+					Log.Debug().WriteLine("Disposing...");
+					// dispose managed state (managed objects) here.
+					StopAsync().Wait();
+				}
+				// Dispose unmanaged objects here
+				// DO NOT CALL any managed objects here, outside of the disposing = true, as this is also used when a distructor is called
+
+				_disposedValue = true;
+			}
+		}
+
+		/// <summary>
+		/// Implement IDisposable
+		/// </summary>
+		public void Dispose()
+		{
+			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+			Dispose(true);
+		}
+		#endregion
 	}
 }

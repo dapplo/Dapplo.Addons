@@ -31,6 +31,7 @@ namespace Dapplo.Addons.Implementation
 {
 	/// <summary>
 	/// A simple bootstrapper, takes the executing assembly and adds it
+	/// It also takes care of resolving events, so DLL's in the same directory as the Addon will be found
 	/// </summary>
 	public class SimpleBootstrapper : CompositionBootstrapper
 	{
@@ -52,7 +53,7 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>Assembly</returns>
 		protected Assembly AddonResolveEventHandler(object sender, ResolveEventArgs resolveEventArgs)
 		{
-			Log.Debug().WriteLine("Resolving name: {0}", resolveEventArgs.Name);
+			Log.Verbose().WriteLine("Resolving name: {0}", resolveEventArgs.Name);
 
 			var addonDirectories = (from addonFile in AddonFiles
 								   select Path.GetDirectoryName(addonFile)).Distinct();

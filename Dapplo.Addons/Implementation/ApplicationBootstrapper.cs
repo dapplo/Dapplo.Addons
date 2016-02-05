@@ -26,43 +26,70 @@ using Dapplo.Config.Ini;
 using Dapplo.Config.Language;
 using IniConfigExportProvider = Dapplo.Addons.ExportProviders.IniConfigExportProvider;
 using LanguageExportProvider = Dapplo.Addons.ExportProviders.LanguageExportProvider;
+using Dapplo.LogFacade;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace Dapplo.Addons.Implementation
 {
 	/// <summary>
-	/// This bootstrapper is made especially for Dapplo
+	/// This bootstrapper is made especially to host dapplo "apps".
 	/// It initializes the IniConfig and LanguageLoader, and makes Importing possible.
+	/// You can protect your application from starting multiple instances by specifying a Mutex-ID
 	/// </summary>
-	public class ApplicationBootstrapper : StartupShutdownBootstrapper
+	public class ApplicationBootstrapper : StartupShutdownBootstrapper, IDisposable
 	{
+		private static readonly LogSource Log = new LogSource();
 		private readonly string _applicationName;
 		private LanguageLoader _languageLoader;
 		private IniConfig _iniConfig;
+		private readonly ResourceMutex _resourceMutex;
 
-		public override void Initialize()
+		/// <summary>
+		/// Initialize the application bootstrapper
+		/// </summary>
+		/// <returns></returns>
+		public override async Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			base.Initialize();
-			if (IniConfigForExport == null)
+			Log.Verbose().WriteLine("Trying to initialize {0}", _applicationName);
+			// Only allow if the resource is locked by us, or if no lock is needed
+			if (_resourceMutex == null || _resourceMutex.IsLocked)
 			{
-				IniConfigForExport = IniConfig.Current;
+				if (IniConfigForExport == null)
+				{
+					IniConfigForExport = IniConfig.Current;
+				}
+				if (LanguageLoaderForExport == null)
+				{
+					LanguageLoaderForExport = LanguageLoader.Current;
+				}
+
+				await base.InitializeAsync(cancellationToken);
 			}
-			if (LanguageLoaderForExport == null)
+			else
 			{
-				LanguageLoaderForExport = LanguageLoader.Current;
+				Log.Error().WriteLine("Can't initialize {0} due to missing mutex lock", _applicationName);
 			}
+			return IsInitialized;
 		}
 
 		/// <summary>
 		/// Create the application bootstrapper, for the specified application name
 		/// </summary>
-		/// <param name="applicationName"></param>
-		public ApplicationBootstrapper(string applicationName)
+		/// <param name="applicationName">Name of your application</param>
+		/// <param name="mutexId">string with an ID for your mutex, preferably a Guid. If the mutex can't be locked, the bootstapper will not "bootstrap".</param>
+		/// <param name="global">Is the mutex a global or local block (false means only in this Windows session)</param>
+		public ApplicationBootstrapper(string applicationName, string mutexId = null, bool global = false)
 		{
 			_applicationName = applicationName;
+			if (mutexId != null)
+			{
+				_resourceMutex = ResourceMutex.Create(mutexId, applicationName, global);
+			}
 		}
 
 		/// <summary>
-		/// Use this to set the IniConfig which is used to resolv IIniSection imports
+		/// Use this to set the IniConfig which is used to resolve IIniSection imports
 		/// </summary>
 		public IniConfig IniConfigForExport
 		{
@@ -83,7 +110,7 @@ namespace Dapplo.Addons.Implementation
 		}
 
 		/// <summary>
-		/// Use this to set the LanguageLoader which is used resolv ILanguage imports
+		/// Use this to set the LanguageLoader which is used resolve ILanguage imports
 		/// </summary>
 		public LanguageLoader LanguageLoaderForExport
 		{
@@ -102,5 +129,24 @@ namespace Dapplo.Addons.Implementation
 				Add(exportProvider);
 			}
 		}
+
+		#region IDisposable Support
+		// To detect redundant calls
+		private bool _disposedValue = false; 
+
+		protected override void Dispose(bool disposing)
+		{
+			if (!_disposedValue)
+			{
+				if (disposing)
+				{
+					// dispose managed state (managed objects) here.
+				}
+
+				_resourceMutex?.Dispose();
+			}
+			base.Dispose(disposing);
+		}
+		#endregion
 	}
 }

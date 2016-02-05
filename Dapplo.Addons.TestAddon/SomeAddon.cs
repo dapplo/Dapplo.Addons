@@ -21,13 +21,12 @@
 	along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Dapplo.Config.Ini;
+using Dapplo.LogFacade;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using NLog;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Dapplo.Config.Ini;
 
 namespace Dapplo.Addons.TestAddon
 {
@@ -35,7 +34,7 @@ namespace Dapplo.Addons.TestAddon
 	[ShutdownAction]
 	public class SomeAddon : IStartupAction, IShutdownAction
 	{
-		private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+		private static readonly LogSource Log = new LogSource();
 
 		[Import]
 		public IThisIsConfiguration MyConfig
@@ -54,7 +53,8 @@ namespace Dapplo.Addons.TestAddon
 		public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
 		{
 			await Task.Delay(100, token);
-			Debug.WriteLine("ShutdownAsync called!");
+			Log.Debug().WriteLine("ShutdownAsync called!");
+			throw new System.Exception("This should be logged!");
 		}
 
 		public async Task StartAsync(CancellationToken token = new CancellationToken())
@@ -62,12 +62,12 @@ namespace Dapplo.Addons.TestAddon
 			foreach (var iniSection in MyConfigs)
 			{
 				var name = iniSection.GetSectionName();
-                Debug.WriteLine(name);
+				Log.Debug().WriteLine("Section {0}", name);
 			}
-			Log.Debug("This shoud not give an exception!");
+			Log.Debug().WriteLine("This shoud not give an exception!");
 			await Task.Delay(100, token);
-            Debug.WriteLine("StartAsync called!");
-			Debug.WriteLine($"Value: {MyConfig.Name}");
+			Log.Debug().WriteLine("StartAsync called!");
+			Log.Debug().WriteLine("Value: {0}", MyConfig.Name);
 		}
 	}
 }

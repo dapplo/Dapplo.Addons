@@ -21,22 +21,31 @@
 	along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System.ComponentModel;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Dapplo.Addons
 {
 	/// <summary>
-	/// Meta-data belonging to the ShutdownActionAttribute, which makes it possible to specify type-safe meta-data.
+	/// This is the interface for all bootstrappers
 	/// </summary>
-	public interface IShutdownActionMetadata
+	public interface IBootstrapper : IServiceLocator, IDisposable
 	{
 		/// <summary>
-		/// Order in which IShutdownAction.ShutdownAsync is called
+		/// Initialize the bootstrapper
 		/// </summary>
-		[DefaultValue(1)]
-		int ShutdownOrder
-		{
-			get;
-		}
+		Task<bool> InitializeAsync(CancellationToken cancellationToken);
+
+		/// <summary>
+		/// Start the bootstrapper, initialize is automatically called when needed
+		/// </summary>
+		Task<bool> RunAsync(CancellationToken cancellationToken);
+
+		/// <summary>
+		/// Stop the bootstrapper, this cleans up resources and makes it possible to hook into it.
+		/// Is also called when being disposed, but as Dispose in not Async this could cause some issues.
+		/// </summary>
+		Task<bool> StopAsync(CancellationToken cancellationToken);
 	}
 }

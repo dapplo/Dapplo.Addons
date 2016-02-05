@@ -33,6 +33,12 @@ namespace Dapplo.Addons
 	/// </summary>
 	public interface IStartupAction : IModule
 	{
+		/// <summary>
+		/// Perform a start of whatever needs to be started.
+		/// Make sure this can be called multiple times, e.g. do nothing when it was already started.
+		/// </summary>
+		/// <param name="token">CancellationToken</param>
+		/// <returns>Task</returns>
 		Task StartAsync(CancellationToken token = default(CancellationToken));
 	}
 }
