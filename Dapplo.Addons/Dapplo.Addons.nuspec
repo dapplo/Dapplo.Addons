@@ -13,10 +13,6 @@
         <language>en-us</language>
 		<copyright>Dapplo</copyright>
 		<tags>MEF bootstrap</tags>
-		<dependencies>
-			<dependency id="Dapplo.Config" version="0.1.126" />
-			<dependency id="Dapplo.LogFacade" version="0.1.3" />
-		</dependencies>
 		<frameworkAssemblies>
 			<frameworkAssembly assemblyName="System.ComponentModel.Composition" targetFramework="net45" />
 		</frameworkAssemblies>

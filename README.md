@@ -1,4 +1,4 @@
-dapplo.addons
+Dapplo.Addons
 =====================
 Work in progress
 
