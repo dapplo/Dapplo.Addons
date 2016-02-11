@@ -21,7 +21,7 @@
 	along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Dapplo.Addons.Implementation;
+using Dapplo.Addons.Bootstrapper;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 using System.Threading.Tasks;

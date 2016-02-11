@@ -28,7 +28,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
 
-namespace Dapplo.Addons
+namespace Dapplo.Addons.Bootstrapper
 {
 	/// <summary>
 	/// This protects your resources or application from running more than once

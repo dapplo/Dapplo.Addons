@@ -21,16 +21,15 @@
 	along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
+using Dapplo.Addons.Bootstrapper.ExportProviders;
 using Dapplo.Config.Ini;
 using Dapplo.Config.Language;
-using IniConfigExportProvider = Dapplo.Addons.ExportProviders.IniConfigExportProvider;
-using LanguageExportProvider = Dapplo.Addons.ExportProviders.LanguageExportProvider;
 using Dapplo.LogFacade;
-using System.Threading.Tasks;
+using System;
 using System.Threading;
+using System.Threading.Tasks;
 
-namespace Dapplo.Addons.Implementation
+namespace Dapplo.Addons.Bootstrapper
 {
 	/// <summary>
 	/// This bootstrapper is made especially to host dapplo "apps".
@@ -51,7 +50,7 @@ namespace Dapplo.Addons.Implementation
 		/// <returns></returns>
 		public override async Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			Log.Verbose().WriteLine("Trying to initialize {0}", _applicationName);
+			Log.Verbose().WriteLine("Trying to initialize application {0}", _applicationName);
 			// Only allow if the resource is locked by us, or if no lock is needed
 			if (_resourceMutex == null || _resourceMutex.IsLocked)
 			{
@@ -104,7 +103,7 @@ namespace Dapplo.Addons.Implementation
 					throw new InvalidOperationException("IniConfig already set.");
 				}
 				_iniConfig = value;
-				var exportProvider = new IniConfigExportProvider(value, AddonAssemblies, this);
+				var exportProvider = new IniConfigExportProvider(value, this);
 				Add(exportProvider);
 			}
 		}
@@ -125,7 +124,7 @@ namespace Dapplo.Addons.Implementation
 					throw new InvalidOperationException("LanguageLoader already set.");
 				}
 				_languageLoader = value;
-				var exportProvider = new LanguageExportProvider(value, AddonAssemblies, this);
+				var exportProvider = new LanguageExportProvider(value, this);
 				Add(exportProvider);
 			}
 		}

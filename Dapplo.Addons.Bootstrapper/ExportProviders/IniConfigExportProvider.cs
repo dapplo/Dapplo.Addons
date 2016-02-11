@@ -30,7 +30,7 @@ using System.Reflection;
 using Dapplo.Config.Ini;
 using Dapplo.LogFacade;
 
-namespace Dapplo.Addons.ExportProviders
+namespace Dapplo.Addons.Bootstrapper.ExportProviders
 {
 	/// <summary>
 	/// This ExportProvider takes care of resolving MEF imports for the IniConfig
@@ -40,9 +40,8 @@ namespace Dapplo.Addons.ExportProviders
 	{
 		private static readonly LogSource Log = new LogSource();
 		private readonly IniConfig _iniConfig;
-		private readonly IList<Assembly> _assemblies;
 		private readonly IDictionary<string, Export> _loopup = new Dictionary<string, Export>();
-		private readonly IServiceLocator _serviceLocator;
+		private readonly IBootstrapper _bootstrapper;
 		private readonly Type _iniSectionType = typeof(IIniSection);
 
 		/// <summary>
@@ -51,11 +50,10 @@ namespace Dapplo.Addons.ExportProviders
 		/// <param name="iniConfig">IniConfig needed for the registering, can be null for the current</param>
 		/// <param name="assemblies">List of assemblies used for finding the type</param>
 		/// <param name="serviceLocator"></param>
-		public IniConfigExportProvider(IniConfig iniConfig, IList<Assembly> assemblies, IServiceLocator serviceLocator)
+		public IniConfigExportProvider(IniConfig iniConfig, IBootstrapper bootstrapper)
 		{
 			_iniConfig = iniConfig ?? IniConfig.Current;
-			_assemblies = assemblies;
-			_serviceLocator = serviceLocator;
+			_bootstrapper = bootstrapper;
 		}
 
 		/// <summary>
@@ -77,13 +75,14 @@ namespace Dapplo.Addons.ExportProviders
 			}
 			else
 			{
+				Log.Verbose().WriteLine("Searching for an export {0}", definition.ContractName);
 				// Loop over all the supplied assemblies, these should come from the bootstrapper
-				foreach (var assembly in _assemblies ?? new List<Assembly>())
+				foreach (var assembly in _bootstrapper.AddonAssemblies)
 				{
 					// Make an AssemblyQualifiedName from the contract name
 					var assemblyQualifiedName = $"{definition.ContractName}, {assembly.FullName}";
 
-					Log.Verbose().WriteLine("Checking {0}", assemblyQualifiedName);
+					Log.Verbose().WriteLine("Checking if {0} can be found in {1}", definition.ContractName, assembly.FullName);
 
 					// Try to get it, don't throw an exception if not found
 					Type contractType;
@@ -126,7 +125,7 @@ namespace Dapplo.Addons.ExportProviders
 
 					// Make sure it's exported
 					string contractName = AttributedModelServices.GetContractName(contractType);
-					_serviceLocator?.Export(contractName, instance);
+					_bootstrapper?.Export(contractName, instance);
 
 					// create the export so we can store and return it
 					export = new Export(new ExportDefinition(contractName, metadata), () => instance);
@@ -136,6 +135,8 @@ namespace Dapplo.Addons.ExportProviders
 					// Nothing more to do, break
 					yield break;
 				}
+				Log.Verbose().WriteLine("Marking {0} as not a IIniSection", definition.ContractName);
+
 				// Add null value, so we don't try it again
 				_loopup.Add(definition.ContractName, null);
 			}

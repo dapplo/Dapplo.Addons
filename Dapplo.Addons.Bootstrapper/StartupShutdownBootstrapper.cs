@@ -29,7 +29,7 @@ using System;
 using System.ComponentModel.Composition;
 using Dapplo.LogFacade;
 
-namespace Dapplo.Addons.Implementation
+namespace Dapplo.Addons.Bootstrapper
 {
 	/// <summary>
 	/// A bootstrapper, which has functionality for the startup & shutdown actions

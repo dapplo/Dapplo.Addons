@@ -22,6 +22,8 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,5 +49,21 @@ namespace Dapplo.Addons
 		/// Is also called when being disposed, but as Dispose in not Async this could cause some issues.
 		/// </summary>
 		Task<bool> StopAsync(CancellationToken cancellationToken);
+
+		/// <summary>
+		/// all assemblies this bootstrapper knows
+		/// </summary>
+		IList<Assembly> AddonAssemblies
+		{
+			get;
+		}
+
+		/// <summary>
+		/// All addon files this bootstrapper knows
+		/// </summary>
+		IList<string> AddonFiles
+		{
+			get;
+		}
 	}
 }

@@ -63,6 +63,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Dapplo.Addons.Bootstrapper\Dapplo.Addons.Bootstrapper.csproj">
+      <Project>{8dbe963a-5098-4dab-8050-0d31c847db19}</Project>
+      <Name>Dapplo.Addons.Bootstrapper</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dapplo.Addons\Dapplo.Addons.csproj">
       <Project>{66106beb-d338-4887-af47-125abb31555f}</Project>
       <Name>Dapplo.Addons</Name>

@@ -33,7 +33,7 @@ using Dapplo.LogFacade;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace Dapplo.Addons.Implementation
+namespace Dapplo.Addons.Bootstrapper
 {
 	/// <summary>
 	/// A bootstrapper for making it possible to load Addons to Dapplo applications.
@@ -299,7 +299,7 @@ namespace Dapplo.Addons.Implementation
 		/// <param name="exportProvider">ExportProvider</param>
 		public void Add(ExportProvider exportProvider)
 		{
-			Log.Verbose().WriteLine("Adding ExportProvider");
+			Log.Verbose().WriteLine("Adding ExportProvider: {0}", exportProvider.GetType().FullName);
 			ExportProviders.Add(exportProvider);
 		}
 

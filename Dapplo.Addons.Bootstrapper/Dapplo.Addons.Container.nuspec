@@ -8,11 +8,11 @@
         <projectUrl>http://www.dapplo.net/blocks/Dapplo.Addons.html</projectUrl>
         <iconUrl>http://www.dapplo.net/favicon.ico</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>Interfaces for addons loaded by Dapplo.Addons.Container</description>
-		<summary>Interfaces for addons loaded by Dapplo.Addons.Container</summary>
+        <description>A bootstrapper which loads Dapplo.Addons addons</description>
+		<summary>A bootstrapper which loads Dapplo.Addons addons</summary>
         <language>en-us</language>
 		<copyright>Dapplo</copyright>
-		<tags>MEF addon</tags>
+		<tags>MEF bootstrapper addon</tags>
 		<frameworkAssemblies>
 			<frameworkAssembly assemblyName="System.ComponentModel.Composition" targetFramework="net451" />
 		</frameworkAssemblies>

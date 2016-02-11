@@ -26,8 +26,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Dapplo.LogFacade;
+using System.Collections.Generic;
 
-namespace Dapplo.Addons.Implementation
+namespace Dapplo.Addons.Bootstrapper
 {
 	/// <summary>
 	/// A simple bootstrapper, takes the executing assembly and adds it
@@ -36,6 +37,7 @@ namespace Dapplo.Addons.Implementation
 	public class SimpleBootstrapper : CompositionBootstrapper
 	{
 		private static readonly LogSource Log = new LogSource();
+		private static IDictionary<string, Assembly> _assemblies = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
 		/// Constructor for the SimpleBootstrapper
@@ -53,21 +55,36 @@ namespace Dapplo.Addons.Implementation
 		/// <returns>Assembly</returns>
 		protected Assembly AddonResolveEventHandler(object sender, ResolveEventArgs resolveEventArgs)
 		{
-			Log.Verbose().WriteLine("Resolving name: {0}", resolveEventArgs.Name);
 
-			var addonDirectories = (from addonFile in AddonFiles
-								   select Path.GetDirectoryName(addonFile)).Distinct();
-
-            foreach (var directory in addonDirectories)
+			Assembly assembly;
+			var assemblyName = GetAssemblyName(resolveEventArgs);
+			if (!_assemblies.TryGetValue(assemblyName, out assembly))
 			{
-				var assemblyFile = Path.Combine(directory, GetAssemblyName(resolveEventArgs) + ".dll");
-				if (!File.Exists(assemblyFile))
+				Log.Verbose().WriteLine("Resolving name: {0}", resolveEventArgs.Name);
+				var addonDirectories = (from addonFile in AddonFiles
+										select Path.GetDirectoryName(addonFile)).Distinct();
+
+				foreach (var directory in addonDirectories)
 				{
-					continue;
+					var assemblyFile = Path.Combine(directory, GetAssemblyName(resolveEventArgs) + ".dll");
+					if (!File.Exists(assemblyFile))
+					{
+						continue;
+					}
+					try
+					{
+						assembly = Assembly.LoadFile(assemblyFile);
+						_assemblies[assemblyName] = assembly;
+						Log.Verbose().WriteLine("Loaded {0} to satisfy resolving {1}", assemblyFile, assemblyName);
+					}
+					catch (Exception ex)
+					{
+						Log.Error().WriteLine(ex, "Couldn't read {0}, to load {1}", assemblyFile, assemblyName);
+					}
+					break;
 				}
-				return Assembly.LoadFile(assemblyFile);
 			}
-			return null;
+			return assembly;
 		}
 
 		/// <summary>

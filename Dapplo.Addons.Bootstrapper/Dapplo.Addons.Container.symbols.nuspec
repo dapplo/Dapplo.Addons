@@ -8,13 +8,15 @@
         <projectUrl>http://www.dapplo.net/blocks/Dapplo.Addons.html</projectUrl>
         <iconUrl>http://www.dapplo.net/favicon.ico</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>Interfaces for addons loaded by Dapplo.Addons.Container</description>
-		<summary>Interfaces for addons loaded by Dapplo.Addons.Container</summary>
+        <description>Dapplo.Addons takes care of bootstrapping with MEF</description>
+		<summary>A library with code to use Addons in your application.</summary>
         <language>en-us</language>
 		<copyright>Dapplo</copyright>
-		<tags>MEF addon</tags>
-		<frameworkAssemblies>
-			<frameworkAssembly assemblyName="System.ComponentModel.Composition" targetFramework="net451" />
-		</frameworkAssemblies>
-	</metadata>
+		<tags>MEF bootstrap</tags>
+    </metadata>
+	<files>
+		<file src="bin\release\Dapplo.Addons.Bootstrapper.pdb" target="lib\net451" />
+		<file src="bin\release\Dapplo.Addons.Bootstrapper.dll" target="lib\net451" />
+		<file src="**\*.cs" exclude="**\obj\**\*.cs;**\release\**\*.cs" target="src" />
+	</files>	
 </package>
