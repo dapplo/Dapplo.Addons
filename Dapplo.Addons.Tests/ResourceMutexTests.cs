@@ -21,27 +21,48 @@
 	along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Dapplo.Addons.Bootstrapper;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Dapplo.Addons.Tests
 {
 	[TestClass]
-	public class TestApplicationBootstrapper
+	public class ResourceMutexTests
 	{
+		private static readonly string MutexId = Guid.NewGuid().ToString();
+
 		[TestMethod]
-		public void TestConstructorAndCleanup()
+		public void TestMutex_Create_Cleanup()
 		{
-			var bootstrapper = new ApplicationBootstrapper("Test");
-			bootstrapper.Dispose();
+			using (var resourceMutex = ResourceMutex.Create(MutexId, "TestMutex_Create_Cleanup"))
+			{
+				Assert.IsNotNull(resourceMutex);
+				Assert.IsTrue(resourceMutex.IsLocked);
+			}
 		}
 
 		[TestMethod]
-		public void TestConstructorWithMutexAndCleanup()
+		public void TestMutex_LockTwice()
 		{
-			var bootstrapper = new ApplicationBootstrapper("Test", Guid.NewGuid().ToString());
-			bootstrapper.Dispose();
+			using (var resourceMutex = ResourceMutex.Create(MutexId, "Call1"))
+			{
+				Assert.IsNotNull(resourceMutex);
+				Assert.IsTrue(resourceMutex.IsLocked);
+				Task.Factory.StartNew(() =>
+				{
+					using (var resourceMutex2 = ResourceMutex.Create(MutexId, "Call2"))
+					{
+						Assert.IsNotNull(resourceMutex2);
+						Assert.IsFalse(resourceMutex2.IsLocked);
+					}
+				}, default(CancellationToken)).Wait();
+			}
 		}
 	}
 }

@@ -99,22 +99,30 @@ namespace Dapplo.Addons.Bootstrapper
 				// 2) if the mutex wasn't created new get the right to it, this returns false if it's already locked
 				if (!createdNew && !_applicationMutex.WaitOne(100, false))
 				{
-					Log.Warn().WriteLine("{0} seems already to be running!", _resourceName);
+					Log.Warn().WriteLine("{0} is already in use, mutex {1} is NOT locked for the caller", _resourceName, _mutexId);
 					IsLocked = false;
 					// Clean up
-					_applicationMutex.Close();
+					_applicationMutex.Dispose();
 					_applicationMutex = null;
 				}
 				else
 				{
-					Log.Info().WriteLine("{0} has claimed the mutex {1}", _resourceName, _mutexId);
+					if (createdNew)
+					{
+						Log.Info().WriteLine("{0} has created & claimed the mutex {1}", _resourceName, _mutexId);
+					}
+					else
+					{
+						Log.Info().WriteLine("{0} has claimed the mutex {1}", _resourceName, _mutexId);
+
+					}
 				}
 			}
 			catch (AbandonedMutexException e)
 			{
 				// Another instance didn't cleanup correctly!
 				// we can ignore the exception, it happend on the "waitone" but still the mutex belongs to us
-				Log.Warn().WriteLine(e, "{0} didn't cleanup correctly!", _resourceName);
+				Log.Warn().WriteLine(e, "{0} didn't cleanup correctly, but we got the mutex {1}.", _resourceName, _mutexId);
 			}
 			catch (UnauthorizedAccessException e)
 			{
@@ -141,15 +149,19 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			if (!_disposedValue)
 			{
-				try
+				if (_applicationMutex != null)
 				{
-					_applicationMutex?.ReleaseMutex();
-					_applicationMutex = null;
-					Log.Info().WriteLine("Released Mutex {0} for {1}", _mutexId, _resourceName);
-				}
-				catch (Exception ex)
-				{
-					Log.Error().WriteLine(ex, "Error releasing Mutex {0} for {1}", _mutexId, _resourceName);
+					try
+					{
+						_applicationMutex.ReleaseMutex();
+						_applicationMutex = null;
+						Log.Info().WriteLine("Released Mutex {0} for {1}", _mutexId, _resourceName);
+					}
+					catch (Exception ex)
+					{
+						Log.Error().WriteLine(ex, "Error releasing Mutex {0} for {1}", _mutexId, _resourceName);
+					}
+
 				}
 				_disposedValue = true;
 			}
