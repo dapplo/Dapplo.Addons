@@ -13,6 +13,9 @@
         <language>en-us</language>
 		<copyright>Dapplo</copyright>
 		<tags>MEF bootstrapper addon</tags>
+		<dependencies>
+			<dependency id="Dapplo.Addons" version="$version$" />
+		</dependencies>
 		<frameworkAssemblies>
 			<frameworkAssembly assemblyName="System.ComponentModel.Composition" targetFramework="net451" />
 		</frameworkAssemblies>
