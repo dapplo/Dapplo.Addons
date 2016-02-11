@@ -91,7 +91,7 @@ namespace Dapplo.Addons.Tests
 
 				// Test localization of a IStartupAction with meta-data, which is exported via [StartupAction(DoNotAwait = true)]
 				var lazy = bootstrapper.GetExport<IStartupAction, IStartupActionMetadata>();
-				Assert.IsFalse(lazy.Metadata.DoNotAwait);
+				Assert.IsFalse(lazy.Metadata.AwaitStart);
 			}
 			// Dispose automatically calls IShutdownActions
 		}

@@ -40,10 +40,11 @@ namespace Dapplo.Addons
 		}
 
 		/// <summary>
-		/// Specify that the StartAsync is not awaited, this is not adviced as exceptions will not be noticed!
+		/// Specify if the startup needs to be awaited, this could be set to false if you want to have a task doing something in the background
+		/// In general you would like this to be true, otherwise depending code might be started to early
 		/// </summary>
-		[DefaultValue(false)]
-		bool DoNotAwait
+		[DefaultValue(true)]
+		bool AwaitStart
 		{
 			get;
 		}

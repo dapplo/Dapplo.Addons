@@ -30,7 +30,7 @@ using System.Threading.Tasks;
 
 namespace Dapplo.Addons.TestAddon
 {
-	[StartupAction(DoNotAwait = false)]
+	[StartupAction(AwaitStart = false)]
 	[ShutdownAction]
 	public class SomeAddon : IStartupAction, IShutdownAction
 	{

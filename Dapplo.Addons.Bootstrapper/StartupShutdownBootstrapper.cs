@@ -117,7 +117,7 @@ namespace Dapplo.Addons.Bootstrapper
 					// Create a task (it will start running, but we don't await it yet)
 					var task = startupAction.Value.StartAsync(cancellationToken);
 					// add the task to an await list, but only if needed!
-					if (!startupAction.Metadata.DoNotAwait)
+					if (startupAction.Metadata.AwaitStart)
 					{
 						tasks.Add(task);
 					}

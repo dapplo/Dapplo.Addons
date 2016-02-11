@@ -57,12 +57,12 @@ namespace Dapplo.Addons
 			set;
 		} = 1;
 
+
 		/// <summary>
-		/// this property describes if the StartAsync NEEDS an await, in general this is true.
-		/// There are some startup actions where is makes sense to NOT await the result.
-		/// These should specify a false in the annotation.
+		/// Specify if the startup needs to be awaited, this could be set to false if you want to have a task doing something in the background
+		/// In general you would like this to be true, otherwise depending code might be started to early
 		/// </summary>
-		public bool DoNotAwait
+		public bool AwaitStart
 		{
 			get;
 			set;
