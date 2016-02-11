@@ -80,7 +80,7 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <returns>true if it worked, false if another instance is already running or something went wrong</returns>
 		public bool Lock()
 		{
-			Log.Verbose().WriteLine($"{_resourceName} is trying to get Mutex {0}", _mutexId);
+			Log.Verbose().WriteLine("{0} is trying to get Mutex {1}", _resourceName, _mutexId);
 
 			IsLocked = true;
 			// check whether there's an local instance running already, but use local so this works in a multi-user environment
@@ -95,11 +95,11 @@ namespace Dapplo.Addons.Bootstrapper
 
 				bool createdNew;
 				// 1) Create Mutex
-				_applicationMutex = new Mutex(false, _mutexId, out createdNew, mutexsecurity);
+				_applicationMutex = new Mutex(true, _mutexId, out createdNew, mutexsecurity);
 				// 2) if the mutex wasn't created new get the right to it, this returns false if it's already locked
 				if (!createdNew && !_applicationMutex.WaitOne(100, false))
 				{
-					Log.Warn().WriteLine($"{_resourceName} seems already to be running!");
+					Log.Warn().WriteLine("{0} seems already to be running!", _resourceName);
 					IsLocked = false;
 					// Clean up
 					_applicationMutex.Close();
@@ -107,23 +107,23 @@ namespace Dapplo.Addons.Bootstrapper
 				}
 				else
 				{
-					Log.Info().WriteLine($"{_resourceName} has claimed the mutex {0}", _mutexId);
+					Log.Info().WriteLine("{0} has claimed the mutex {1}", _resourceName, _mutexId);
 				}
 			}
 			catch (AbandonedMutexException e)
 			{
 				// Another instance didn't cleanup correctly!
 				// we can ignore the exception, it happend on the "waitone" but still the mutex belongs to us
-				Log.Warn().WriteLine(e, $"{_resourceName} didn't cleanup correctly!");
+				Log.Warn().WriteLine(e, "{0} didn't cleanup correctly!", _resourceName);
 			}
 			catch (UnauthorizedAccessException e)
 			{
-				Log.Error().WriteLine(e, $"{_resourceName} is most likely already running for a different user in the same session, can't create/get mutex due to error.");
+				Log.Error().WriteLine(e, "{0} is most likely already running for a different user in the same session, can't create/get mutex {1} due to error.", _resourceName, _mutexId);
 				IsLocked = false;
 			}
 			catch (Exception ex)
 			{
-				Log.Error().WriteLine(ex, "Problem obtaining the Mutex, assuming it was already taken!");
+				Log.Error().WriteLine(ex, "Problem obtaining the Mutex {1} for {0}, assuming it was already taken!", _resourceName, _mutexId);
 				IsLocked = false;
 			}
 			return IsLocked;
@@ -145,10 +145,11 @@ namespace Dapplo.Addons.Bootstrapper
 				{
 					_applicationMutex?.ReleaseMutex();
 					_applicationMutex = null;
+					Log.Info().WriteLine("Released Mutex {0} for {1}", _mutexId, _resourceName);
 				}
 				catch (Exception ex)
 				{
-					Log.Error().WriteLine(ex, "Error releasing Mutex!");
+					Log.Error().WriteLine(ex, "Error releasing Mutex {0} for {1}", _mutexId, _resourceName);
 				}
 				_disposedValue = true;
 			}

@@ -148,6 +148,10 @@ namespace Dapplo.Addons.Bootstrapper
 
 		protected override void Dispose(bool disposing)
 		{
+			// Call other stuff first, the mutex should protect untill everything is shutdown
+			base.Dispose(disposing);
+
+			// Handle our own stuff, currently only the mutex (if any)
 			if (!_disposedValue)
 			{
 				if (disposing)
@@ -157,7 +161,6 @@ namespace Dapplo.Addons.Bootstrapper
 
 				_resourceMutex?.Dispose();
 			}
-			base.Dispose(disposing);
 		}
 		#endregion
 	}

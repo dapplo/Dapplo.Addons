@@ -36,12 +36,6 @@ namespace Dapplo.Addons.Tests
 	{
 		private const string ApplicationName = "Dapplo";
 
-		[TestInitialize]
-		public void Initialize()
-		{
-			LogSettings.Logger = new TraceLogger { Level = LogLevel.Verbose };
-		}
-
 		[TestMethod]
 		public async Task TestStartupShutdown()
 		{

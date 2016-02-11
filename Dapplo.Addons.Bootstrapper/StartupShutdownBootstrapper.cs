@@ -73,7 +73,7 @@ namespace Dapplo.Addons.Bootstrapper
 
 		public override async Task<bool> StopAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			Log.Debug().WriteLine("Stopping");
+			Log.Debug().WriteLine("Stopping bootstrapper");
 			if (AutoShutdown)
 			{
 				await ShutdownAsync(cancellationToken);
@@ -89,8 +89,12 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <returns>Task</returns>
 		public async Task StartupAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			Log.Debug().WriteLine("Startup called");
-
+			Log.Debug().WriteLine("Starting the startup actions, if any");
+			if (_startupActions == null)
+			{
+				Log.Debug().WriteLine("No startup actions set...");
+				return;
+			}
 			var orderedActions = from export in _startupActions orderby export.Metadata.StartupOrder ascending select export;
 
 			var tasks = new List<Task>();
@@ -160,7 +164,12 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <returns>Task</returns>
 		public async Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			Log.Debug().WriteLine("Shutdown called");
+			Log.Debug().WriteLine("Shutdown of the shutdown actions, if any");
+			if (_shutdownActions == null)
+			{
+				Log.Debug().WriteLine("No shutdown actions set...");
+				return;
+			}
 			var orderedActions = from export in _shutdownActions orderby export.Metadata.ShutdownOrder ascending select export;
 
 			var tasks = new List<KeyValuePair<Type, Task>>();
