@@ -4,7 +4,7 @@
         <id>$id$</id>
         <version>$version$</version>
         <authors>$author$</authors>
-        <licenseUrl>https://en.wikipedia.org/wiki/GNU_General_Public_License</licenseUrl>
+        <licenseUrl>http://www.gnu.org/licenses/lgpl-3.0.html</licenseUrl>
         <projectUrl>http://www.dapplo.net/blocks/Dapplo.Addons.html</projectUrl>
         <iconUrl>http://www.dapplo.net/favicon.ico</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>

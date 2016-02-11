@@ -45,6 +45,18 @@ namespace Dapplo.Addons.Bootstrapper
 		private readonly ResourceMutex _resourceMutex;
 
 		/// <summary>
+		/// Returns if the Mutex is locked, in other words if this ApplicationBootstrapper can continue
+		/// This also returns true if no mutex is used
+		/// </summary>
+		public bool IsMutexLocked
+		{
+			get
+			{
+				return _resourceMutex == null || _resourceMutex.IsLocked;
+			}
+		}
+
+		/// <summary>
 		/// Initialize the application bootstrapper
 		/// </summary>
 		/// <returns></returns>
@@ -74,9 +86,10 @@ namespace Dapplo.Addons.Bootstrapper
 
 		/// <summary>
 		/// Create the application bootstrapper, for the specified application name
+		/// The mutex is created and locked in the contructor, and some of your application logic might depend on this.
 		/// </summary>
 		/// <param name="applicationName">Name of your application</param>
-		/// <param name="mutexId">string with an ID for your mutex, preferably a Guid. If the mutex can't be locked, the bootstapper will not "bootstrap".</param>
+		/// <param name="mutexId">string with an ID for your mutex, preferably a Guid. If the mutex can't be locked, the bootstapper will not  be able to "bootstrap".</param>
 		/// <param name="global">Is the mutex a global or local block (false means only in this Windows session)</param>
 		public ApplicationBootstrapper(string applicationName, string mutexId = null, bool global = false)
 		{
