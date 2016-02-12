@@ -64,5 +64,22 @@ namespace Dapplo.Addons.Tests
 				}, default(CancellationToken)).Wait();
 			}
 		}
+
+
+		[TestMethod]
+		public void TestMutex_100()
+		{
+			// Test creating and cleanup 100x
+			int i = 0;
+			do
+			{
+				using (var resourceMutex = ResourceMutex.Create(MutexId, "Call" + i))
+				{
+					Assert.IsNotNull(resourceMutex);
+					Assert.IsTrue(resourceMutex.IsLocked);
+
+				}
+			} while (i++ < 100);
+		}
 	}
 }
