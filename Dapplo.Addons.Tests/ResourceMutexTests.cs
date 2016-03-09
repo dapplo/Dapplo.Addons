@@ -22,51 +22,53 @@
  */
 
 using Dapplo.Addons.Bootstrapper;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace Dapplo.Addons.Tests
 {
-	[TestClass]
 	public class ResourceMutexTests
 	{
 		private static readonly string MutexId = Guid.NewGuid().ToString();
 
-		[TestMethod]
+		public ResourceMutexTests(ITestOutputHelper testOutputHelper)
+		{
+			XUnitLogger.RegisterLogger(testOutputHelper, LogFacade.LogLevel.Verbose);
+		}
+
+		[Fact]
 		public void TestMutex_Create_Cleanup()
 		{
 			using (var resourceMutex = ResourceMutex.Create(MutexId, "TestMutex_Create_Cleanup"))
 			{
-				Assert.IsNotNull(resourceMutex);
-				Assert.IsTrue(resourceMutex.IsLocked);
+				Assert.NotNull(resourceMutex);
+				Assert.True(resourceMutex.IsLocked);
 			}
 		}
 
-		[TestMethod]
+		[Fact]
 		public void TestMutex_LockTwice()
 		{
 			using (var resourceMutex = ResourceMutex.Create(MutexId, "Call1"))
 			{
-				Assert.IsNotNull(resourceMutex);
-				Assert.IsTrue(resourceMutex.IsLocked);
+				Assert.NotNull(resourceMutex);
+				Assert.True(resourceMutex.IsLocked);
 				Task.Factory.StartNew(() =>
 				{
 					using (var resourceMutex2 = ResourceMutex.Create(MutexId, "Call2"))
 					{
-						Assert.IsNotNull(resourceMutex2);
-						Assert.IsFalse(resourceMutex2.IsLocked);
+						Assert.NotNull(resourceMutex2);
+						Assert.False(resourceMutex2.IsLocked);
 					}
 				}, default(CancellationToken)).Wait();
 			}
 		}
 
 
-		[TestMethod]
+		[Fact]
 		public void TestMutex_100()
 		{
 			// Test creating and cleanup 100x
@@ -75,8 +77,8 @@ namespace Dapplo.Addons.Tests
 			{
 				using (var resourceMutex = ResourceMutex.Create(MutexId, "Call" + i))
 				{
-					Assert.IsNotNull(resourceMutex);
-					Assert.IsTrue(resourceMutex.IsLocked);
+					Assert.NotNull(resourceMutex);
+					Assert.True(resourceMutex.IsLocked);
 
 				}
 			} while (i++ < 100);

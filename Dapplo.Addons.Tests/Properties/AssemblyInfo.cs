@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Xunit;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
@@ -8,11 +8,14 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Dapplo.Addons.Tests")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Dapplo")]
 [assembly: AssemblyProduct("Dapplo.Addons.Tests")]
-[assembly: AssemblyCopyright("Copyright ©  2015")]
+[assembly: AssemblyCopyright("Copyright © Dapplo 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
+
+// Disable parallel xunit testing
+[assembly: CollectionBehavior(DisableTestParallelization = true, MaxParallelThreads = 1)]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
@@ -20,7 +23,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("0d4f3af8-d7a1-48af-a516-68241a80657c")]
+[assembly: Guid("4ece26ad-6832-4a19-982a-65f5e3d2afde")]
 
 // Version information for an assembly consists of the following four values:
 //
