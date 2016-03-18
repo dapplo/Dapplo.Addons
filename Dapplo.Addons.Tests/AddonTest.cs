@@ -22,21 +22,24 @@
  */
 
 using Dapplo.Addons.Bootstrapper;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Dapplo.Config.Ini;
 using System.Linq;
 using System.Threading.Tasks;
-using Dapplo.Config.Ini;
-using Dapplo.LogFacade;
-using Dapplo.LogFacade.Loggers;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace Dapplo.Addons.Tests
 {
-	[TestClass]
 	public class AddonTest
 	{
 		private const string ApplicationName = "Dapplo";
 
-		[TestMethod]
+		public AddonTest(ITestOutputHelper testOutputHelper)
+		{
+			XUnitLogger.RegisterLogger(testOutputHelper, LogFacade.LogLevel.Verbose);
+		}
+
+		[Fact]
 		public async Task TestStartupShutdown()
 		{
 			using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
@@ -55,37 +58,31 @@ namespace Dapplo.Addons.Tests
 				bootstrapper.Add(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release", "Dapplo.*.dll");
 #endif
 				// Test if our test addon was loaded
-				Assert.IsTrue(bootstrapper.AddonFiles.Count(addon => addon.EndsWith("TestAddon.dll")) > 0);
+				Assert.True(bootstrapper.AddonFiles.Count(addon => addon.EndsWith("TestAddon.dll")) > 0);
 
 				// Initialize, so we can export
-				if (!await bootstrapper.InitializeAsync())
-				{
-					Assert.Fail("Not initialized");
-				}
+				Assert.True(await bootstrapper.InitializeAsync(), "Not initialized");
 
 				// test Export, this should work before Run as some of the addons might need some stuff.
 
 				var part = bootstrapper.Export(this);
 
 				// Start the composition, and IStartupActions
-				if (!await bootstrapper.RunAsync())
-				{
-					Assert.Fail("Couldn't run");
-				}
+				Assert.True(await bootstrapper.RunAsync(), "Couldn't run");
 
 				// test import
-				Assert.IsNotNull(bootstrapper.GetExport<AddonTest>().Value);
+				Assert.NotNull(bootstrapper.GetExport<AddonTest>().Value);
 
 				// test release
 				bootstrapper.Release(part);
-				Assert.IsFalse(bootstrapper.GetExports<AddonTest>().Any());
+				Assert.False(bootstrapper.GetExports<AddonTest>().Any());
 
 				// Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
-				Assert.IsNotNull(bootstrapper.GetExport<IStartupAction>().Value);
+				Assert.NotNull(bootstrapper.GetExport<IStartupAction>().Value);
 
 				// Test localization of a IStartupAction with meta-data, which is exported via [StartupAction(DoNotAwait = true)]
 				var lazy = bootstrapper.GetExport<IStartupAction, IStartupActionMetadata>();
-				Assert.IsFalse(lazy.Metadata.AwaitStart);
+				Assert.False(lazy.Metadata.AwaitStart);
 			}
 			// Dispose automatically calls IShutdownActions
 		}

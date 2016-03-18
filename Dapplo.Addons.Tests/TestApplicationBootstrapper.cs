@@ -21,23 +21,31 @@
 	along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Dapplo.Addons.Bootstrapper;
+using System;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace Dapplo.Addons.Tests
 {
-	[TestClass]
+
 	public class TestApplicationBootstrapper
 	{
-		[TestMethod]
+
+		public TestApplicationBootstrapper(ITestOutputHelper testOutputHelper)
+		{
+			XUnitLogger.RegisterLogger(testOutputHelper, LogFacade.LogLevel.Verbose);
+		}
+
+
+		[Fact]
 		public void TestConstructorAndCleanup()
 		{
 			var bootstrapper = new ApplicationBootstrapper("Test");
 			bootstrapper.Dispose();
 		}
 
-		[TestMethod]
+		[Fact]
 		public void TestConstructorWithMutexAndCleanup()
 		{
 			var bootstrapper = new ApplicationBootstrapper("Test", Guid.NewGuid().ToString());

@@ -5,13 +5,13 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons", "Dapplo.Addons\Dapplo.Addons.csproj", "{66106BEB-D338-4887-AF47-125ABB31555F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.Tests", "Dapplo.Addons.Tests\Dapplo.Addons.Tests.csproj", "{0D4F3AF8-D7A1-48AF-A516-68241A80657C}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.TestAddon", "Dapplo.Addons.TestAddon\Dapplo.Addons.TestAddon.csproj", "{450BA0DC-F37C-45F5-B250-0B20F4B1D594}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.NuGet", "Dapplo.Addons.NuGet\Dapplo.Addons.NuGet.csproj", "{B835F9A9-3778-43F3-8A2A-81F1608FBC67}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.Bootstrapper", "Dapplo.Addons.Bootstrapper\Dapplo.Addons.Bootstrapper.csproj", "{8DBE963A-5098-4DAB-8050-0D31C847DB19}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.Tests", "Dapplo.Addons.Tests\Dapplo.Addons.Tests.csproj", "{4ECE26AD-6832-4A19-982A-65F5E3D2AFDE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,6 @@ Global
 		{66106BEB-D338-4887-AF47-125ABB31555F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{66106BEB-D338-4887-AF47-125ABB31555F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{66106BEB-D338-4887-AF47-125ABB31555F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0D4F3AF8-D7A1-48AF-A516-68241A80657C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0D4F3AF8-D7A1-48AF-A516-68241A80657C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0D4F3AF8-D7A1-48AF-A516-68241A80657C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0D4F3AF8-D7A1-48AF-A516-68241A80657C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{450BA0DC-F37C-45F5-B250-0B20F4B1D594}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{450BA0DC-F37C-45F5-B250-0B20F4B1D594}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{450BA0DC-F37C-45F5-B250-0B20F4B1D594}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -39,6 +35,10 @@ Global
 		{8DBE963A-5098-4DAB-8050-0D31C847DB19}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8DBE963A-5098-4DAB-8050-0D31C847DB19}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8DBE963A-5098-4DAB-8050-0D31C847DB19}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4ECE26AD-6832-4A19-982A-65F5E3D2AFDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4ECE26AD-6832-4A19-982A-65F5E3D2AFDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4ECE26AD-6832-4A19-982A-65F5E3D2AFDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4ECE26AD-6832-4A19-982A-65F5E3D2AFDE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
