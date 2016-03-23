@@ -36,7 +36,7 @@ namespace Dapplo.Addons.Bootstrapper
 	/// It initializes the IniConfig and LanguageLoader, and makes Importing possible.
 	/// You can protect your application from starting multiple instances by specifying a Mutex-ID
 	/// </summary>
-	public class ApplicationBootstrapper : StartupShutdownBootstrapper, IDisposable
+	public class ApplicationBootstrapper : StartupShutdownBootstrapper
 	{
 		private static readonly LogSource Log = new LogSource();
 		private readonly string _applicationName;
