@@ -1,63 +1,47 @@
-﻿/*
-	Dapplo - building blocks for desktop applications
-	Copyright (C) 2015-2016 Dapplo
+﻿//  Dapplo - building blocks for desktop applications
+//  Copyright (C) 2015-2016 Dapplo
+// 
+//  For more information see: http://dapplo.net/
+//  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+// 
+//  This file is part of Dapplo.Addons
+// 
+//  Dapplo.Addons is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU Lesser General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+// 
+//  Dapplo.Addons is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU Lesser General Public License for more details.
+// 
+//  You should have Config a copy of the GNU Lesser General Public License
+//  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-	For more information see: http://dapplo.net/
-	Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+#region using
 
-	This file is part of Dapplo.Addons
-
-	Dapplo.Addons is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	Dapplo.Addons is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/>.
- */
-
-using Dapplo.LogFacade;
-using NuGet;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Dapplo.LogFacade;
+using NuGet;
+
+#endregion
 
 namespace Dapplo.Addons.NuGet
 {
 	/// <summary>
-	/// The nuget resolver can handle "ResolveEvents" by checking if the missing Assembly can be downloaded from Nuget
+	///     The nuget resolver can handle "ResolveEvents" by checking if the missing Assembly can be downloaded from Nuget
 	/// </summary>
 	internal class NuGetResolver
 	{
 		private static readonly LogSource Log = new LogSource();
-		/// <summary>
-		/// Location where the local packages will be stored
-		/// </summary>
-		internal string LocalPackageSource
-		{
-			get;
-			set;
-		}
 
 		/// <summary>
-		/// Remote package source where the nuget packages will be looked for an downloaded
-		/// Default is "https://packages.nuget.org/api/v2" but could just as well be your own package source
-		/// </summary>
-		internal string RemotePackageSource
-		{
-			get;
-			set;
-		}
-
-		/// <summary>
-		/// The NuGet Resolver default construction will set some defaults
+		///     The NuGet Resolver default construction will set some defaults
 		/// </summary>
 		internal NuGetResolver()
 		{
@@ -66,7 +50,36 @@ namespace Dapplo.Addons.NuGet
 		}
 
 		/// <summary>
-		/// Try to resolve the requested assembly via Nuget, locally and remote.
+		///     Location where the local packages will be stored
+		/// </summary>
+		internal string LocalPackageSource { get; set; }
+
+		/// <summary>
+		///     Remote package source where the nuget packages will be looked for an downloaded
+		///     Default is "https://packages.nuget.org/api/v2" but could just as well be your own package source
+		/// </summary>
+		internal string RemotePackageSource { get; set; }
+
+		/// <summary>
+		///     Find a package matching the supplied assemblyname in the list of packages
+		/// </summary>
+		private static IPackage FindPackage(AssemblyName assemblyName, IEnumerable<IPackage> packages)
+		{
+			IPackage optionalOther = null;
+			foreach (var availablePackage in packages.OrderBy(package => package.Version.ToString()))
+			{
+				// Find the needed version
+				if (assemblyName.Version.Equals(availablePackage.Version.Version))
+				{
+					return availablePackage;
+				}
+				optionalOther = availablePackage;
+			}
+			return optionalOther;
+		}
+
+		/// <summary>
+		///     Try to resolve the requested assembly via Nuget, locally and remote.
 		/// </summary>
 		internal Assembly NugetResolveEventHandler(object sender, ResolveEventArgs resolveEventArgs)
 		{
@@ -79,13 +92,13 @@ namespace Dapplo.Addons.NuGet
 
 			try
 			{
-				IPackageRepository remoteRepository = PackageRepositoryFactory.Default.CreateRepository(RemotePackageSource);
+				var remoteRepository = PackageRepositoryFactory.Default.CreateRepository(RemotePackageSource);
 				// Create a package manager for managing our local repository
 				IPackageManager packageManager = new PackageManager(remoteRepository, LocalPackageSource);
-				IPackageRepository localRepository = packageManager.LocalRepository;
+				var localRepository = packageManager.LocalRepository;
 				var localPackages = localRepository.FindPackagesById(assemblyName.Name);
 
-				IPackage locatedPackage = FindPackage(assemblyName, localPackages);
+				var locatedPackage = FindPackage(assemblyName, localPackages);
 				if (locatedPackage == null)
 				{
 					// Search package via NuGet remote
@@ -106,25 +119,7 @@ namespace Dapplo.Addons.NuGet
 		}
 
 		/// <summary>
-		/// Find a package matching the supplied assemblyname in the list of packages
-		/// </summary>
-		private static IPackage FindPackage(AssemblyName assemblyName, IEnumerable<IPackage> packages)
-		{
-			IPackage optionalOther = null;
-			foreach (IPackage availablePackage in packages.OrderBy(package => package.Version.ToString()))
-			{
-				// Find the needed version
-				if (assemblyName.Version.Equals(availablePackage.Version.Version))
-				{
-					return availablePackage;
-				}
-				optionalOther = availablePackage;
-			}
-			return optionalOther;
-		}
-
-		/// <summary>
-		/// Retrieve the assembly for the supplied package, or null
+		///     Retrieve the assembly for the supplied package, or null
 		/// </summary>
 		private static Assembly ReturnAssemblyFromRepository(IPackageManager packageManager, AssemblyName assemblyName)
 		{
@@ -132,10 +127,10 @@ namespace Dapplo.Addons.NuGet
 			{
 				return null;
 			}
-			string basePath = Path.GetFullPath(packageManager.LocalRepository.Source);
+			var basePath = Path.GetFullPath(packageManager.LocalRepository.Source);
 			if (Directory.Exists(basePath))
 			{
-				string dllPath = Directory.EnumerateFiles(basePath, assemblyName.Name + ".dll", SearchOption.AllDirectories).OrderBy(path => path).LastOrDefault();
+				var dllPath = Directory.EnumerateFiles(basePath, assemblyName.Name + ".dll", SearchOption.AllDirectories).OrderBy(path => path).LastOrDefault();
 				if (!string.IsNullOrEmpty(dllPath))
 				{
 					Log.Info().WriteLine("Dll found in Package {0}, installed here {1}", assemblyName.Name, dllPath);
@@ -149,6 +144,5 @@ namespace Dapplo.Addons.NuGet
 			}
 			return null;
 		}
-
 	}
 }

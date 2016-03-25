@@ -1,38 +1,40 @@
-﻿/*
-	Dapplo - building blocks for desktop applications
-	Copyright (C) 2015-2016 Dapplo
+﻿//  Dapplo - building blocks for desktop applications
+//  Copyright (C) 2015-2016 Dapplo
+// 
+//  For more information see: http://dapplo.net/
+//  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+// 
+//  This file is part of Dapplo.Addons
+// 
+//  Dapplo.Addons is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU Lesser General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+// 
+//  Dapplo.Addons is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU Lesser General Public License for more details.
+// 
+//  You should have Config a copy of the GNU Lesser General Public License
+//  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-	For more information see: http://dapplo.net/
-	Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+#region using
 
-	This file is part of Dapplo.Addons
-
-	Dapplo.Addons is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	Dapplo.Addons is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/>.
- */
-
-
-using Dapplo.LogFacade;
 using System;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
+using Dapplo.LogFacade;
+
+#endregion
 
 namespace Dapplo.Addons.Bootstrapper
 {
 	/// <summary>
-	/// This protects your resources or application from running more than once
-	/// Simplifies the usage of the Mutex class, as described here: https://msdn.microsoft.com/en-us/library/System.Threading.Mutex.aspx
+	///     This protects your resources or application from running more than once
+	///     Simplifies the usage of the Mutex class, as described here:
+	///     https://msdn.microsoft.com/en-us/library/System.Threading.Mutex.aspx
 	/// </summary>
 	public class ResourceMutex : IDisposable
 	{
@@ -42,16 +44,7 @@ namespace Dapplo.Addons.Bootstrapper
 		private Mutex _applicationMutex;
 
 		/// <summary>
-		/// Test if the Mutex was created and locked.
-		/// </summary>
-		public bool IsLocked
-		{
-			get;
-			set;
-		}
-
-		/// <summary>
-		/// Private constructor 
+		///     Private constructor
 		/// </summary>
 		/// <param name="mutexId"></param>
 		/// <param name="resourceName"></param>
@@ -62,7 +55,12 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		/// Create a ResourceMutex for the specified mutex id and resource-name
+		///     Test if the Mutex was created and locked.
+		/// </summary>
+		public bool IsLocked { get; set; }
+
+		/// <summary>
+		///     Create a ResourceMutex for the specified mutex id and resource-name
 		/// </summary>
 		/// <param name="mutexId">ID of the mutex, preferably a Guid as string</param>
 		/// <param name="resourceName">Name of the resource to lock, e.g your application name, usefull for logs</param>
@@ -75,7 +73,7 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		/// This tries to get the Mutex, which takes care of having multiple instances running
+		///     This tries to get the Mutex, which takes care of having multiple instances running
 		/// </summary>
 		/// <returns>true if it worked, false if another instance is already running or something went wrong</returns>
 		public bool Lock()
@@ -107,15 +105,7 @@ namespace Dapplo.Addons.Bootstrapper
 				}
 				else
 				{
-					if (createdNew)
-					{
-						Log.Info().WriteLine("{0} has created & claimed the mutex {1}", _resourceName, _mutexId);
-					}
-					else
-					{
-						Log.Info().WriteLine("{0} has claimed the mutex {1}", _resourceName, _mutexId);
-
-					}
+					Log.Info().WriteLine(createdNew ? "{0} has created & claimed the mutex {1}" : "{0} has claimed the mutex {1}", _resourceName, _mutexId);
 				}
 			}
 			catch (AbandonedMutexException e)
@@ -138,11 +128,12 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		#region IDisposable Support
+
 		//  To detect redundant Dispose calls
-		private bool _disposedValue = false;
+		private bool _disposedValue;
 
 		/// <summary>
-		/// The real disposing code
+		///     The real disposing code
 		/// </summary>
 		/// <param name="disposing">true if dispose is called, false when the finalizer is called</param>
 		protected virtual void Dispose(bool disposing)
@@ -161,22 +152,22 @@ namespace Dapplo.Addons.Bootstrapper
 					{
 						Log.Error().WriteLine(ex, "Error releasing Mutex {0} for {1}", _mutexId, _resourceName);
 					}
-
 				}
 				_disposedValue = true;
 			}
 		}
 
 		/// <summary>
-		/// Make sure the ApplicationMutex is disposed when the finalizer is called
+		///     Make sure the ApplicationMutex is disposed when the finalizer is called
 		/// </summary>
-		~ResourceMutex() {
+		~ResourceMutex()
+		{
 			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
 			Dispose(false);
 		}
 
 		/// <summary>
-		/// The dispose interface, which calls Dispose(true) to signal that dispose is called.
+		///     The dispose interface, which calls Dispose(true) to signal that dispose is called.
 		/// </summary>
 		public void Dispose()
 		{
@@ -184,6 +175,7 @@ namespace Dapplo.Addons.Bootstrapper
 			Dispose(true);
 			GC.SuppressFinalize(this);
 		}
+
 		#endregion
 	}
 }

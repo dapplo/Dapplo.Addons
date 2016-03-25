@@ -1,68 +1,70 @@
-﻿/*
-	Dapplo - building blocks for desktop applications
-	Copyright (C) 2015-2016 Dapplo
+﻿//  Dapplo - building blocks for desktop applications
+//  Copyright (C) 2015-2016 Dapplo
+// 
+//  For more information see: http://dapplo.net/
+//  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+// 
+//  This file is part of Dapplo.Addons
+// 
+//  Dapplo.Addons is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU Lesser General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+// 
+//  Dapplo.Addons is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU Lesser General Public License for more details.
+// 
+//  You should have Config a copy of the GNU Lesser General Public License
+//  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-	For more information see: http://dapplo.net/
-	Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+#region using
 
-	This file is part of Dapplo.Addons
-
-	Dapplo.Addons is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	Dapplo.Addons is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/>.
- */
-
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.Composition;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
-using System.Collections.Generic;
-using System;
-using System.ComponentModel.Composition;
 using Dapplo.LogFacade;
+
+#endregion
 
 namespace Dapplo.Addons.Bootstrapper
 {
 	/// <summary>
-	/// A bootstrapper, which has functionality for the startup & shutdown actions
+	///     A bootstrapper, which has functionality for the startup & shutdown actions
 	/// </summary>
 	public class StartupShutdownBootstrapper : SimpleBootstrapper
 	{
 		private static readonly LogSource Log = new LogSource();
 
-		/// <summary>
-		/// Specifies if Run automatically calls the startup
-		/// </summary>
-		public bool AutoStartup { get; set; } = true;
-
-		/// <summary>
-		/// Specifies if Dispose automatically calls the shutdown
-		/// </summary>
-		public bool AutoShutdown { get; set; } = true;
+		[ImportMany]
+		// ReSharper disable once FieldCanBeMadeReadOnly.Local
+		private IEnumerable<Lazy<IShutdownAction, IShutdownActionMetadata>> _shutdownActions = null;
 
 		[ImportMany]
 		// ReSharper disable once FieldCanBeMadeReadOnly.Local
 		private IEnumerable<Lazy<IStartupAction, IStartupActionMetadata>> _startupActions = null;
 
-		[ImportMany]
-		// ReSharper disable once FieldCanBeMadeReadOnly.Local
-		private IEnumerable<Lazy<IShutdownAction, IShutdownActionMetadata>> _shutdownActions = null;
+		/// <summary>
+		///     Specifies if Dispose automatically calls the shutdown
+		/// </summary>
+		public bool AutoShutdown { get; set; } = true;
 
 		/// <summary>
-		/// Override the run to make sure "this" is injected
+		///     Specifies if Run automatically calls the startup
+		/// </summary>
+		public bool AutoStartup { get; set; } = true;
+
+		/// <summary>
+		///     Override the run to make sure "this" is injected
 		/// </summary>
 		public override async Task<bool> RunAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			Log.Debug().WriteLine("Starting");
-			var result = await base.RunAsync();
+			var result = await base.RunAsync(cancellationToken);
 			FillImports(this);
 			if (AutoStartup)
 			{
@@ -71,19 +73,58 @@ namespace Dapplo.Addons.Bootstrapper
 			return result;
 		}
 
-		public override async Task<bool> StopAsync(CancellationToken cancellationToken = default(CancellationToken))
+		/// <summary>
+		///     Initiate Shutdown on all "Shutdown actions"
+		/// </summary>
+		/// <param name="cancellationToken">CancellationToken</param>
+		/// <returns>Task</returns>
+		public async Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			Log.Debug().WriteLine("Stopping bootstrapper");
-			if (AutoShutdown)
+			Log.Debug().WriteLine("Shutdown of the shutdown actions, if any");
+			if (_shutdownActions == null)
 			{
-				await ShutdownAsync(cancellationToken);
+				Log.Debug().WriteLine("No shutdown actions set...");
+				return;
 			}
-			return await base.StopAsync(cancellationToken);
+			var orderedActions = from export in _shutdownActions orderby export.Metadata.ShutdownOrder ascending select export;
+
+			var tasks = new List<KeyValuePair<Type, Task>>();
+
+			// Variable used for grouping the shutdowns
+			var groupingOrder = int.MaxValue;
+
+			foreach (var shutdownAction in orderedActions)
+			{
+				// Check if we have all the startup actions belonging to a group
+				if (tasks.Count > 0 && groupingOrder != shutdownAction.Metadata.ShutdownOrder)
+				{
+					groupingOrder = shutdownAction.Metadata.ShutdownOrder;
+
+					// Await all belonging to the same order "group"
+					await WhenAll(tasks);
+					tasks.Clear();
+				}
+				try
+				{
+					Log.Debug().WriteLine("Stopping {0}", shutdownAction.Value.GetType());
+					// Create a task (it will start running, but we don't await it yet)
+					tasks.Add(new KeyValuePair<Type, Task>(shutdownAction.Value.GetType(), shutdownAction.Value.ShutdownAsync(cancellationToken)));
+				}
+				catch (Exception ex)
+				{
+					Log.Error().WriteLine(ex, shutdownAction.IsValueCreated ? "Exception executing shutdownAction {0}: " : "Exception instantiating shutdownAction {0}: ", shutdownAction.Value.GetType());
+				}
+			}
+			// Await all remaining tasks
+			if (tasks.Count > 0)
+			{
+				await WhenAll(tasks);
+			}
 		}
 
 		/// <summary>
-		/// Startup all "Startup actions"
-		/// Call this after run, it will find all IStartupAction's and start them in the specified order
+		///     Startup all "Startup actions"
+		///     Call this after run, it will find all IStartupAction's and start them in the specified order
 		/// </summary>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>Task</returns>
@@ -101,7 +142,7 @@ namespace Dapplo.Addons.Bootstrapper
 			var nonAwaitable = new List<KeyValuePair<Type, Task>>();
 
 			// Variable used for grouping the startups
-			int groupingOrder = int.MaxValue;
+			var groupingOrder = int.MaxValue;
 
 			foreach (var startupAction in orderedActions)
 			{
@@ -136,14 +177,7 @@ namespace Dapplo.Addons.Bootstrapper
 				}
 				catch (Exception ex)
 				{
-					if (startupAction.IsValueCreated)
-					{
-						Log.Error().WriteLine(ex, "Exception executing startupAction {0}: ", startupAction.Value.GetType());
-					}
-					else
-					{
-						Log.Error().WriteLine(ex, "Exception instantiating startupAction {0}: ", startupAction.Value.GetType());
-					}
+					Log.Error().WriteLine(ex, startupAction.IsValueCreated ? "Exception executing startupAction {0}: " : "Exception instantiating startupAction {0}: ", startupAction.Value.GetType());
 				}
 			}
 			// Await all remaining tasks
@@ -153,69 +187,24 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			if (nonAwaitable.Count > 0 && Log.IsErrorEnabled())
 			{
+				// ReSharper disable once UnusedVariable
 				var ignoreTask = WhenAll(nonAwaitable);
 			}
 		}
 
-		/// <summary>
-		/// Initiate Shutdown on all "Shutdown actions" 
-		/// </summary>
-		/// <param name="cancellationToken">CancellationToken</param>
-		/// <returns>Task</returns>
-		public async Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken))
+		public override async Task<bool> StopAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			Log.Debug().WriteLine("Shutdown of the shutdown actions, if any");
-			if (_shutdownActions == null)
+			Log.Debug().WriteLine("Stopping bootstrapper");
+			if (AutoShutdown)
 			{
-				Log.Debug().WriteLine("No shutdown actions set...");
-				return;
+				await ShutdownAsync(cancellationToken);
 			}
-			var orderedActions = from export in _shutdownActions orderby export.Metadata.ShutdownOrder ascending select export;
-
-			var tasks = new List<KeyValuePair<Type, Task>>();
-
-			// Variable used for grouping the shutdowns
-			int groupingOrder = int.MaxValue;
-
-			foreach (var shutdownAction in orderedActions)
-			{
-				// Check if we have all the startup actions belonging to a group
-				if (tasks.Count > 0 && groupingOrder != shutdownAction.Metadata.ShutdownOrder)
-				{
-					groupingOrder = shutdownAction.Metadata.ShutdownOrder;
-
-					// Await all belonging to the same order "group"
-					await WhenAll(tasks);
-					tasks.Clear();
-				}
-				try
-				{
-					Log.Debug().WriteLine("Stopping {0}", shutdownAction.Value.GetType());
-					// Create a task (it will start running, but we don't await it yet)
-					tasks.Add(new KeyValuePair<Type, Task>(shutdownAction.Value.GetType(), shutdownAction.Value.ShutdownAsync(cancellationToken)));
-				}
-				catch (Exception ex)
-				{
-					if (shutdownAction.IsValueCreated)
-					{
-						Log.Error().WriteLine(ex, "Exception executing shutdownAction {0}: ", shutdownAction.Value.GetType());
-					}
-					else
-					{
-						Log.Error().WriteLine(ex, "Exception instantiating shutdownAction {0}: ", shutdownAction.Value.GetType());
-					}
-				}
-			}
-			// Await all remaining tasks
-			if (tasks.Count > 0)
-			{
-				await WhenAll(tasks);
-			}
+			return await base.StopAsync(cancellationToken);
 		}
 
 		/// <summary>
-		/// Special WhenAll, this awaits the supplied values and log any exceptions they had.
-		/// This is not optimized, like Task.WhenAll...
+		///     Special WhenAll, this awaits the supplied values and log any exceptions they had.
+		///     This is not optimized, like Task.WhenAll...
 		/// </summary>
 		/// <param name="tasksToAwait"></param>
 		/// <returns>Task</returns>

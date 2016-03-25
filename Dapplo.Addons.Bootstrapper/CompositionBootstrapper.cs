@@ -1,25 +1,25 @@
-﻿/*
-	Dapplo - building blocks for desktop applications
-	Copyright (C) 2015-2016 Dapplo
+﻿//  Dapplo - building blocks for desktop applications
+//  Copyright (C) 2015-2016 Dapplo
+// 
+//  For more information see: http://dapplo.net/
+//  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+// 
+//  This file is part of Dapplo.Addons
+// 
+//  Dapplo.Addons is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU Lesser General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+// 
+//  Dapplo.Addons is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU Lesser General Public License for more details.
+// 
+//  You should have Config a copy of the GNU Lesser General Public License
+//  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-	For more information see: http://dapplo.net/
-	Dapplo repositories are hosted on GitHub: https://github.com/dapplo
-
-	This file is part of Dapplo.Addons
-
-	Dapplo.Addons is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	Dapplo.Addons is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/>.
- */
+#region using
 
 using System;
 using System.Collections.Generic;
@@ -29,85 +29,56 @@ using System.ComponentModel.Composition.Primitives;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Dapplo.LogFacade;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
+using Dapplo.LogFacade;
+
+#endregion
 
 namespace Dapplo.Addons.Bootstrapper
 {
 	/// <summary>
-	/// A bootstrapper for making it possible to load Addons to Dapplo applications.
-	/// This uses MEF for loading and managing the Addons.
+	///     A bootstrapper for making it possible to load Addons to Dapplo applications.
+	///     This uses MEF for loading and managing the Addons.
 	/// </summary>
 	public abstract class CompositionBootstrapper : IBootstrapper
 	{
 		private static readonly LogSource Log = new LogSource();
 		protected bool IsAggregateCatalogConfigured;
 		protected bool IsInitialized;
-		private TaskScheduler _taskScheduler;
 
 		/// <summary>
-		/// The AggregateCatalog contains all the catalogs with the assemblies in it.
+		///     The AggregateCatalog contains all the catalogs with the assemblies in it.
 		/// </summary>
-		protected AggregateCatalog AggregateCatalog
-		{
-			get;
-			set;
-		} = new AggregateCatalog();
+		protected AggregateCatalog AggregateCatalog { get; set; } = new AggregateCatalog();
 
 		/// <summary>
-		/// The CompositionContainer
+		///     Specify how the composition is made, is used in the Run()
 		/// </summary>
-		protected CompositionContainer Container
-		{
-			get;
-			set;
-		}
+		protected CompositionOptions CompositionOptionFlags { get; set; } = CompositionOptions.DisableSilentRejection | CompositionOptions.ExportCompositionService;
 
 		/// <summary>
-		/// List of ExportProviders
+		///     The CompositionContainer
 		/// </summary>
-		protected IList<ExportProvider> ExportProviders
-		{
-			get;
-		} = new List<ExportProvider>();
+		protected CompositionContainer Container { get; set; }
 
 		/// <summary>
-		/// List of all known assemblies
+		///     List of ExportProviders
 		/// </summary>
-		public IList<Assembly> AddonAssemblies
-		{
-			get;
-		} = new List<Assembly>();
+		protected IList<ExportProvider> ExportProviders { get; } = new List<ExportProvider>();
 
 		/// <summary>
-		/// Get a list of all found files
+		///     List of all known assemblies
 		/// </summary>
-		public IList<string> AddonFiles
-		{
-			get;
-		} = new List<string>();
+		public IList<Assembly> AddonAssemblies { get; } = new List<Assembly>();
 
 		/// <summary>
-		/// Specify how the composition is made, is used in the Run()
+		///     Get a list of all found files
 		/// </summary>
-		protected CompositionOptions CompositionOptionFlags
-		{
-			get;
-			set;
-		} = CompositionOptions.DisableSilentRejection | CompositionOptions.ExportCompositionService;
+		public IList<string> AddonFiles { get; } = new List<string>();
 
 		/// <summary>
-		/// Override this method to extend what is loaded into the Catalog
-		/// </summary>
-		protected virtual void ConfigureAggregateCatalog()
-		{
-			Log.Verbose().WriteLine("Configuring");
-			IsAggregateCatalogConfigured = true;
-        }
-
-		/// <summary>
-		/// Export an object
+		///     Export an object
 		/// </summary>
 		/// <typeparam name="T">Type to export</typeparam>
 		/// <param name="obj">object to add</param>
@@ -118,13 +89,13 @@ namespace Dapplo.Addons.Bootstrapper
 			if (!IsInitialized)
 			{
 				throw new InvalidOperationException("Bootstrapper is not initialized");
-            }
-			var contractName = AttributedModelServices.GetContractName(typeof(T));
+			}
+			var contractName = AttributedModelServices.GetContractName(typeof (T));
 			return Export(contractName, obj);
 		}
 
 		/// <summary>
-		/// Export an object
+		///     Export an object
 		/// </summary>
 		/// <typeparam name="T">Type to export</typeparam>
 		/// <param name="contractName">contractName under which the object of Type T is registered</param>
@@ -148,7 +119,7 @@ namespace Dapplo.Addons.Bootstrapper
 				Log.Debug().WriteLine("Exporting {0}", contractName);
 			}
 
-			string typeIdentity = AttributedModelServices.GetTypeIdentity(typeof(T));
+			var typeIdentity = AttributedModelServices.GetTypeIdentity(typeof (T));
 			if (metadata == null)
 			{
 				metadata = new Dictionary<string, object>();
@@ -163,7 +134,7 @@ namespace Dapplo.Addons.Bootstrapper
 			if (partDefinition != null && partDefinition.ExportDefinitions.Any())
 			{
 				var partMetadata = partDefinition.ExportDefinitions.First().Metadata;
-                foreach (var key in partMetadata.Keys)
+				foreach (var key in partMetadata.Keys)
 				{
 					if (!metadata.ContainsKey(key))
 					{
@@ -185,7 +156,6 @@ namespace Dapplo.Addons.Bootstrapper
 						}
 					}
 				}
-
 			}
 
 			// We probaby could use the export-definition from the partDefinition directly...
@@ -197,7 +167,7 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		/// Release an export which was previously added with the Export method
+		///     Release an export which was previously added with the Export method
 		/// </summary>
 		/// <param name="part">ComposablePart from Export call</param>
 		public void Release(ComposablePart part)
@@ -219,8 +189,128 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		/// Add an assembly to the AggregateCatalog.Catalogs
-		/// In english: make the items in the assembly discoverable
+		///     Fill all the imports in the object isntance
+		/// </summary>
+		/// <param name="importingObject">object to fill the imports for</param>
+		public void FillImports(object importingObject)
+		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException("Bootstrapper is not initialized");
+			}
+			if (Log.IsDebugEnabled())
+			{
+				Log.Debug().WriteLine("Filling imports of {0}", importingObject.GetType());
+			}
+			Container.SatisfyImportsOnce(importingObject);
+		}
+
+		/// <summary>
+		///     Simple "service-locater"
+		/// </summary>
+		/// <typeparam name="T">Type to locate</typeparam>
+		/// <returns>Lazy T</returns>
+		public Lazy<T> GetExport<T>()
+		{
+			if (Log.IsVerboseEnabled())
+			{
+				Log.Verbose().WriteLine("Getting export for {0}", typeof (T));
+			}
+			return Container.GetExport<T>();
+		}
+
+		/// <summary>
+		///     Simple "service-locater" with meta-data
+		/// </summary>
+		/// <typeparam name="T">Type to locate</typeparam>
+		/// <typeparam name="TMetaData">Type for the meta-data</typeparam>
+		/// <returns>Lazy T,TMetaData</returns>
+		public Lazy<T, TMetaData> GetExport<T, TMetaData>()
+		{
+			if (Log.IsVerboseEnabled())
+			{
+				Log.Verbose().WriteLine("Getting export for {0}", typeof (T));
+			}
+			return Container.GetExport<T, TMetaData>();
+		}
+
+		/// <summary>
+		///     Simple "service-locater" to get multiple exports
+		/// </summary>
+		/// <typeparam name="T">Type to locate</typeparam>
+		/// <returns>IEnumerable of Lazy T</returns>
+		public IEnumerable<Lazy<T>> GetExports<T>()
+		{
+			if (Log.IsVerboseEnabled())
+			{
+				Log.Verbose().WriteLine("Getting exports for {0}", typeof (T));
+			}
+			return Container.GetExports<T>();
+		}
+
+		/// <summary>
+		///     Simple "service-locater" to get multiple exports with meta-data
+		/// </summary>
+		/// <typeparam name="T">Type to locate</typeparam>
+		/// <typeparam name="TMetaData">Type for the meta-data</typeparam>
+		/// <returns>IEnumerable of Lazy T,TMetaData</returns>
+		public IEnumerable<Lazy<T, TMetaData>> GetExports<T, TMetaData>()
+		{
+			if (Log.IsVerboseEnabled())
+			{
+				Log.Verbose().WriteLine("Getting export for {0}", typeof (T));
+			}
+			return Container.GetExports<T, TMetaData>();
+		}
+
+		/// <summary>
+		///     Initialize the bootstrapper
+		/// </summary>
+		public virtual Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
+		{
+			Log.Debug().WriteLine("Initializing");
+			IsInitialized = true;
+			ConfigureAggregateCatalog();
+			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags, ExportProviders.ToArray());
+			// Make sure we export ourselves as the IServiceLocator
+			Export<IServiceLocator>(this);
+			return Task.FromResult(IsInitialized);
+		}
+
+		/// <summary>
+		///     Start the bootstrapper, initialize if needed
+		/// </summary>
+		public virtual async Task<bool> RunAsync(CancellationToken cancellationToken = default(CancellationToken))
+		{
+			Log.Debug().WriteLine("Starting");
+			if (!IsInitialized)
+			{
+				await InitializeAsync(cancellationToken);
+			}
+			if (!IsInitialized)
+			{
+				throw new NotSupportedException("Can't run if IsInitialized is false!");
+			}
+			Container.ComposeParts();
+			return IsInitialized;
+		}
+
+		/// <summary>
+		///     Stop the bootstrapper
+		/// </summary>
+		public virtual Task<bool> StopAsync(CancellationToken cancellationToken = default(CancellationToken))
+		{
+			if (IsInitialized)
+			{
+				Log.Debug().WriteLine("Stopped");
+				IsInitialized = false;
+			}
+			return Task.FromResult(!IsInitialized);
+		}
+
+		/// <summary>
+		///     Add an assembly to the AggregateCatalog.Catalogs
+		///     In english: make the items in the assembly discoverable
 		/// </summary>
 		/// <param name="assembly">Assembly to add</param>
 		public void Add(Assembly assembly)
@@ -234,8 +324,8 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		/// Add an AssemblyCatalog AggregateCatalog.Catalogs
-		/// But only if the AssemblyCatalog has parts
+		///     Add an AssemblyCatalog AggregateCatalog.Catalogs
+		///     But only if the AssemblyCatalog has parts
 		/// </summary>
 		/// <param name="assemblyCatalog">AssemblyCatalog to add</param>
 		public void Add(AssemblyCatalog assemblyCatalog)
@@ -256,7 +346,7 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		/// Add the assemblies (with parts) found in the specified directory
+		///     Add the assemblies (with parts) found in the specified directory
 		/// </summary>
 		/// <param name="directory">Directory to scan</param>
 		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
@@ -284,7 +374,7 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		/// Add the assembly for the specified type
+		///     Add the assembly for the specified type
 		/// </summary>
 		/// <param name="type">The assembly for the type is retrieved add added via the Add(Assembly) method</param>
 		public void Add(Type type)
@@ -294,7 +384,7 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		/// Add the ExportProvider to the export providers which are used in the CompositionContainer
+		///     Add the ExportProvider to the export providers which are used in the CompositionContainer
 		/// </summary>
 		/// <param name="exportProvider">ExportProvider</param>
 		public void Add(ExportProvider exportProvider)
@@ -304,128 +394,18 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		/// Fill all the imports in the object isntance
+		///     Override this method to extend what is loaded into the Catalog
 		/// </summary>
-		/// <param name="importingObject">object to fill the imports for</param>
-		public void FillImports(object importingObject)
+		protected virtual void ConfigureAggregateCatalog()
 		{
-			if (!IsInitialized)
-			{
-				throw new InvalidOperationException("Bootstrapper is not initialized");
-			}
-			if (Log.IsDebugEnabled())
-			{
-				Log.Debug().WriteLine("Filling imports of {0}", importingObject.GetType());
-			}
-			Container.SatisfyImportsOnce(importingObject);
-        }
-
-		/// <summary>
-		/// Simple "service-locater"
-		/// </summary>
-		/// <typeparam name="T">Type to locate</typeparam>
-		/// <returns>Lazy T</returns>
-		public Lazy<T> GetExport<T>()
-		{
-			if (Log.IsVerboseEnabled())
-			{
-				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
-			}
-			return Container.GetExport<T>();
-		}
-
-		/// <summary>
-		/// Simple "service-locater" with meta-data
-		/// </summary>
-		/// <typeparam name="T">Type to locate</typeparam>
-		/// <typeparam name="TMetaData">Type for the meta-data</typeparam>
-		/// <returns>Lazy T,TMetaData</returns>
-		public Lazy<T, TMetaData> GetExport<T, TMetaData>()
-		{
-			if (Log.IsVerboseEnabled())
-			{
-				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
-			}
-			return Container.GetExport<T, TMetaData>();
-		}
-
-		/// <summary>
-		/// Simple "service-locater" to get multiple exports
-		/// </summary>
-		/// <typeparam name="T">Type to locate</typeparam>
-		/// <returns>IEnumerable of Lazy T</returns>
-		public IEnumerable<Lazy<T>> GetExports<T>()
-		{
-			if (Log.IsVerboseEnabled())
-			{
-				Log.Verbose().WriteLine("Getting exports for {0}", typeof(T));
-			}
-			return Container.GetExports<T>();
-		}
-
-		/// <summary>
-		/// Simple "service-locater" to get multiple exports with meta-data
-		/// </summary>
-		/// <typeparam name="T">Type to locate</typeparam>
-		/// <typeparam name="TMetaData">Type for the meta-data</typeparam>
-		/// <returns>IEnumerable of Lazy T,TMetaData</returns>
-		public IEnumerable<Lazy<T, TMetaData>> GetExports<T, TMetaData>()
-		{
-			if (Log.IsVerboseEnabled())
-			{
-				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
-			}
-			return Container.GetExports<T, TMetaData>();
-		}
-
-		/// <summary>
-		/// Initialize the bootstrapper
-		/// </summary>
-		public virtual Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
-		{
-			Log.Debug().WriteLine("Initializing");
-			IsInitialized = true;
-			ConfigureAggregateCatalog();
-			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags, ExportProviders.ToArray());
-			// Make sure we export ourselves as the IServiceLocator
-			Export<IServiceLocator>(this);
-			return Task.FromResult(IsInitialized);
-		}
-
-		/// <summary>
-		/// Start the bootstrapper, initialize if needed
-		/// </summary>
-		public virtual async Task<bool> RunAsync(CancellationToken cancellationToken = default(CancellationToken))
-		{
-			Log.Debug().WriteLine("Starting");
-			if (!IsInitialized)
-			{
-				await InitializeAsync(cancellationToken);
-            }
-			if (!IsInitialized)
-			{
-				throw new NotSupportedException("Can't run if IsInitialized is false!");
-			}
-			Container.ComposeParts();
-			return IsInitialized;
-		}
-
-		/// <summary>
-		/// Stop the bootstrapper
-		/// </summary>
-		public virtual Task<bool> StopAsync(CancellationToken cancellationToken = default(CancellationToken))
-		{
-			if (IsInitialized)
-			{
-				Log.Debug().WriteLine("Stopped");
-				IsInitialized = false;
-			}
-			return Task.FromResult(!IsInitialized);
+			Log.Verbose().WriteLine("Configuring");
+			IsAggregateCatalogConfigured = true;
 		}
 
 		#region IDisposable Support
+
 		// To detect redundant calls
-		private bool _disposedValue = false;
+		private bool _disposedValue;
 
 		protected virtual void Dispose(bool disposing)
 		{
@@ -445,13 +425,14 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		/// Implement IDisposable
+		///     Implement IDisposable
 		/// </summary>
 		public void Dispose()
 		{
 			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
 			Dispose(true);
 		}
+
 		#endregion
 	}
 }

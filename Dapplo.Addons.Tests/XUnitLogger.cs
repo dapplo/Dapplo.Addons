@@ -1,81 +1,64 @@
-﻿/*
-	Dapplo - building blocks for desktop applications
-	Copyright (C) 2015-2016 Dapplo
+﻿//  Dapplo - building blocks for desktop applications
+//  Copyright (C) 2015-2016 Dapplo
+// 
+//  For more information see: http://dapplo.net/
+//  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+// 
+//  This file is part of Dapplo.Addons
+// 
+//  Dapplo.Addons is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU Lesser General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+// 
+//  Dapplo.Addons is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU Lesser General Public License for more details.
+// 
+//  You should have Config a copy of the GNU Lesser General Public License
+//  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-	For more information see: http://dapplo.net/
-	Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+#region using
 
-	This file is part of Dapplo.LogFacade
-
-	Dapplo.LogFacade is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	Dapplo.LogFacade is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with Dapplo.LogFacade. If not, see <http://www.gnu.org/licenses/>.
- */
-
-using Dapplo.LogFacade;
 using System;
 using System.Runtime.Remoting.Messaging;
+using Dapplo.LogFacade;
 using Xunit.Abstractions;
+
+#endregion
 
 namespace Dapplo.Addons.Tests
 {
 	/// <summary>
-	/// xUnit starts multiple tests parallel, and due to this xUnit won't capture nomale trace output correctly.
-	/// This is where their ITestOutputHelper comes around, see <a href="https://xunit.github.io/docs/capturing-output.html">here</a>
-	/// but Dapplo.LogFacade can only have one logger, so this class solves this issue.
-	/// This class solves the problem by registering the ITestOutputHelper in the CallContext.
-	/// Every log statement will retrieve the ITestOutputHelper from the context and use it to log.
+	///     xUnit starts multiple tests parallel, and due to this xUnit won't capture nomale trace output correctly.
+	///     This is where their ITestOutputHelper comes around, see
+	///     <a href="https://xunit.github.io/docs/capturing-output.html">here</a>
+	///     but Dapplo.LogFacade can only have one logger, so this class solves this issue.
+	///     This class solves the problem by registering the ITestOutputHelper in the CallContext.
+	///     Every log statement will retrieve the ITestOutputHelper from the context and use it to log.
 	/// </summary>
 	public class XUnitLogger : ILogger
 	{
 		/// <summary>
-		/// Register the XUnitLogger,  as the global LogFacade logger
-		/// This also places the ITestOutputHelper in the CallContext, so the output is mapped to the xUnit test
-		/// </summary>
-		/// <param name="testOutputHelper">ITestOutputHelper</param>
-		/// <param name="level">LogLevel, when none is given the LogSettings.DefaultLevel is used</param>
-		public static void RegisterLogger(ITestOutputHelper testOutputHelper, LogLevel level = default(LogLevel))
-		{
-			CallContext.LogicalSetData(typeof(ITestOutputHelper).Name, testOutputHelper);
-			if (level != LogLevel.None)
-			{
-				CallContext.LogicalSetData(typeof(LogLevel).Name, level);
-			}
-			if (!(LogSettings.Logger is XUnitLogger))
-			{
-				LogSettings.Logger = new XUnitLogger();
-			}
-		}
-
-		/// <summary>
-		/// Prevent the constructor from being use elsewhere
+		///     Prevent the constructor from being use elsewhere
 		/// </summary>
 		private XUnitLogger()
 		{
-
 		}
 
 		/// <summary>
-		/// LogLevel, this can give a different result pro xUnit test...
-		/// It will depend on the RegisterLogger value which was used in the current xUnit test
+		///     LogLevel, this can give a different result pro xUnit test...
+		///     It will depend on the RegisterLogger value which was used in the current xUnit test
 		/// </summary>
 		public LogLevel Level
 		{
 			get
 			{
-				var level = CallContext.LogicalGetData(typeof(LogLevel).Name);
+				var level = CallContext.LogicalGetData(typeof (LogLevel).Name);
 				if (level != null)
 				{
-					var logLevel = (LogLevel)level;
+					var logLevel = (LogLevel) level;
 					if (logLevel != LogLevel.None)
 					{
 						return logLevel;
@@ -83,15 +66,12 @@ namespace Dapplo.Addons.Tests
 				}
 				return LogSettings.DefaultLevel;
 			}
-			set
-			{
-				CallContext.LogicalSetData(typeof(LogLevel).Name, value);
-			}
+			set { CallContext.LogicalSetData(typeof (LogLevel).Name, value); }
 		}
 
 		/// <summary>
-		/// If the level is enabled, this returns true
-		/// The level depends on what the xUnit test used in the RegisterLogger
+		///     If the level is enabled, this returns true
+		///     The level depends on what the xUnit test used in the RegisterLogger
 		/// </summary>
 		/// <param name="level">LogLevel</param>
 		/// <returns>true if the level is enabled</returns>
@@ -102,24 +82,42 @@ namespace Dapplo.Addons.Tests
 
 		public void Write(LogInfo logInfo, string messageTemplate, params object[] logParameters)
 		{
-			var testOutputHelper = CallContext.LogicalGetData(typeof(ITestOutputHelper).Name) as ITestOutputHelper;
+			var testOutputHelper = CallContext.LogicalGetData(typeof (ITestOutputHelper).Name) as ITestOutputHelper;
 			if (testOutputHelper == null)
 			{
-				throw new ArgumentNullException("Couldn't find a ITestOutputHelper in the CallContext", nameof(testOutputHelper));
+				throw new ArgumentNullException(nameof(testOutputHelper), "Couldn't find a ITestOutputHelper in the CallContext");
 			}
 			testOutputHelper.WriteLine($"{logInfo} - {messageTemplate}", logParameters);
 		}
 
 		public void Write(LogInfo logInfo, Exception exception, string messageTemplate = null, params object[] logParameters)
 		{
-			var testOutputHelper = CallContext.LogicalGetData(typeof(ITestOutputHelper).Name) as ITestOutputHelper;
+			var testOutputHelper = CallContext.LogicalGetData(typeof (ITestOutputHelper).Name) as ITestOutputHelper;
 			if (testOutputHelper == null)
 			{
-				throw new ArgumentNullException("Couldn't find a ITestOutputHelper in the CallContext", nameof(testOutputHelper));
+				throw new ArgumentNullException(nameof(testOutputHelper), "Couldn't find a ITestOutputHelper in the CallContext");
 			}
 			testOutputHelper.WriteLine($"{logInfo} - {messageTemplate}", logParameters);
 			testOutputHelper.WriteLine(exception.ToString());
 		}
-	}
 
+		/// <summary>
+		///     Register the XUnitLogger,  as the global LogFacade logger
+		///     This also places the ITestOutputHelper in the CallContext, so the output is mapped to the xUnit test
+		/// </summary>
+		/// <param name="testOutputHelper">ITestOutputHelper</param>
+		/// <param name="level">LogLevel, when none is given the LogSettings.DefaultLevel is used</param>
+		public static void RegisterLogger(ITestOutputHelper testOutputHelper, LogLevel level = default(LogLevel))
+		{
+			CallContext.LogicalSetData(typeof (ITestOutputHelper).Name, testOutputHelper);
+			if (level != LogLevel.None)
+			{
+				CallContext.LogicalSetData(typeof (LogLevel).Name, level);
+			}
+			if (!(LogSettings.Logger is XUnitLogger))
+			{
+				LogSettings.Logger = new XUnitLogger();
+			}
+		}
+	}
 }
