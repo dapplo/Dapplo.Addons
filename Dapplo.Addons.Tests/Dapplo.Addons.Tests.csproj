@@ -36,7 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Dapplo.Config">
-      <HintPath>..\packages\Dapplo.Config.0.3.7.0\lib\net46\Dapplo.Config.dll</HintPath>
+      <HintPath>..\packages\Dapplo.Config.0.3.8.0\lib\net46\Dapplo.Config.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Dapplo.LogFacade">
