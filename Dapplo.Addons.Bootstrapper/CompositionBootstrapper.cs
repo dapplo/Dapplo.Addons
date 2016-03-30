@@ -366,9 +366,9 @@ namespace Dapplo.Addons.Bootstrapper
 					var assemblyCatalog = new AssemblyCatalog(file);
 					Add(assemblyCatalog);
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
-					// Ignore
+					Log.Error().WriteLine(ex, "Problem loading assembly from {0}", file);
 				}
 			}
 		}
