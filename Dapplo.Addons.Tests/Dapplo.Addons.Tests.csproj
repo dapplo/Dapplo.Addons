@@ -40,7 +40,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Dapplo.LogFacade">
-      <HintPath>..\packages\Dapplo.LogFacade.0.2.20.0\lib\net452\Dapplo.LogFacade.dll</HintPath>
+      <HintPath>..\packages\Dapplo.LogFacade.0.2.20\lib\net45\Dapplo.LogFacade.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
