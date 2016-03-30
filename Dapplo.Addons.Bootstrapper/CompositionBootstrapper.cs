@@ -366,6 +366,19 @@ namespace Dapplo.Addons.Bootstrapper
 					var assemblyCatalog = new AssemblyCatalog(file);
 					Add(assemblyCatalog);
 				}
+				catch (ReflectionTypeLoadException ex)
+				{
+					Log.Error().WriteLine(ex, "Couldn't load {0} reasons follow.", file);
+					var messages = new HashSet<string>();
+					foreach (var loaderException in ex.LoaderExceptions)
+					{
+						messages.Add(loaderException.Message);
+					}
+					foreach (var exceptionMessage in messages)
+					{
+						Log.Error().WriteLine(exceptionMessage);
+					}
+				}
 				catch (Exception ex)
 				{
 					Log.Error().WriteLine(ex, "Problem loading assembly from {0}", file);
