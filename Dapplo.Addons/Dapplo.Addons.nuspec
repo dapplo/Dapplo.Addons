@@ -11,10 +11,10 @@
         <description>Interfaces for addons loaded by Dapplo.Addons.Container</description>
 		<summary>Interfaces for addons loaded by Dapplo.Addons.Container</summary>
         <language>en-us</language>
-		<copyright>Dapplo</copyright>
+		<copyright>$author$</copyright>
 		<tags>MEF addon</tags>
 		<frameworkAssemblies>
-			<frameworkAssembly assemblyName="System.ComponentModel.Composition" targetFramework="net451" />
+			<frameworkAssembly assemblyName="System.ComponentModel.Composition" targetFramework="net452" />
 		</frameworkAssemblies>
 	</metadata>
 </package>

@@ -121,9 +121,22 @@ namespace Dapplo.Addons.Bootstrapper
 				{
 					IniConfigForExport = IniConfig.Current;
 				}
+
+				if (IniConfigForExport != null)
+				{
+					Log.Verbose().WriteLine("Loading IniConfig");
+					await IniConfigForExport.ReloadAsync(true, cancellationToken);
+				}
+
 				if (LanguageLoaderForExport == null)
 				{
 					LanguageLoaderForExport = LanguageLoader.Current;
+				}
+
+				if (LanguageLoaderForExport != null)
+				{
+					Log.Verbose().WriteLine("Loading Languages");
+					await LanguageLoaderForExport.ReloadAsync(cancellationToken);
 				}
 
 				await base.InitializeAsync(cancellationToken);

@@ -11,13 +11,13 @@
         <description>A bootstrapper which loads Dapplo.Addons addons</description>
 		<summary>A bootstrapper which loads Dapplo.Addons addons</summary>
         <language>en-us</language>
-		<copyright>Dapplo</copyright>
+		<copyright>$author$</copyright>
 		<tags>MEF bootstrapper addon</tags>
 		<dependencies>
 			<dependency id="Dapplo.Addons" version="$version$" />
 		</dependencies>
 		<frameworkAssemblies>
-			<frameworkAssembly assemblyName="System.ComponentModel.Composition" targetFramework="net451" />
+			<frameworkAssembly assemblyName="System.ComponentModel.Composition" targetFramework="net452" />
 		</frameworkAssemblies>
 	</metadata>
 </package>

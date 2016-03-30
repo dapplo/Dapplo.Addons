@@ -35,11 +35,11 @@
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Dapplo.Config, Version=0.2.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Config.0.2.7.0\lib\net452\Dapplo.Config.dll</HintPath>
+    <Reference Include="Dapplo.Config">
+      <HintPath>..\packages\Dapplo.Config.0.3.7.0\lib\net46\Dapplo.Config.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Dapplo.LogFacade, Version=0.2.20.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Dapplo.LogFacade">
       <HintPath>..\packages\Dapplo.LogFacade.0.2.20.0\lib\net452\Dapplo.LogFacade.dll</HintPath>
       <Private>True</Private>
     </Reference>

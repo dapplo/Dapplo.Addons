@@ -122,7 +122,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 					};
 
 					// Create instance
-					var instance = _iniConfig.RegisterAndGet(contractType);
+					var instance = _iniConfig.Get(contractType);
 
 					// Make sure it's exported
 					var contractName = AttributedModelServices.GetContractName(contractType);
