@@ -16,7 +16,7 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU Lesser General Public License for more details.
 // 
-//  You should have Config a copy of the GNU Lesser General Public License
+//  You should have a copy of the GNU Lesser General Public License
 //  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
 #region using
@@ -34,7 +34,7 @@ using Dapplo.LogFacade;
 namespace Dapplo.Addons.Bootstrapper
 {
 	/// <summary>
-	///     A bootstrapper, which has functionality for the startup & shutdown actions
+	///     A bootstrapper, which has functionality for the startup and shutdown actions
 	/// </summary>
 	public class StartupShutdownBootstrapper : SimpleBootstrapper
 	{
@@ -192,6 +192,11 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 		}
 
+		/// <summary>
+		///     Stop the Bootstrapper
+		/// </summary>
+		/// <param name="cancellationToken">CancellationToken</param>
+		/// <returns>Task</returns>
 		public override async Task<bool> StopAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			Log.Debug().WriteLine("Stopping bootstrapper");

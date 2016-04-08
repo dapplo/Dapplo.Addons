@@ -16,7 +16,7 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU Lesser General Public License for more details.
 // 
-//  You should have Config a copy of the GNU Lesser General Public License
+//  You should have a copy of the GNU Lesser General Public License
 //  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
 #region using
@@ -35,7 +35,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 {
 	/// <summary>
 	///     This ExportProvider takes care of resolving MEF imports for the IniConfig
-	///     It will register & create the ILanguage derrived class, and return the export so it can be injected
+	///     It will register and create the ILanguage derrived class, and return the export so it can be injected
 	/// </summary>
 	public class LanguageExportProvider : ExportProvider
 	{

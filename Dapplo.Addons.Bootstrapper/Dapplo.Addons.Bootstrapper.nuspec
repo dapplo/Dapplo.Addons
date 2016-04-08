@@ -4,8 +4,8 @@
         <id>$id$</id>
         <version>$version$</version>
         <authors>$author$</authors>
-        <licenseUrl>https://en.wikipedia.org/wiki/GNU_General_Public_License</licenseUrl>
-        <projectUrl>http://www.dapplo.net/blocks/Dapplo.Addons.html</projectUrl>
+        <licenseUrl>http://www.gnu.org/licenses/lgpl-3.0.html</licenseUrl>
+        <projectUrl>http://www.dapplo.net/blocks/Dapplo.Addons</projectUrl>
         <iconUrl>http://www.dapplo.net/favicon.ico</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>A bootstrapper which loads Dapplo.Addons addons</description>
@@ -20,4 +20,9 @@
 			<frameworkAssembly assemblyName="System.ComponentModel.Composition" targetFramework="net452" />
 		</frameworkAssemblies>
 	</metadata>
+	<files>
+		<file src="bin\release\$id$.pdb" target="lib\net452" />
+		<file src="bin\release\$id$.xml" target="lib\net452" />
+		<file src="bin\release\$id$.dll" target="lib\net452" />
+	</files>
 </package>

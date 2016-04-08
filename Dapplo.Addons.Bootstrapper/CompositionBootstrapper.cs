@@ -16,7 +16,7 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU Lesser General Public License for more details.
 // 
-//  You should have Config a copy of the GNU Lesser General Public License
+//  You should have a copy of the GNU Lesser General Public License
 //  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
 #region using
@@ -44,8 +44,6 @@ namespace Dapplo.Addons.Bootstrapper
 	public abstract class CompositionBootstrapper : IBootstrapper
 	{
 		private static readonly LogSource Log = new LogSource();
-		protected bool IsAggregateCatalogConfigured;
-		protected bool IsInitialized;
 
 		/// <summary>
 		///     The AggregateCatalog contains all the catalogs with the assemblies in it.
@@ -66,6 +64,16 @@ namespace Dapplo.Addons.Bootstrapper
 		///     List of ExportProviders
 		/// </summary>
 		protected IList<ExportProvider> ExportProviders { get; } = new List<ExportProvider>();
+
+		/// <summary>
+		///     Specify if the Aggregate Catalog is configured
+		/// </summary>
+		protected bool IsAggregateCatalogConfigured { get; set; }
+
+		/// <summary>
+		///     Is this initialized?
+		/// </summary>
+		protected bool IsInitialized { get; set; }
 
 		/// <summary>
 		///     List of all known assemblies
@@ -420,6 +428,10 @@ namespace Dapplo.Addons.Bootstrapper
 		// To detect redundant calls
 		private bool _disposedValue;
 
+		/// <summary>
+		///     Implementation of the dispose pattern
+		/// </summary>
+		/// <param name="disposing">bool</param>
 		protected virtual void Dispose(bool disposing)
 		{
 			if (!_disposedValue)

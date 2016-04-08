@@ -16,7 +16,7 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU Lesser General Public License for more details.
 // 
-//  You should have Config a copy of the GNU Lesser General Public License
+//  You should have a copy of the GNU Lesser General Public License
 //  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
 #region using
@@ -34,6 +34,9 @@ namespace Dapplo.Addons
 	[MetadataAttribute, AttributeUsage(AttributeTargets.Class, Inherited = false)]
 	public class StartupActionAttribute : ModuleAttribute, IStartupActionMetadata
 	{
+		/// <summary>
+		///     Default constructor
+		/// </summary>
 		public StartupActionAttribute() : base(typeof (IStartupAction))
 		{
 		}

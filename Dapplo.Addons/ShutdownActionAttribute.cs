@@ -16,7 +16,7 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU Lesser General Public License for more details.
 // 
-//  You should have Config a copy of the GNU Lesser General Public License
+//  You should have a copy of the GNU Lesser General Public License
 //  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
 #region using
@@ -35,14 +35,24 @@ namespace Dapplo.Addons
 	[AttributeUsage(AttributeTargets.Class, Inherited = false)]
 	public class ShutdownActionAttribute : ModuleAttribute, IShutdownActionMetadata
 	{
+		/// <summary>
+		///     Default constructor
+		/// </summary>
 		public ShutdownActionAttribute() : base(typeof (IShutdownAction))
 		{
 		}
 
+		/// <summary>
+		///     Constructor with a contract name
+		/// </summary>
+		/// <param name="contractName"></param>
 		public ShutdownActionAttribute(string contractName) : base(contractName, typeof (IShutdownAction))
 		{
 		}
 
+		/// <summary>
+		///     Order for the shutdowns to be called
+		/// </summary>
 		public int ShutdownOrder { get; set; }
 	}
 }

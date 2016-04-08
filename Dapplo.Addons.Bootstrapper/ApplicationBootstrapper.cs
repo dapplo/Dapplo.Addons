@@ -16,7 +16,7 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU Lesser General Public License for more details.
 // 
-//  You should have Config a copy of the GNU Lesser General Public License
+//  You should have a copy of the GNU Lesser General Public License
 //  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
 #region using
@@ -153,6 +153,10 @@ namespace Dapplo.Addons.Bootstrapper
 		// To detect redundant calls
 		private readonly bool _disposedValue = false;
 
+		/// <summary>
+		///     Implementation of the dispose pattern
+		/// </summary>
+		/// <param name="disposing">bool</param>
 		protected override void Dispose(bool disposing)
 		{
 			// Call other stuff first, the mutex should protect untill everything is shutdown
