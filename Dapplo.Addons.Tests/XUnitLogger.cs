@@ -22,24 +22,26 @@
 #region using
 
 using System;
-using System.Runtime.Remoting.Messaging;
+using System.Threading;
 using Dapplo.LogFacade;
 using Xunit.Abstractions;
+using Dapplo.LogFacade.Loggers;
 
 #endregion
 
 namespace Dapplo.Addons.Tests
 {
 	/// <summary>
-	///     xUnit starts multiple tests parallel, and due to this xUnit won't capture nomale trace output correctly.
-	///     This is where their ITestOutputHelper comes around, see
-	///     <a href="https://xunit.github.io/docs/capturing-output.html">here</a>
-	///     but Dapplo.LogFacade can only have one logger, so this class solves this issue.
+	///     xUnit will have tests run parallel, and due to this it won't capture trace output correctly.
+	///     This is where their ITestOutputHelper comes around, but Dapplo.LogFacade can only have one logger.
 	///     This class solves the problem by registering the ITestOutputHelper in the CallContext.
 	///     Every log statement will retrieve the ITestOutputHelper from the context and use it to log.
 	/// </summary>
-	public class XUnitLogger : ILogger
+	public class XUnitLogger : AbstractLogger
 	{
+		private static readonly AsyncLocal<ITestOutputHelper> TestOutputHelperAsyncLocal = new AsyncLocal<ITestOutputHelper>();
+		private static readonly AsyncLocal<LogLevel> LogLevelAsyncLocal = new AsyncLocal<LogLevel>();
+
 		/// <summary>
 		///     Prevent the constructor from being use elsewhere
 		/// </summary>
@@ -51,22 +53,13 @@ namespace Dapplo.Addons.Tests
 		///     LogLevel, this can give a different result pro xUnit test...
 		///     It will depend on the RegisterLogger value which was used in the current xUnit test
 		/// </summary>
-		public LogLevel Level
+		public override LogLevel Level
 		{
 			get
 			{
-				var level = CallContext.LogicalGetData(typeof (LogLevel).Name);
-				if (level != null)
-				{
-					var logLevel = (LogLevel) level;
-					if (logLevel != LogLevel.None)
-					{
-						return logLevel;
-					}
-				}
-				return LogSettings.DefaultLevel;
+				return LogLevelAsyncLocal.Value;
 			}
-			set { CallContext.LogicalSetData(typeof (LogLevel).Name, value); }
+			set { LogLevelAsyncLocal.Value = value; }
 		}
 
 		/// <summary>
@@ -75,14 +68,14 @@ namespace Dapplo.Addons.Tests
 		/// </summary>
 		/// <param name="level">LogLevel</param>
 		/// <returns>true if the level is enabled</returns>
-		public bool IsLogLevelEnabled(LogLevel level)
+		public override bool IsLogLevelEnabled(LogLevel level)
 		{
 			return level != LogLevel.None && level >= Level;
 		}
 
-		public void Write(LogInfo logInfo, string messageTemplate, params object[] logParameters)
+		public override void Write(LogInfo logInfo, string messageTemplate, params object[] logParameters)
 		{
-			var testOutputHelper = CallContext.LogicalGetData(typeof (ITestOutputHelper).Name) as ITestOutputHelper;
+			var testOutputHelper = TestOutputHelperAsyncLocal.Value;
 			if (testOutputHelper == null)
 			{
 				throw new ArgumentNullException(nameof(testOutputHelper), "Couldn't find a ITestOutputHelper in the CallContext");
@@ -90,9 +83,9 @@ namespace Dapplo.Addons.Tests
 			testOutputHelper.WriteLine($"{logInfo} - {messageTemplate}", logParameters);
 		}
 
-		public void Write(LogInfo logInfo, Exception exception, string messageTemplate = null, params object[] logParameters)
+		public override void Write(LogInfo logInfo, Exception exception, string messageTemplate = null, params object[] logParameters)
 		{
-			var testOutputHelper = CallContext.LogicalGetData(typeof (ITestOutputHelper).Name) as ITestOutputHelper;
+			var testOutputHelper = TestOutputHelperAsyncLocal.Value;
 			if (testOutputHelper == null)
 			{
 				throw new ArgumentNullException(nameof(testOutputHelper), "Couldn't find a ITestOutputHelper in the CallContext");
@@ -109,11 +102,8 @@ namespace Dapplo.Addons.Tests
 		/// <param name="level">LogLevel, when none is given the LogSettings.DefaultLevel is used</param>
 		public static void RegisterLogger(ITestOutputHelper testOutputHelper, LogLevel level = default(LogLevel))
 		{
-			CallContext.LogicalSetData(typeof (ITestOutputHelper).Name, testOutputHelper);
-			if (level != LogLevel.None)
-			{
-				CallContext.LogicalSetData(typeof (LogLevel).Name, level);
-			}
+			TestOutputHelperAsyncLocal.Value = testOutputHelper;
+			LogLevelAsyncLocal.Value = level == LogLevel.None ? LogSettings.DefaultLevel : level;
 			if (!(LogSettings.Logger is XUnitLogger))
 			{
 				LogSettings.Logger = new XUnitLogger();
