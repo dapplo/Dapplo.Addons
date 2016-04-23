@@ -4,7 +4,7 @@
 # 3: Coveralls.net to export the generated OpenCover report to coveralls.io (if COVERALLS_REPO_TOKEN available)
 
 $projectName = (gci *.Sln).BaseName
-$filter="-filter:+`"[$projectName]*`""
+$filter="-filter:+`"[$projectName]* +[$projectName.Bootstrapper]*`""
 $opencoverPath = ((gci packages\opencover* | sort-object name)[-1]).Fullname
 $xunitrunnerPath = ((gci packages\xunit.runner.console* | sort-object name)[-1]).Fullname
 $output="coverage.xml"

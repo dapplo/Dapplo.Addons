@@ -18,7 +18,7 @@ before_build:
   - nuget restore
   - ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { $env:is_not_pr = "true"; }
 before_package:
-  - del /S /Q packages\OpenCover.4.6.519\SampleSln packages\OpenCover.4.6.519\Samples
+  - ps: Remove-Item packages\OpenCover* -include ("*.pdb", "*.sln", "*.csproj") -recurse
   - GitLink .\
 after_test:
 # This runs the tests with OpenCover and publishes the report to Coverall
