@@ -33,7 +33,7 @@ using Dapplo.LogFacade;
 
 namespace Dapplo.Addons.TestAddon
 {
-	[StartupAction(AwaitStart = false)]
+	[StartupAction(AwaitStart = false, StartupOrder = 1)]
 	[ShutdownAction]
 	public class SomeAddon : IStartupAction, IShutdownAction
 	{

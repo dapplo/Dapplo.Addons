@@ -43,6 +43,7 @@ namespace Dapplo.Addons.Bootstrapper
 	/// </summary>
 	public abstract class CompositionBootstrapper : IBootstrapper
 	{
+		private const string NotInitialized = "Bootstrapper is not initialized";
 		private static readonly LogSource Log = new LogSource();
 
 		/// <summary>
@@ -96,7 +97,7 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			if (!IsInitialized)
 			{
-				throw new InvalidOperationException("Bootstrapper is not initialized");
+				throw new InvalidOperationException(NotInitialized);
 			}
 			var contractName = AttributedModelServices.GetContractName(typeof (T));
 			return Export(contractName, obj);
@@ -114,7 +115,7 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			if (!IsInitialized)
 			{
-				throw new InvalidOperationException("Bootstrapper is not initialized");
+				throw new InvalidOperationException(NotInitialized);
 			}
 
 			if (obj == null)
@@ -182,7 +183,7 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			if (!IsInitialized)
 			{
-				throw new InvalidOperationException("Bootstrapper is not initialized");
+				throw new InvalidOperationException(NotInitialized);
 			}
 
 			if (Log.IsDebugEnabled())
@@ -204,7 +205,7 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			if (!IsInitialized)
 			{
-				throw new InvalidOperationException("Bootstrapper is not initialized");
+				throw new InvalidOperationException(NotInitialized);
 			}
 			if (Log.IsDebugEnabled())
 			{
@@ -220,6 +221,10 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <returns>Lazy T</returns>
 		public Lazy<T> GetExport<T>()
 		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
 			if (Log.IsVerboseEnabled())
 			{
 				Log.Verbose().WriteLine("Getting export for {0}", typeof (T));
@@ -235,6 +240,10 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <returns>Lazy T,TMetaData</returns>
 		public Lazy<T, TMetaData> GetExport<T, TMetaData>()
 		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
 			if (Log.IsVerboseEnabled())
 			{
 				Log.Verbose().WriteLine("Getting export for {0}", typeof (T));
@@ -249,6 +258,10 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <returns>IEnumerable of Lazy T</returns>
 		public IEnumerable<Lazy<T>> GetExports<T>()
 		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
 			if (Log.IsVerboseEnabled())
 			{
 				Log.Verbose().WriteLine("Getting exports for {0}", typeof (T));
@@ -264,6 +277,10 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <returns>IEnumerable of Lazy T,TMetaData</returns>
 		public IEnumerable<Lazy<T, TMetaData>> GetExports<T, TMetaData>()
 		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
 			if (Log.IsVerboseEnabled())
 			{
 				Log.Verbose().WriteLine("Getting export for {0}", typeof (T));

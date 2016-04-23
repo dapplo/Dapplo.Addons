@@ -49,8 +49,11 @@ namespace Dapplo.Addons.Tests
 		[Fact]
 		public void TestConstructorWithMutexAndCleanup()
 		{
-			var bootstrapper = new ApplicationBootstrapper("Test", Guid.NewGuid().ToString());
-			bootstrapper.Dispose();
+			using (var bootstrapper = new ApplicationBootstrapper("Test", Guid.NewGuid().ToString()))
+			{
+				Assert.True(bootstrapper.IsMutexLocked);
+				Assert.Throws<InvalidOperationException>(() => bootstrapper.GetExports<TestApplicationBootstrapper>());
+			}
 		}
 	}
 }

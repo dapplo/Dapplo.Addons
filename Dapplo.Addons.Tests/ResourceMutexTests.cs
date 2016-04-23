@@ -69,6 +69,14 @@ namespace Dapplo.Addons.Tests
 		}
 
 		[Fact]
+		public void TestMutex_Finalizer()
+		{
+			var resourceMutex = ResourceMutex.Create(MutexId, "TestMutex_Finalizer");
+			Assert.NotNull(resourceMutex);
+			Assert.True(resourceMutex.IsLocked);
+		}
+
+		[Fact]
 		public void TestMutex_LockTwice()
 		{
 			using (var resourceMutex = ResourceMutex.Create(MutexId, "Call1"))
