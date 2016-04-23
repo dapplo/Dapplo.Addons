@@ -38,7 +38,7 @@ namespace Dapplo.Addons.Bootstrapper
 	/// </summary>
 	public class ResourceMutex : IDisposable
 	{
-		private static readonly LogSource Log = new LogSource();
+		private static LogSource Log = new LogSource();
 		private readonly string _mutexId;
 		private readonly string _resourceName;
 		private Mutex _applicationMutex;
@@ -162,6 +162,8 @@ namespace Dapplo.Addons.Bootstrapper
 		/// </summary>
 		~ResourceMutex()
 		{
+			// Prevent logstatements in finalizer
+			Log = null;
 			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
 			Dispose(false);
 		}
