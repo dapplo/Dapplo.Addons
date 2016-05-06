@@ -106,12 +106,42 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <summary>
 		///     Export an object
 		/// </summary>
+		/// <param name="type">Type to export</param>
+		/// <param name="obj">object to add</param>
+		/// <param name="metadata">Metadata for the export</param>
+		/// <returns>ComposablePart, this can be used to remove the export later</returns>
+		public ComposablePart Export(Type type, object obj, IDictionary<string, object> metadata = null)
+		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
+			var contractName = AttributedModelServices.GetContractName(type);
+			return Export(contractName, obj);
+		}
+
+		/// <summary>
+		///     Export an object
+		/// </summary>
 		/// <typeparam name="T">Type to export</typeparam>
 		/// <param name="contractName">contractName under which the object of Type T is registered</param>
 		/// <param name="obj">object to add</param>
 		/// <param name="metadata">Metadata for the export</param>
 		/// <returns>ComposablePart, this can be used to remove the export later</returns>
 		public ComposablePart Export<T>(string contractName, T obj, IDictionary<string, object> metadata = null)
+		{
+			return Export(typeof(T), contractName, obj, metadata);
+		}
+
+		/// <summary>
+		///     Export an object
+		/// </summary>
+		/// <param name="type">Type to export</param>
+		/// <param name="contractName">contractName under which the object of Type T is registered</param>
+		/// <param name="obj">object to add</param>
+		/// <param name="metadata">Metadata for the export</param>
+		/// <returns>ComposablePart, this can be used to remove the export later</returns>
+		public ComposablePart Export(Type type, string contractName, object obj, IDictionary<string, object> metadata = null)
 		{
 			if (!IsInitialized)
 			{
@@ -128,7 +158,7 @@ namespace Dapplo.Addons.Bootstrapper
 				Log.Debug().WriteLine("Exporting {0}", contractName);
 			}
 
-			var typeIdentity = AttributedModelServices.GetTypeIdentity(typeof (T));
+			var typeIdentity = AttributedModelServices.GetTypeIdentity(type);
 			if (metadata == null)
 			{
 				metadata = new Dictionary<string, object>();
@@ -249,6 +279,26 @@ namespace Dapplo.Addons.Bootstrapper
 				Log.Verbose().WriteLine("Getting export for {0}", typeof (T));
 			}
 			return Container.GetExport<T, TMetaData>();
+		}
+
+		/// <summary>
+		///     Simple "service-locater"
+		/// </summary>
+		/// <param name="type">Type to locate</param>
+		/// <param name="contractname">Name of the contract, null or an empty string</param>
+		/// <returns>object for type</returns>
+		public object GetExport(Type type, string contractname = "")
+		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
+			if (Log.IsVerboseEnabled())
+			{
+				Log.Verbose().WriteLine("Getting export for {0}", type);
+			}
+			var lazyResult = Container.GetExports(type, null, contractname).FirstOrDefault();
+			return lazyResult?.Value;
 		}
 
 		/// <summary>

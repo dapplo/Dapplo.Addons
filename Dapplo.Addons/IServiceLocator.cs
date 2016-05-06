@@ -49,12 +49,31 @@ namespace Dapplo.Addons
 		/// <summary>
 		///     Export an object
 		/// </summary>
+		/// <param name="type">Type to export</param>
+		/// <param name="obj">object to add</param>
+		/// <param name="metadata">Metadata for the export</param>
+		/// <returns>ComposablePart, this can be used to remove the export later</returns>
+		ComposablePart Export(Type type, object obj, IDictionary<string, object> metadata = null);
+
+		/// <summary>
+		///     Export an object
+		/// </summary>
 		/// <typeparam name="T">Type to export</typeparam>
 		/// <param name="contractName">contractName under which the object of Type T is registered</param>
 		/// <param name="obj">object to add</param>
 		/// <param name="metadata">Metadata for the export</param>
 		/// <returns>ComposablePart, this can be used to remove the export later</returns>
 		ComposablePart Export<T>(string contractName, T obj, IDictionary<string, object> metadata = null);
+
+		/// <summary>
+		///     Export an object
+		/// </summary>
+		/// <param name="type">Type to export</param>
+		/// <param name="contractName">contractName under which the object of Type T is registered</param>
+		/// <param name="obj">object to add</param>
+		/// <param name="metadata">Metadata for the export</param>
+		/// <returns>ComposablePart, this can be used to remove the export later</returns>
+		ComposablePart Export(Type type, string contractName, object obj, IDictionary<string, object> metadata = null);
 
 		/// <summary>
 		///     Fill all the imports in the object isntance
@@ -76,6 +95,14 @@ namespace Dapplo.Addons
 		/// <typeparam name="TMetaData">interface-type for the meta-data</typeparam>
 		/// <returns>Lazy T,TMetaData</returns>
 		Lazy<T, TMetaData> GetExport<T, TMetaData>();
+
+		/// <summary>
+		///     Simple "service-locater"
+		/// </summary>
+		/// <param name="type">Type to locate</param>
+		/// <param name="contractname">Name of the contract, null or an empty string</param>
+		/// <returns>object for type</returns>
+		object GetExport(Type type, string contractname = "");
 
 		/// <summary>
 		///     Simple "service-locater" to get multiple exports
