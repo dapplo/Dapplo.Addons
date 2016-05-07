@@ -1,5 +1,5 @@
 ﻿//  Dapplo - building blocks for desktop applications
-//  Copyright (C) 2015-2016 Dapplo
+//  Copyright (C) 2016 Dapplo
 // 
 //  For more information see: http://dapplo.net/
 //  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -23,58 +23,19 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition.Primitives;
 
 #endregion
 
 namespace Dapplo.Addons
 {
 	/// <summary>
-	///     This interface is what the Dapplo.Addon CompositionBootstrapper (ApplicationBootstrapper) implements.
+	///     This interface is one of many which the Dapplo.Addon CompositionBootstrapper (ApplicationBootstrapper) implements.
 	///     The Bootstrapper will automatically export itself as IServiceLocator, so framework code can use imports to get
 	///     basic servicelocator support.
-	///     This IServiceLocator should only be used for cases where a simple import/export can't work.
+	///     A IServiceLocator should only be used for cases where a simple import can't work.
 	/// </summary>
 	public interface IServiceLocator
 	{
-		/// <summary>
-		///     Export an object
-		/// </summary>
-		/// <typeparam name="T">Type to export</typeparam>
-		/// <param name="obj">object to add</param>
-		/// <param name="metadata">Metadata for the export</param>
-		/// <returns>ComposablePart, this can be used to remove the export later</returns>
-		ComposablePart Export<T>(T obj, IDictionary<string, object> metadata = null);
-
-		/// <summary>
-		///     Export an object
-		/// </summary>
-		/// <param name="type">Type to export</param>
-		/// <param name="obj">object to add</param>
-		/// <param name="metadata">Metadata for the export</param>
-		/// <returns>ComposablePart, this can be used to remove the export later</returns>
-		ComposablePart Export(Type type, object obj, IDictionary<string, object> metadata = null);
-
-		/// <summary>
-		///     Export an object
-		/// </summary>
-		/// <typeparam name="T">Type to export</typeparam>
-		/// <param name="contractName">contractName under which the object of Type T is registered</param>
-		/// <param name="obj">object to add</param>
-		/// <param name="metadata">Metadata for the export</param>
-		/// <returns>ComposablePart, this can be used to remove the export later</returns>
-		ComposablePart Export<T>(string contractName, T obj, IDictionary<string, object> metadata = null);
-
-		/// <summary>
-		///     Export an object
-		/// </summary>
-		/// <param name="type">Type to export</param>
-		/// <param name="contractName">contractName under which the object of Type T is registered</param>
-		/// <param name="obj">object to add</param>
-		/// <param name="metadata">Metadata for the export</param>
-		/// <returns>ComposablePart, this can be used to remove the export later</returns>
-		ComposablePart Export(Type type, string contractName, object obj, IDictionary<string, object> metadata = null);
-
 		/// <summary>
 		///     Fill all the imports in the object isntance
 		/// </summary>
@@ -112,17 +73,19 @@ namespace Dapplo.Addons
 		IEnumerable<Lazy<T>> GetExports<T>();
 
 		/// <summary>
+		///     Simple "service-locater" to get multiple exports
+		/// </summary>
+		/// <param name="type">Type to locate</param>
+		/// <param name="contractname">Name of the contract, null or an empty string</param>
+		/// <returns>IEnumerable of Lazy object</returns>
+		IEnumerable<Lazy<object>> GetExports(Type type, string contractname = "");
+
+		/// <summary>
 		///     Simple "service-locater" to get multiple exports with meta-data
 		/// </summary>
 		/// <typeparam name="T">Type to locate</typeparam>
 		/// <typeparam name="TMetaData">interface-type for the meta-data</typeparam>
 		/// <returns>IEnumerable of Lazy T,TMetaData</returns>
 		IEnumerable<Lazy<T, TMetaData>> GetExports<T, TMetaData>();
-
-		/// <summary>
-		///     Release an export which was previously added with the Export method
-		/// </summary>
-		/// <param name="part">ComposablePart from Export call</param>
-		void Release(ComposablePart part);
 	}
 }

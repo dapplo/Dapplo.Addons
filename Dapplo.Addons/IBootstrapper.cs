@@ -1,5 +1,5 @@
 ﻿//  Dapplo - building blocks for desktop applications
-//  Copyright (C) 2015-2016 Dapplo
+//  Copyright (C) 2016 Dapplo
 // 
 //  For more information see: http://dapplo.net/
 //  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -34,7 +34,7 @@ namespace Dapplo.Addons
 	/// <summary>
 	///     This is the interface for all bootstrappers
 	/// </summary>
-	public interface IBootstrapper : IServiceLocator, IDisposable
+	public interface IBootstrapper : IServiceLocator, IServiceExporter, IServiceRepository, IDisposable
 	{
 		/// <summary>
 		///     all assemblies this bootstrapper knows

@@ -41,6 +41,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IAction.cs" />
+    <Compile Include="IServiceExporter.cs" />
+    <Compile Include="IServiceRepository.cs" />
     <Compile Include="IModule.cs" />
     <Compile Include="IBootstrapper.cs" />
     <Compile Include="IServiceLocator.cs" />

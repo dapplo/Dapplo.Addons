@@ -1,5 +1,5 @@
 ﻿//  Dapplo - building blocks for desktop applications
-//  Copyright (C) 2015-2016 Dapplo
+//  Copyright (C) 2016 Dapplo
 // 
 //  For more information see: http://dapplo.net/
 //  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -42,7 +42,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 		private static readonly LogSource Log = new LogSource();
 		private readonly IBootstrapper _bootstrapper;
 		private readonly IniConfig _iniConfig;
-		private readonly Type _iniSectionType = typeof (IIniSection);
+		private readonly Type _iniSectionType = typeof(IIniSection);
 		private readonly IDictionary<string, Export> _loopup = new Dictionary<string, Export>();
 
 		/// <summary>

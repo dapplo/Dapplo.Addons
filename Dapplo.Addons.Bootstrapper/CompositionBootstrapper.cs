@@ -1,5 +1,5 @@
 ﻿//  Dapplo - building blocks for desktop applications
-//  Copyright (C) 2015-2016 Dapplo
+//  Copyright (C) 2016 Dapplo
 // 
 //  For more information see: http://dapplo.net/
 //  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -99,7 +99,7 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				throw new InvalidOperationException(NotInitialized);
 			}
-			var contractName = AttributedModelServices.GetContractName(typeof (T));
+			var contractName = AttributedModelServices.GetContractName(typeof(T));
 			return Export(contractName, obj);
 		}
 
@@ -257,7 +257,7 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			if (Log.IsVerboseEnabled())
 			{
-				Log.Verbose().WriteLine("Getting export for {0}", typeof (T));
+				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
 			}
 			return Container.GetExport<T>();
 		}
@@ -276,7 +276,7 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			if (Log.IsVerboseEnabled())
 			{
-				Log.Verbose().WriteLine("Getting export for {0}", typeof (T));
+				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
 			}
 			return Container.GetExport<T, TMetaData>();
 		}
@@ -304,6 +304,25 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <summary>
 		///     Simple "service-locater" to get multiple exports
 		/// </summary>
+		/// <param name="type">Type to locate</param>
+		/// <param name="contractname">Name of the contract, null or an empty string</param>
+		/// <returns>IEnumerable of Lazy object</returns>
+		public IEnumerable<Lazy<object>> GetExports(Type type, string contractname = "")
+		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
+			if (Log.IsVerboseEnabled())
+			{
+				Log.Verbose().WriteLine("Getting exports for {0}", type);
+			}
+			return Container.GetExports(type, null, contractname);
+		}
+
+		/// <summary>
+		///     Simple "service-locater" to get multiple exports
+		/// </summary>
 		/// <typeparam name="T">Type to locate</typeparam>
 		/// <returns>IEnumerable of Lazy T</returns>
 		public IEnumerable<Lazy<T>> GetExports<T>()
@@ -314,7 +333,7 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			if (Log.IsVerboseEnabled())
 			{
-				Log.Verbose().WriteLine("Getting exports for {0}", typeof (T));
+				Log.Verbose().WriteLine("Getting exports for {0}", typeof(T));
 			}
 			return Container.GetExports<T>();
 		}
@@ -333,7 +352,7 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			if (Log.IsVerboseEnabled())
 			{
-				Log.Verbose().WriteLine("Getting export for {0}", typeof (T));
+				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
 			}
 			return Container.GetExports<T, TMetaData>();
 		}
@@ -349,6 +368,8 @@ namespace Dapplo.Addons.Bootstrapper
 			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags, ExportProviders.ToArray());
 			// Make sure we export ourselves as the IServiceLocator
 			Export<IServiceLocator>(this);
+			Export<IServiceExporter>(this);
+			Export<IServiceRepository>(this);
 			return Task.FromResult(IsInitialized);
 		}
 

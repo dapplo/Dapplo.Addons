@@ -1,5 +1,5 @@
 ﻿//  Dapplo - building blocks for desktop applications
-//  Copyright (C) 2015-2016 Dapplo
+//  Copyright (C) 2016 Dapplo
 // 
 //  For more information see: http://dapplo.net/
 //  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -37,7 +37,7 @@ namespace Dapplo.Addons
 		/// <summary>
 		///     Default constructor
 		/// </summary>
-		public StartupActionAttribute() : base(typeof (IStartupAction))
+		public StartupActionAttribute() : base(typeof(IStartupAction))
 		{
 		}
 
@@ -45,7 +45,7 @@ namespace Dapplo.Addons
 		///     Use a specific contract name for the IStartupAction
 		/// </summary>
 		/// <param name="contractName"></param>
-		public StartupActionAttribute(string contractName) : base(contractName, typeof (IStartupAction))
+		public StartupActionAttribute(string contractName) : base(contractName, typeof(IStartupAction))
 		{
 		}
 
