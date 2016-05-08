@@ -376,9 +376,7 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <summary>
 		///     Start the bootstrapper, initialize if needed
 		/// </summary>
-		/// <param name="args">Commandline arguments</param>
-		/// <param name="cancellationToken">CancellationToken</param>
-		public virtual async Task<bool> RunAsync(string[] args = null, CancellationToken cancellationToken = default(CancellationToken))
+		public virtual async Task<bool> RunAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			Log.Debug().WriteLine("Starting");
 			if (!IsInitialized)

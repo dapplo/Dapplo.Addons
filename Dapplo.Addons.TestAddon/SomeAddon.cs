@@ -52,7 +52,7 @@ namespace Dapplo.Addons.TestAddon
 			throw new Exception("This should be logged!");
 		}
 
-		public async Task StartAsync(string [] args = null, CancellationToken token = new CancellationToken())
+		public async Task StartAsync(CancellationToken token = new CancellationToken())
 		{
 			foreach (var iniSection in MyConfigs)
 			{

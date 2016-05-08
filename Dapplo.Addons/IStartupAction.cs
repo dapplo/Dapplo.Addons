@@ -38,9 +38,8 @@ namespace Dapplo.Addons
 		///     Perform a start of whatever needs to be started.
 		///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
 		/// </summary>
-		/// <param name="args">the commandline parameters</param>
 		/// <param name="token">CancellationToken</param>
 		/// <returns>Task</returns>
-		Task StartAsync(string[] args = null, CancellationToken token = default(CancellationToken));
+		Task StartAsync(CancellationToken token = default(CancellationToken));
 	}
 }

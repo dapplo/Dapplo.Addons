@@ -61,16 +61,14 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <summary>
 		///     Override the run to make sure "this" is injected
 		/// </summary>
-		/// <param name="args">Commandline arguments</param>
-		/// <param name="cancellationToken">CancellationToken</param>
-		public override async Task<bool> RunAsync(string [] args = null, CancellationToken cancellationToken = default(CancellationToken))
+		public override async Task<bool> RunAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			Log.Debug().WriteLine("Starting");
-			var result = await base.RunAsync(args, cancellationToken);
+			var result = await base.RunAsync(cancellationToken);
 			FillImports(this);
 			if (AutoStartup)
 			{
-				await StartupAsync(args, cancellationToken);
+				await StartupAsync(cancellationToken);
 			}
 			return result;
 		}
@@ -128,10 +126,9 @@ namespace Dapplo.Addons.Bootstrapper
 		///     Startup all "Startup actions"
 		///     Call this after run, it will find all IStartupAction's and start them in the specified order
 		/// </summary>
-		/// <param name="args">the commandline parameters</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>Task</returns>
-		public async Task StartupAsync(string[] args = null, CancellationToken cancellationToken = default(CancellationToken))
+		public async Task StartupAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			Log.Debug().WriteLine("Starting the startup actions, if any");
 			if (_startupActions == null)
@@ -166,7 +163,7 @@ namespace Dapplo.Addons.Bootstrapper
 					}
 
 					// Create a task (it will start running, but we don't await it yet)
-					var task = startupAction.Value.StartAsync(args, cancellationToken);
+					var task = startupAction.Value.StartAsync(cancellationToken);
 					// add the task to an await list, but only if needed!
 					if (startupAction.Metadata.AwaitStart)
 					{
