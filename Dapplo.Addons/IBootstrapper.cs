@@ -49,17 +49,19 @@ namespace Dapplo.Addons
 		/// <summary>
 		///     Initialize the bootstrapper
 		/// </summary>
-		Task<bool> InitializeAsync(CancellationToken cancellationToken);
+		Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken));
 
 		/// <summary>
 		///     Start the bootstrapper, initialize is automatically called when needed
 		/// </summary>
-		Task<bool> RunAsync(CancellationToken cancellationToken);
+		/// <param name="args">Commandline arguments</param>
+		/// <param name="cancellationToken">CancellationToken</param>
+		Task<bool> RunAsync(string [] args, CancellationToken cancellationToken = default(CancellationToken));
 
 		/// <summary>
 		///     Stop the bootstrapper, this cleans up resources and makes it possible to hook into it.
 		///     Is also called when being disposed, but as Dispose in not Async this could cause some issues.
 		/// </summary>
-		Task<bool> StopAsync(CancellationToken cancellationToken);
+		Task<bool> StopAsync(CancellationToken cancellationToken = default(CancellationToken));
 	}
 }
