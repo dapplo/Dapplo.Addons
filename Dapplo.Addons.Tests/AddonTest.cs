@@ -47,12 +47,6 @@ namespace Dapplo.Addons.Tests
 		{
 			using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
 			{
-				// ReSharper disable once UnusedVariable
-				var iniConfig = new IniConfig(ApplicationName, "test");
-
-				// Only do this if there al multiple configs, as the IniConfig.Current is requested
-				// bootstrapper.IniConfigForExport = iniConfig;
-
 				bootstrapper.Add(".", "Dapplo.*.dll");
 				// Add test project, without having a direct reference
 #if DEBUG

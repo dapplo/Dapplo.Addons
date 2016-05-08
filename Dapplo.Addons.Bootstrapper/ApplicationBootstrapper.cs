@@ -58,6 +58,10 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <param name="global">Is the mutex a global or local block (false means only in this Windows session)</param>
 		public ApplicationBootstrapper(string applicationName, string mutexId = null, bool global = false)
 		{
+			if (applicationName == null)
+			{
+				throw new ArgumentNullException(nameof(applicationName));
+			}
 			_applicationName = applicationName;
 			if (mutexId != null)
 			{
@@ -66,20 +70,38 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
+		/// If this is set to true, which is the default, IniConfig and LanguageLoader will be configured automatically.
+		/// </summary>
+		public bool AutoConfigure { get; set; } = true;
+
+		/// <summary>
 		///     Use this to set the IniConfig which is used to resolve IIniSection imports
 		/// </summary>
 		public IniConfig IniConfigForExport
 		{
-			get { return _iniConfig; }
+			get
+			{
+				lock (_applicationName)
+				{
+					if (_iniConfig == null && AutoConfigure)
+					{
+						IniConfigForExport = IniConfig.Current ?? new IniConfig(_applicationName, _applicationName);
+					}
+				}
+				return _iniConfig;
+			}
 			set
 			{
-				if (_iniConfig != null)
+				lock (_applicationName)
 				{
-					throw new InvalidOperationException("IniConfig already set.");
+					if (_iniConfig != null)
+					{
+						throw new InvalidOperationException("IniConfig already set.");
+					}
+					_iniConfig = value;
+					var exportProvider = new IniConfigExportProvider(value, this);
+					Add(exportProvider);
 				}
-				_iniConfig = value;
-				var exportProvider = new IniConfigExportProvider(value, this);
-				Add(exportProvider);
 			}
 		}
 
@@ -94,16 +116,31 @@ namespace Dapplo.Addons.Bootstrapper
 		/// </summary>
 		public LanguageLoader LanguageLoaderForExport
 		{
-			get { return _languageLoader; }
+			get
+			{
+				lock (_applicationName)
+				{
+
+					if (_languageLoader == null && AutoConfigure)
+					{
+						LanguageLoaderForExport = LanguageLoader.Current ?? new LanguageLoader(_applicationName);
+					}
+				}
+				return _languageLoader;
+			}
 			set
 			{
-				if (_languageLoader != null)
+				lock (_applicationName)
 				{
-					throw new InvalidOperationException("LanguageLoader already set.");
+
+					if (_languageLoader != null)
+					{
+						throw new InvalidOperationException("LanguageLoader already set.");
+					}
+					_languageLoader = value;
+					var exportProvider = new LanguageExportProvider(value, this);
+					Add(exportProvider);
 				}
-				_languageLoader = value;
-				var exportProvider = new LanguageExportProvider(value, this);
-				Add(exportProvider);
 			}
 		}
 

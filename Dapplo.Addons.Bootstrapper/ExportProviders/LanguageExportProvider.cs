@@ -123,7 +123,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 
 					//  Create instance
 					var instance = _languageLoader.Get(contractType);
-					// Make sure it's exported
+					// Make sure it's exported, language interfaces usually are not
 					var contractName = AttributedModelServices.GetContractName(contractType);
 					_bootstrapper?.Export(contractName, instance);
 

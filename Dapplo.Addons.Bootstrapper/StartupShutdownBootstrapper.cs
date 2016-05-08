@@ -157,7 +157,10 @@ namespace Dapplo.Addons.Bootstrapper
 						// Clean the tasks, we are finished.
 						tasks.Clear();
 					}
-					Log.Debug().WriteLine("Starting {0}", startupAction.Value.GetType());
+					if (Log.IsDebugEnabled())
+					{
+						Log.Debug().WriteLine("Starting {0}", startupAction.Value.GetType());
+					}
 
 					// Create a task (it will start running, but we don't await it yet)
 					var task = startupAction.Value.StartAsync(cancellationToken);
