@@ -35,12 +35,12 @@
     <DocumentationFile>bin\Release\Dapplo.Addons.Bootstrapper.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Dapplo.Config, Version=0.3.22.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Config.0.3.22\lib\net452\Dapplo.Config.dll</HintPath>
+    <Reference Include="Dapplo.Config, Version=0.3.26.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapplo.Config.0.3.26\lib\net452\Dapplo.Config.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Dapplo.InterfaceImpl, Version=0.1.11.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.InterfaceImpl.0.1.11\lib\net452\Dapplo.InterfaceImpl.dll</HintPath>
+    <Reference Include="Dapplo.InterfaceImpl, Version=0.1.12.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapplo.InterfaceImpl.0.1.12\lib\net452\Dapplo.InterfaceImpl.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Dapplo.LogFacade, Version=0.2.43.0, Culture=neutral, processorArchitecture=MSIL">
@@ -58,8 +58,7 @@
   <ItemGroup>
     <Compile Include="ApplicationBootstrapper.cs" />
     <Compile Include="CompositionBootstrapper.cs" />
-    <Compile Include="ExportProviders\IniConfigExportProvider.cs" />
-    <Compile Include="ExportProviders\LanguageExportProvider.cs" />
+    <Compile Include="ExportProviders\ConfigExportProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceMutex.cs" />
     <Compile Include="SimpleBootstrapper.cs" />

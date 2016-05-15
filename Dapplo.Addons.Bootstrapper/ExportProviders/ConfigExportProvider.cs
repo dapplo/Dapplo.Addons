@@ -26,39 +26,39 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.ComponentModel.Composition.Primitives;
-using Dapplo.Config.Ini;
 using Dapplo.LogFacade;
+using Dapplo.Config;
 
 #endregion
 
 namespace Dapplo.Addons.Bootstrapper.ExportProviders
 {
 	/// <summary>
-	///     This ExportProvider takes care of resolving MEF imports for the IniConfig
-	///     It will register and create the IniSection derrived class, and return the export so it can be injected
+	///     The ConfigExportProvider takes care of resolving MEF imports for Dapplo.Config based types.
+	///     It will register and create the type derrived classes, and return the export so it can be injected
 	/// </summary>
-	public class IniConfigExportProvider : ExportProvider
+	public class ConfigExportProvider<TExportType> : ExportProvider
 	{
+		// ReSharper disable once StaticMemberInGenericType
 		private static readonly LogSource Log = new LogSource();
 		private readonly IBootstrapper _bootstrapper;
-		private readonly IniConfig _iniConfig;
-		private readonly Type _iniSectionType = typeof(IIniSection);
+		private readonly IConfigProvider _configProvider;
 		private readonly IDictionary<string, Export> _loopup = new Dictionary<string, Export>();
 
 		/// <summary>
-		///     Create a IniConfigExportProvider which is for the specified applicatio, iniconfig and works with the supplied
+		///     Create a ConfigExportProvider which is for the specified application, IConfigProvider and works with the supplied
 		///     assemblies
 		/// </summary>
-		/// <param name="iniConfig">IniConfig needed for the registering, can be null for the current</param>
-		/// <param name="bootstrapper"></param>
-		public IniConfigExportProvider(IniConfig iniConfig, IBootstrapper bootstrapper)
+		/// <param name="configProvider">provider needed for the registering</param>
+		/// <param name="bootstrapper">IBootstrapper</param>
+		public ConfigExportProvider(IConfigProvider configProvider, IBootstrapper bootstrapper)
 		{
-			_iniConfig = iniConfig ?? IniConfig.Current;
+			_configProvider = configProvider;
 			_bootstrapper = bootstrapper;
 		}
 
 		/// <summary>
-		///     Try to find the IniSection type that wants to be imported, and get/register it.
+		///     Try to find the instance for the type that wants to be imported, and get/register it.
 		/// </summary>
 		/// <param name="definition">ImportDefinition</param>
 		/// <param name="atomicComposition">AtomicComposition</param>
@@ -104,14 +104,14 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 						continue;
 					}
 
-					if (contractType == _iniSectionType)
+					if (contractType == typeof(TExportType))
 					{
-						// We can't export the IIniSection itself
+						// We can't export the base type itself
 						break;
 					}
 
-					// Check if it is derrived from IIniSection
-					if (!_iniSectionType.IsAssignableFrom(contractType))
+					// Check if it is derrived from the exporting base type
+					if (!typeof(TExportType).IsAssignableFrom(contractType))
 					{
 						continue;
 					}
@@ -123,7 +123,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 					};
 
 					// Create instance
-					var instance = _iniConfig.Get(contractType);
+					var instance = _configProvider.Get(contractType);
 
 					// Make sure it's exported
 					var contractName = AttributedModelServices.GetContractName(contractType);
@@ -137,7 +137,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 					// Nothing more to do, break
 					yield break;
 				}
-				Log.Verbose().WriteLine("Marking {0} as not a IIniSection", definition.ContractName);
+				Log.Verbose().WriteLine("Marking {0} as not a {1}", definition.ContractName, typeof(TExportType));
 
 				// Add null value, so we don't try it again
 				_loopup.Add(definition.ContractName, null);

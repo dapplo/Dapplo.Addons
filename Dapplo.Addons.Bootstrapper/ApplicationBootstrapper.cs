@@ -99,7 +99,7 @@ namespace Dapplo.Addons.Bootstrapper
 						throw new InvalidOperationException("IniConfig already set.");
 					}
 					_iniConfig = value;
-					var exportProvider = new IniConfigExportProvider(value, this);
+					var exportProvider = new ConfigExportProvider<IIniSection>(value, this);
 					Add(exportProvider);
 				}
 			}
@@ -138,7 +138,7 @@ namespace Dapplo.Addons.Bootstrapper
 						throw new InvalidOperationException("LanguageLoader already set.");
 					}
 					_languageLoader = value;
-					var exportProvider = new LanguageExportProvider(value, this);
+					var exportProvider = new ConfigExportProvider<ILanguage>(value, this);
 					Add(exportProvider);
 				}
 			}
