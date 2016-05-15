@@ -22,8 +22,6 @@
 #region using
 
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -36,16 +34,6 @@ namespace Dapplo.Addons
 	/// </summary>
 	public interface IBootstrapper : IServiceLocator, IServiceExporter, IServiceRepository, IDisposable
 	{
-		/// <summary>
-		///     all assemblies this bootstrapper knows
-		/// </summary>
-		IList<Assembly> AddonAssemblies { get; }
-
-		/// <summary>
-		///     All addon files this bootstrapper knows
-		/// </summary>
-		IList<string> AddonFiles { get; }
-
 		/// <summary>
 		///     Initialize the bootstrapper
 		/// </summary>

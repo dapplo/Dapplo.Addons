@@ -77,7 +77,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 			{
 				Log.Verbose().WriteLine("Searching for an export {0}", definition.ContractName);
 				// Loop over all the supplied assemblies, these should come from the bootstrapper
-				foreach (var assembly in _bootstrapper.AddonAssemblies)
+				foreach (var assembly in _bootstrapper.KnownAssemblies)
 				{
 					// Make an AssemblyQualifiedName from the contract name
 					var assemblyQualifiedName = $"{definition.ContractName}, {assembly.FullName}";

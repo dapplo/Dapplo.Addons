@@ -22,6 +22,7 @@
 #region using
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition.Hosting;
 using System.Reflection;
 
@@ -36,6 +37,16 @@ namespace Dapplo.Addons
 	/// </summary>
 	public interface IServiceRepository
 	{
+		/// <summary>
+		///     all assemblies this bootstrapper knows
+		/// </summary>
+		IList<Assembly> KnownAssemblies { get; }
+
+		/// <summary>
+		///     All addon files this bootstrapper knows
+		/// </summary>
+		IList<string> KnownFiles { get; }
+
 		/// <summary>
 		///     Add an assembly to the AggregateCatalog.Catalogs
 		///     In english: make the items in the assembly discoverable

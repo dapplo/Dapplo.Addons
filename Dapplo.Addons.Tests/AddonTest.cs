@@ -24,7 +24,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper;
-using Dapplo.Config.Ini;
 using Dapplo.LogFacade;
 using Xunit;
 using Xunit.Abstractions;
@@ -55,7 +54,7 @@ namespace Dapplo.Addons.Tests
 				bootstrapper.Add(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release", "Dapplo.*.dll");
 #endif
 				// Test if our test addon was loaded
-				Assert.True(bootstrapper.AddonFiles.Count(addon => addon.EndsWith("TestAddon.dll")) > 0);
+				Assert.True(bootstrapper.KnownFiles.Count(addon => addon.EndsWith("TestAddon.dll")) > 0);
 
 				// Initialize, so we can export
 				Assert.True(await bootstrapper.InitializeAsync(), "Not initialized");

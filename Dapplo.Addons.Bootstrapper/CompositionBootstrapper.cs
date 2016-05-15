@@ -77,14 +77,16 @@ namespace Dapplo.Addons.Bootstrapper
 		protected bool IsInitialized { get; set; }
 
 		/// <summary>
-		///     List of all known assemblies
+		///     List of all known assemblies.
+		///     This might be needed in e.g. a Caliburn Micro bootstrapper, so it can locate a view for a view model.
 		/// </summary>
-		public IList<Assembly> AddonAssemblies { get; } = new List<Assembly>();
+		public IList<Assembly> KnownAssemblies { get; } = new List<Assembly>();
 
 		/// <summary>
-		///     Get a list of all found files
+		///     Get a list of all known file locations.
+		///     This is internally needed to resolved dependencies.
 		/// </summary>
-		public IList<string> AddonFiles { get; } = new List<string>();
+		public IList<string> KnownFiles { get; } = new List<string>();
 
 		/// <summary>
 		///     Export an object
@@ -426,7 +428,7 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <param name="assemblyCatalog">AssemblyCatalog to add</param>
 		public void Add(AssemblyCatalog assemblyCatalog)
 		{
-			if (AddonAssemblies.Contains(assemblyCatalog.Assembly))
+			if (KnownAssemblies.Contains(assemblyCatalog.Assembly))
 			{
 				return;
 			}
@@ -434,11 +436,11 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				AggregateCatalog.Catalogs.Add(assemblyCatalog);
 				Log.Debug().WriteLine("Adding file {0}", assemblyCatalog.Assembly.Location);
-				AddonFiles.Add(assemblyCatalog.Assembly.Location);
+				KnownFiles.Add(assemblyCatalog.Assembly.Location);
 			}
 			Log.Debug().WriteLine("Adding assembly {0}", assemblyCatalog.Assembly.FullName);
 			// Always add the assembly, even if there are no parts, so we can resolve certain "non" parts in ExportProviders.
-			AddonAssemblies.Add(assemblyCatalog.Assembly);
+			KnownAssemblies.Add(assemblyCatalog.Assembly);
 		}
 
 		/// <summary>

@@ -62,7 +62,7 @@ namespace Dapplo.Addons.Bootstrapper
 			if (!Assemblies.TryGetValue(assemblyName, out assembly))
 			{
 				Log.Verbose().WriteLine("Resolving name: {0}", resolveEventArgs.Name);
-				var addonDirectories = (from addonFile in AddonFiles
+				var addonDirectories = (from addonFile in KnownFiles
 					select Path.GetDirectoryName(addonFile)).Distinct();
 
 				foreach (var directory in addonDirectories)
