@@ -368,10 +368,15 @@ namespace Dapplo.Addons.Bootstrapper
 			IsInitialized = true;
 			ConfigureAggregateCatalog();
 			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags, ExportProviders.ToArray());
-			// Make sure we export ourselves as the IServiceLocator
+			// Make this bootstrapper as Dapplo.Addons.IServiceLocator
 			Export<IServiceLocator>(this);
+			// Export this bootstrapper as Dapplo.Addons.IServiceExporter
 			Export<IServiceExporter>(this);
+			// Export this bootstrapper as Dapplo.Addons.IServiceRepository
 			Export<IServiceRepository>(this);
+			// Export this bootstrapper as System.IServiceProvider
+			Export<IServiceProvider>(this);
+
 			return Task.FromResult(IsInitialized);
 		}
 
@@ -432,15 +437,33 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				return;
 			}
-			if (assemblyCatalog.Parts.ToList().Count > 0)
+			try
 			{
-				AggregateCatalog.Catalogs.Add(assemblyCatalog);
-				Log.Debug().WriteLine("Adding file {0}", assemblyCatalog.Assembly.Location);
-				KnownFiles.Add(assemblyCatalog.Assembly.Location);
+				Log.Debug().WriteLine("Adding assembly {0}", assemblyCatalog.Assembly.FullName);
+				if (assemblyCatalog.Parts.ToList().Count > 0)
+				{
+					AggregateCatalog.Catalogs.Add(assemblyCatalog);
+					Log.Debug().WriteLine("Adding file {0}", assemblyCatalog.Assembly.Location);
+					KnownFiles.Add(assemblyCatalog.Assembly.Location);
+				}
+				Log.Verbose().WriteLine("Added assembly {0}", assemblyCatalog.Assembly.FullName);
+				// Always add the assembly, even if there are no parts, so we can resolve certain "non" parts in ExportProviders.
+				KnownAssemblies.Add(assemblyCatalog.Assembly);
 			}
-			Log.Debug().WriteLine("Adding assembly {0}", assemblyCatalog.Assembly.FullName);
-			// Always add the assembly, even if there are no parts, so we can resolve certain "non" parts in ExportProviders.
-			KnownAssemblies.Add(assemblyCatalog.Assembly);
+			catch (ReflectionTypeLoadException rtlEx)
+			{
+				Log.Error().WriteLine(rtlEx, "Couldn't add the supplied assembly. Details follow:");
+				foreach(var loaderException in rtlEx.LoaderExceptions)
+				{
+					Log.Error().WriteLine(loaderException, loaderException.Message);
+				}
+				throw;
+			}
+			catch (Exception ex)
+			{
+				Log.Error().WriteLine(ex, "Couldn't add the supplied assembly catalog.");
+				throw;
+			}
 		}
 
 		/// <summary>
@@ -511,6 +534,16 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			Log.Verbose().WriteLine("Configuring");
 			IsAggregateCatalogConfigured = true;
+		}
+
+		/// <summary>
+		/// Implement IServiceProdiver
+		/// </summary>
+		/// <param name="serviceType">Type</param>
+		/// <returns>Instance of the serviceType</returns>
+		public object GetService(Type serviceType)
+		{
+			return GetExport(serviceType);
 		}
 
 		#region IDisposable Support

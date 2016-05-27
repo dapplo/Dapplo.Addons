@@ -34,7 +34,7 @@ namespace Dapplo.Addons
 	///     basic servicelocator support.
 	///     A IServiceLocator should only be used for cases where a simple import can't work.
 	/// </summary>
-	public interface IServiceLocator
+	public interface IServiceLocator : IServiceProvider
 	{
 		/// <summary>
 		///     Fill all the imports in the object isntance
