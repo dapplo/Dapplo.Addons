@@ -27,18 +27,25 @@ using Dapplo.Addons.Bootstrapper;
 using Dapplo.LogFacade;
 using Xunit;
 using Xunit.Abstractions;
+using System;
 
 #endregion
 
 namespace Dapplo.Addons.Tests
 {
-	public class AddonTest
+	public class ApplicationBootstrapperTests
 	{
 		private const string ApplicationName = "Dapplo";
 
-		public AddonTest(ITestOutputHelper testOutputHelper)
+		public ApplicationBootstrapperTests(ITestOutputHelper testOutputHelper)
 		{
 			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
+		}
+
+		[Fact]
+		public void TestNewNullApplicationName()
+		{
+			Assert.Throws<ArgumentNullException>(() => new ApplicationBootstrapper(null));
 		}
 
 		[Fact]
@@ -67,11 +74,11 @@ namespace Dapplo.Addons.Tests
 				Assert.True(await bootstrapper.RunAsync(), "Couldn't run");
 
 				// test import
-				Assert.NotNull(bootstrapper.GetExport<AddonTest>().Value);
+				Assert.NotNull(bootstrapper.GetExport<ApplicationBootstrapperTests>().Value);
 
 				// test release
 				bootstrapper.Release(part);
-				Assert.False(bootstrapper.GetExports<AddonTest>().Any());
+				Assert.False(bootstrapper.GetExports<ApplicationBootstrapperTests>().Any());
 
 				// Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
 				Assert.NotNull(bootstrapper.GetExport<IStartupAction>().Value);
@@ -81,6 +88,22 @@ namespace Dapplo.Addons.Tests
 				Assert.False(lazy.Metadata.AwaitStart);
 			}
 			// Dispose automatically calls IShutdownActions
+		}
+
+		[Fact]
+		public void TestConstructorAndCleanup()
+		{
+			var bootstrapper = new ApplicationBootstrapper("Test");
+			bootstrapper.Dispose();
+		}
+
+		[Fact]
+		public void TestConstructorWithMutexAndCleanup()
+		{
+			using (var bootstrapper = new ApplicationBootstrapper("Test", Guid.NewGuid().ToString()))
+			{
+				Assert.True(bootstrapper.IsMutexLocked);
+			}
 		}
 	}
 }

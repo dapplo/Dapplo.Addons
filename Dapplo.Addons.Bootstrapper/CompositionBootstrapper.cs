@@ -97,10 +97,6 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <returns>ComposablePart, this can be used to remove the export later</returns>
 		public ComposablePart Export<T>(T obj, IDictionary<string, object> metadata = null)
 		{
-			if (!IsInitialized)
-			{
-				throw new InvalidOperationException(NotInitialized);
-			}
 			var contractName = AttributedModelServices.GetContractName(typeof(T));
 			return Export(contractName, obj);
 		}
@@ -114,10 +110,6 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <returns>ComposablePart, this can be used to remove the export later</returns>
 		public ComposablePart Export(Type type, object obj, IDictionary<string, object> metadata = null)
 		{
-			if (!IsInitialized)
-			{
-				throw new InvalidOperationException(NotInitialized);
-			}
 			var contractName = AttributedModelServices.GetContractName(type);
 			return Export(contractName, obj);
 		}
@@ -217,6 +209,10 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				throw new InvalidOperationException(NotInitialized);
 			}
+			if (part == null)
+			{
+				throw new ArgumentNullException(nameof(part));
+			}
 
 			if (Log.IsDebugEnabled())
 			{
@@ -238,6 +234,10 @@ namespace Dapplo.Addons.Bootstrapper
 			if (!IsInitialized)
 			{
 				throw new InvalidOperationException(NotInitialized);
+			}
+			if (importingObject == null)
+			{
+				throw new ArgumentNullException(nameof(importingObject));
 			}
 			if (Log.IsDebugEnabled())
 			{
@@ -420,7 +420,7 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			if (assembly == null)
 			{
-				return;
+				throw new ArgumentNullException(nameof(assembly));
 			}
 			var assemblyCatalog = new AssemblyCatalog(assembly);
 			Add(assemblyCatalog);
@@ -433,6 +433,10 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <param name="assemblyCatalog">AssemblyCatalog to add</param>
 		public void Add(AssemblyCatalog assemblyCatalog)
 		{
+			if (assemblyCatalog == null)
+			{
+				throw new ArgumentNullException(nameof(assemblyCatalog));
+			}
 			if (KnownAssemblies.Contains(assemblyCatalog.Assembly))
 			{
 				return;
@@ -473,6 +477,10 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
 		public void Add(string directory, string pattern = "*.dll")
 		{
+			if (directory == null)
+			{
+				throw new ArgumentNullException(nameof(directory));
+			}
 			if (!Directory.Exists(directory))
 			{
 				throw new ArgumentException("Directory doesn't exist: " + directory);
@@ -501,6 +509,10 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <param name="type">The assembly for the type is retrieved add added via the Add(Assembly) method</param>
 		public void Add(Type type)
 		{
+			if (type == null)
+			{
+				throw new ArgumentNullException(nameof(type));
+			}
 			var typeAssembly = Assembly.GetAssembly(type);
 			Add(typeAssembly);
 		}
@@ -511,6 +523,10 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <param name="exportProvider">ExportProvider</param>
 		public void Add(ExportProvider exportProvider)
 		{
+			if (exportProvider == null)
+			{
+				throw new ArgumentNullException(nameof(exportProvider));
+			}
 			Log.Verbose().WriteLine("Adding ExportProvider: {0}", exportProvider.GetType().FullName);
 			ExportProviders.Add(exportProvider);
 		}
@@ -531,6 +547,10 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <returns>Instance of the serviceType</returns>
 		public object GetService(Type serviceType)
 		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
 			return GetExport(serviceType);
 		}
 

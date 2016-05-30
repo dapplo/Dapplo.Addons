@@ -35,20 +35,20 @@
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Dapplo.Config, Version=0.3.31.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Config.0.3.31\lib\net452\Dapplo.Config.dll</HintPath>
+    <Reference Include="Dapplo.Config, Version=0.3.32.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapplo.Config.0.3.32\lib\net452\Dapplo.Config.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Dapplo.InterfaceImpl, Version=0.1.14.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.InterfaceImpl.0.1.14\lib\net452\Dapplo.InterfaceImpl.dll</HintPath>
+    <Reference Include="Dapplo.InterfaceImpl, Version=0.1.16.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapplo.InterfaceImpl.0.1.16\lib\net452\Dapplo.InterfaceImpl.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Dapplo.LogFacade, Version=0.2.45.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Dapplo.LogFacade.0.2.45\lib\net45\Dapplo.LogFacade.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Dapplo.Utils, Version=0.1.31.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Utils.0.1.31\lib\net45\Dapplo.Utils.dll</HintPath>
+    <Reference Include="Dapplo.Utils, Version=0.1.33.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapplo.Utils.0.1.33\lib\net45\Dapplo.Utils.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -78,10 +78,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AddonTest.cs" />
+    <Compile Include="CompositionBootstrapperTests.cs" />
+    <Compile Include="ApplicationBootstrapperTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceMutexTests.cs" />
-    <Compile Include="TestApplicationBootstrapper.cs" />
     <Compile Include="XUnitLogger.cs" />
   </ItemGroup>
   <ItemGroup>
