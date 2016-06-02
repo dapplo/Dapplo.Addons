@@ -47,7 +47,7 @@ namespace Dapplo.Addons.TestAddon
 
 		public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
 		{
-			await Task.Delay(100, token);
+			await Task.Delay(100, token).ConfigureAwait(false);
 			Log.Debug().WriteLine("ShutdownAsync called!");
 			throw new Exception("This should be logged!");
 		}
@@ -60,7 +60,7 @@ namespace Dapplo.Addons.TestAddon
 				Log.Debug().WriteLine("Section {0}", name);
 			}
 			Log.Debug().WriteLine("This shoud not give an exception!");
-			await Task.Delay(100, token);
+			await Task.Delay(100, token).ConfigureAwait(false);
 			Log.Debug().WriteLine("StartAsync called!");
 			Log.Debug().WriteLine("Value: {0}", MyConfig.Name);
 		}

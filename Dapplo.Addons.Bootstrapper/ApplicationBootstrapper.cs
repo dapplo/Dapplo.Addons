@@ -162,7 +162,7 @@ namespace Dapplo.Addons.Bootstrapper
 				if (IniConfigForExport != null)
 				{
 					Log.Verbose().WriteLine("Loading IniConfig");
-					await IniConfigForExport.LoadIfNeededAsync(cancellationToken);
+					await IniConfigForExport.LoadIfNeededAsync(cancellationToken).ConfigureAwait(false);
 				}
 
 				if (LanguageLoaderForExport == null)
@@ -173,10 +173,10 @@ namespace Dapplo.Addons.Bootstrapper
 				if (LanguageLoaderForExport != null)
 				{
 					Log.Verbose().WriteLine("Loading Languages");
-					await LanguageLoaderForExport.LoadIfNeededAsync(cancellationToken);
+					await LanguageLoaderForExport.LoadIfNeededAsync(cancellationToken).ConfigureAwait(false);
 				}
 
-				await base.InitializeAsync(cancellationToken);
+				await base.InitializeAsync(cancellationToken).ConfigureAwait(false);
 			}
 			else
 			{

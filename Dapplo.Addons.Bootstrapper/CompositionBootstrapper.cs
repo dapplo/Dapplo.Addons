@@ -388,7 +388,7 @@ namespace Dapplo.Addons.Bootstrapper
 			Log.Debug().WriteLine("Starting");
 			if (!IsInitialized)
 			{
-				await InitializeAsync(cancellationToken);
+				await InitializeAsync(cancellationToken).ConfigureAwait(false);
 			}
 			if (!IsInitialized)
 			{

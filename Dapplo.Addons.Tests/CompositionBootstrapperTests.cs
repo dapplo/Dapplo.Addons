@@ -72,7 +72,7 @@ namespace Dapplo.Addons.Tests
 			Assert.Throws<ArgumentNullException>(() => cb.Add((string)null));
 			Assert.Throws<ArgumentNullException>(() => cb.Add((Type)null));
 			Assert.Throws<ArgumentNullException>(() => cb.Add((ExportProvider)null));
-			await cb.InitializeAsync();
+			await cb.InitializeAsync().ConfigureAwait(false);
 			Assert.Throws<ArgumentNullException>(() => cb.Export<string>(null));
 			Assert.Throws<ArgumentNullException>(() => cb.Release(null));
 			Assert.Throws<ArgumentNullException>(() => cb.FillImports(null));

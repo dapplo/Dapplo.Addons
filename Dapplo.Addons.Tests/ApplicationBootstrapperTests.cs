@@ -64,14 +64,14 @@ namespace Dapplo.Addons.Tests
 				Assert.True(bootstrapper.KnownFiles.Count(addon => addon.EndsWith("TestAddon.dll")) > 0);
 
 				// Initialize, so we can export
-				Assert.True(await bootstrapper.InitializeAsync(), "Not initialized");
+				Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");
 
 				// test Export, this should work before Run as some of the addons might need some stuff.
 
 				var part = bootstrapper.Export(this);
 
 				// Start the composition, and IStartupActions
-				Assert.True(await bootstrapper.RunAsync(), "Couldn't run");
+				Assert.True(await bootstrapper.RunAsync().ConfigureAwait(false), "Couldn't run");
 
 				// test import
 				Assert.NotNull(bootstrapper.GetExport<ApplicationBootstrapperTests>().Value);

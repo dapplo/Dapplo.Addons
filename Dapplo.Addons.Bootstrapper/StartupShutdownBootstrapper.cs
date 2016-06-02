@@ -64,11 +64,11 @@ namespace Dapplo.Addons.Bootstrapper
 		public override async Task<bool> RunAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			Log.Debug().WriteLine("Starting");
-			var result = await base.RunAsync(cancellationToken);
+			var result = await base.RunAsync(cancellationToken).ConfigureAwait(false);
 			FillImports(this);
 			if (AutoStartup)
 			{
-				await StartupAsync(cancellationToken);
+				await StartupAsync(cancellationToken).ConfigureAwait(false);
 			}
 			return result;
 		}
@@ -101,14 +101,16 @@ namespace Dapplo.Addons.Bootstrapper
 					groupingOrder = shutdownAction.Metadata.ShutdownOrder;
 
 					// Await all belonging to the same order "group"
-					await WhenAll(tasks);
+					await WhenAll(tasks).ConfigureAwait(false);
 					tasks.Clear();
 				}
 				try
 				{
 					Log.Debug().WriteLine("Stopping {0}", shutdownAction.Value.GetType());
 					// Create a task (it will start running, but we don't await it yet)
-					tasks.Add(new KeyValuePair<Type, Task>(shutdownAction.Value.GetType(), shutdownAction.Value.ShutdownAsync(cancellationToken)));
+					var shutdownTask = shutdownAction.Value.ShutdownAsync(cancellationToken);
+					// Store it for awaiting
+					tasks.Add(new KeyValuePair<Type, Task>(shutdownAction.Value.GetType(), shutdownTask));
 				}
 				catch (Exception ex)
 				{
@@ -118,7 +120,7 @@ namespace Dapplo.Addons.Bootstrapper
 			// Await all remaining tasks
 			if (tasks.Count > 0)
 			{
-				await WhenAll(tasks);
+				await WhenAll(tasks).ConfigureAwait(false);
 			}
 		}
 
@@ -153,7 +155,7 @@ namespace Dapplo.Addons.Bootstrapper
 					{
 						groupingOrder = startupAction.Metadata.StartupOrder;
 						// Await all belonging to the same order "group"
-						await Task.WhenAll(tasks);
+						await Task.WhenAll(tasks).ConfigureAwait(false);
 						// Clean the tasks, we are finished.
 						tasks.Clear();
 					}
@@ -186,7 +188,7 @@ namespace Dapplo.Addons.Bootstrapper
 			// Await all remaining tasks
 			if (tasks.Any())
 			{
-				await Task.WhenAll(tasks);
+				await Task.WhenAll(tasks).ConfigureAwait(false);
 			}
 			if (nonAwaitable.Count > 0 && Log.IsErrorEnabled())
 			{
@@ -205,9 +207,9 @@ namespace Dapplo.Addons.Bootstrapper
 			Log.Debug().WriteLine("Stopping bootstrapper");
 			if (AutoShutdown)
 			{
-				await ShutdownAsync(cancellationToken);
+				await ShutdownAsync(cancellationToken).ConfigureAwait(false);
 			}
-			return await base.StopAsync(cancellationToken);
+			return await base.StopAsync(cancellationToken).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -222,7 +224,7 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				try
 				{
-					await taskInfo.Value;
+					await taskInfo.Value.ConfigureAwait(false);
 				}
 				catch (Exception ex)
 				{
