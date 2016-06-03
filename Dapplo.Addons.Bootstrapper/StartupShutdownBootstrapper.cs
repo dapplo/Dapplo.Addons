@@ -93,31 +93,47 @@ namespace Dapplo.Addons.Bootstrapper
 			// Variable used for grouping the shutdowns
 			var groupingOrder = int.MaxValue;
 
-			foreach (var shutdownAction in orderedActions)
+			foreach (var lazyShutdownAction in orderedActions)
 			{
 				// Check if we have all the startup actions belonging to a group
-				if (tasks.Count > 0 && groupingOrder != shutdownAction.Metadata.ShutdownOrder)
+				if (tasks.Count > 0 && groupingOrder != lazyShutdownAction.Metadata.ShutdownOrder)
 				{
-					groupingOrder = shutdownAction.Metadata.ShutdownOrder;
+					groupingOrder = lazyShutdownAction.Metadata.ShutdownOrder;
 
 					// Await all belonging to the same order "group"
 					await WhenAll(tasks).ConfigureAwait(false);
+					// Clean the tasks, we are finished.
 					tasks.Clear();
 				}
+				IShutdownAction shutdownAction;
 				try
 				{
-					Log.Debug().WriteLine("Stopping {0}", shutdownAction.Value.GetType());
-					// Create a task (it will start running, but we don't await it yet)
-					var shutdownTask = shutdownAction.Value.ShutdownAsync(cancellationToken);
-					// Store it for awaiting
-					tasks.Add(new KeyValuePair<Type, Task>(shutdownAction.Value.GetType(), shutdownTask));
+					shutdownAction = lazyShutdownAction.Value;
 				}
 				catch (Exception ex)
 				{
-					Log.Error().WriteLine(ex, shutdownAction.IsValueCreated ? "Exception executing shutdownAction {0}: " : "Exception instantiating shutdownAction {0}: ", shutdownAction.Value.GetType());
+					Log.Error().WriteLine(ex, "Exception instantiating IShutdownAction, probably a MEF issue.");
+					continue;
+				}
+
+				if (Log.IsDebugEnabled())
+				{
+					Log.Debug().WriteLine("Stopping {0}", shutdownAction.GetType());
+				}
+
+				try
+				{
+					// Create a task (it will start running, but we don't await it yet)
+					var shutdownTask = shutdownAction.ShutdownAsync(cancellationToken);
+					// Store it for awaiting
+					tasks.Add(new KeyValuePair<Type, Task>(shutdownAction.GetType(), shutdownTask));
+				}
+				catch (Exception ex)
+				{
+					Log.Error().WriteLine(ex, "Exception executing IShutdownAction {0}: ", shutdownAction.GetType());
 				}
 			}
-			// Await all remaining tasks
+			// Await all remaining tasks, as the system is shutdown we NEED to wait, and ignore but log their exceptions
 			if (tasks.Count > 0)
 			{
 				await WhenAll(tasks).ConfigureAwait(false);
@@ -140,60 +156,71 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			var orderedActions = from export in _startupActions orderby export.Metadata.StartupOrder ascending select export;
 
-			var tasks = new List<Task>();
-			var nonAwaitable = new List<KeyValuePair<Type, Task>>();
+			var tasks = new List<KeyValuePair<Type, Task>>();
+			var nonAwaitables = new List<KeyValuePair<Type, Task>>();
 
 			// Variable used for grouping the startups
 			var groupingOrder = int.MaxValue;
 
-			foreach (var startupAction in orderedActions)
+			foreach (var lazyStartupAction in orderedActions)
 			{
 				try
 				{
 					// Check if we have all the startup actions belonging to a group
-					if (tasks.Count > 0 && groupingOrder != startupAction.Metadata.StartupOrder)
+					if (tasks.Count > 0 && groupingOrder != lazyStartupAction.Metadata.StartupOrder)
 					{
-						groupingOrder = startupAction.Metadata.StartupOrder;
+						groupingOrder = lazyStartupAction.Metadata.StartupOrder;
 						// Await all belonging to the same order "group"
-						await Task.WhenAll(tasks).ConfigureAwait(false);
+						await WhenAll(tasks).ConfigureAwait(false);
 						// Clean the tasks, we are finished.
 						tasks.Clear();
 					}
+					IStartupAction startupAction;
+					try
+					{
+						startupAction = lazyStartupAction.Value;
+					}
+					catch (Exception ex)
+					{
+						Log.Error().WriteLine(ex, "Exception instantiating IStartupAction, probably a MEF issue.");
+						continue;
+					}
 					if (Log.IsDebugEnabled())
 					{
-						Log.Debug().WriteLine("Starting {0}", startupAction.Value.GetType());
+						Log.Debug().WriteLine("Starting {0}", startupAction.GetType());
 					}
 
 					// Create a task (it will start running, but we don't await it yet)
-					var task = startupAction.Value.StartAsync(cancellationToken);
+					var task = startupAction.StartAsync(cancellationToken);
 					// add the task to an await list, but only if needed!
-					if (startupAction.Metadata.AwaitStart)
+					if (lazyStartupAction.Metadata.AwaitStart)
 					{
-						tasks.Add(task);
+						tasks.Add(new KeyValuePair<Type, Task>(lazyStartupAction.Value.GetType(), task));
 					}
 					else
 					{
 						if (Log.IsErrorEnabled())
 						{
 							// We do await for them, but just to catch any exceptions
-							nonAwaitable.Add(new KeyValuePair<Type, Task>(startupAction.Value.GetType(), task));
+							nonAwaitables.Add(new KeyValuePair<Type, Task>(lazyStartupAction.Value.GetType(), task));
 						}
 					}
 				}
 				catch (Exception ex)
 				{
-					Log.Error().WriteLine(ex, startupAction.IsValueCreated ? "Exception executing startupAction {0}: " : "Exception instantiating startupAction {0}: ", startupAction.Value.GetType());
+					Log.Error().WriteLine(ex, "Exception executing IStartupAction {0}: ", lazyStartupAction.Value.GetType());
 				}
 			}
 			// Await all remaining tasks
 			if (tasks.Any())
 			{
-				await Task.WhenAll(tasks).ConfigureAwait(false);
+				await WhenAll(tasks, false).ConfigureAwait(false);
 			}
-			if (nonAwaitable.Count > 0 && Log.IsErrorEnabled())
+			// If there is logging, log any exceptions of tasks that aren't awaited
+			if (nonAwaitables.Count > 0 && Log.IsErrorEnabled())
 			{
 				// ReSharper disable once UnusedVariable
-				var ignoreTask = WhenAll(nonAwaitable);
+				var ignoreTask = WhenAll(nonAwaitables);
 			}
 		}
 
@@ -217,8 +244,9 @@ namespace Dapplo.Addons.Bootstrapper
 		///     This is not optimized, like Task.WhenAll...
 		/// </summary>
 		/// <param name="tasksToAwait"></param>
+		/// <param name="ignoreExceptions">if true (default) the exceptions will be logged but ignored.</param>
 		/// <returns>Task</returns>
-		private async Task WhenAll(IEnumerable<KeyValuePair<Type, Task>> tasksToAwait)
+		private async Task WhenAll(IEnumerable<KeyValuePair<Type, Task>> tasksToAwait, bool ignoreExceptions = true)
 		{
 			foreach (var taskInfo in tasksToAwait)
 			{
@@ -228,7 +256,11 @@ namespace Dapplo.Addons.Bootstrapper
 				}
 				catch (Exception ex)
 				{
-					Log.Error().WriteLine(ex, "Exception calling shutdown on {0}", taskInfo.Key);
+					Log.Error().WriteLine(ex, "Exception using {0}", taskInfo.Key);
+					if (!ignoreExceptions)
+					{
+						throw;
+					}
 				}
 			}
 		}
