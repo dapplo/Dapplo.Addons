@@ -21,15 +21,15 @@
 
 #region using
 
-using System.Linq;
-using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper;
+using Dapplo.Log.XUnit;
 using Dapplo.LogFacade;
+using System;
+using System.ComponentModel.Composition.Hosting;
+using System.Reflection;
+using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
-using System;
-using System.Reflection;
-using System.ComponentModel.Composition.Hosting;
 
 #endregion
 
@@ -41,7 +41,7 @@ namespace Dapplo.Addons.Tests
 
 		public CompositionBootstrapperTests(ITestOutputHelper testOutputHelper)
 		{
-			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
+			XUnitLogger.RegisterLogger(testOutputHelper, LogLevels.Verbose);
 		}
 
 		[Fact]

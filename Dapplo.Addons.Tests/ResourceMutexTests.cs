@@ -21,11 +21,12 @@
 
 #region using
 
+using Dapplo.Addons.Bootstrapper;
+using Dapplo.Log.XUnit;
+using Dapplo.LogFacade;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dapplo.Addons.Bootstrapper;
-using Dapplo.LogFacade;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -39,7 +40,7 @@ namespace Dapplo.Addons.Tests
 
 		public ResourceMutexTests(ITestOutputHelper testOutputHelper)
 		{
-			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
+			XUnitLogger.RegisterLogger(testOutputHelper, LogLevels.Verbose);
 		}
 
 
