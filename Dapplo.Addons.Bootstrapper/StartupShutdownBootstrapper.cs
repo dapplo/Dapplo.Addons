@@ -27,7 +27,7 @@ using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Dapplo.LogFacade;
+using Dapplo.Log.Facade;
 
 #endregion
 

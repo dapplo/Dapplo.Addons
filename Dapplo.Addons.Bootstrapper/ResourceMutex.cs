@@ -25,7 +25,7 @@ using System;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
-using Dapplo.LogFacade;
+using Dapplo.Log.Facade;
 
 #endregion
 

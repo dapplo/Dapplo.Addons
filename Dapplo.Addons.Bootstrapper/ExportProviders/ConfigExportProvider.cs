@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.ComponentModel.Composition.Primitives;
-using Dapplo.LogFacade;
+using Dapplo.Log.Facade;
 using Dapplo.Config;
 
 #endregion
