@@ -82,11 +82,11 @@ namespace Dapplo.Addons.Tests
 				Assert.False(bootstrapper.GetExports<ApplicationBootstrapperTests>().Any());
 
 				// Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
-				Assert.NotNull(bootstrapper.GetExport<IStartupAction>().Value);
+				Assert.True(bootstrapper.GetExports<IStartupAction>().Count() == 2);
 
 				// Test localization of a IStartupAction with meta-data, which is exported via [StartupAction(DoNotAwait = true)]
-				var lazy = bootstrapper.GetExport<IStartupAction, IStartupActionMetadata>();
-				Assert.False(lazy.Metadata.AwaitStart);
+				var hasAwaitStartFalse = bootstrapper.GetExports<IStartupAction, IStartupActionMetadata>().Any(x => x.Metadata.AwaitStart == false);
+				Assert.True(hasAwaitStartFalse);
 			}
 			// Dispose automatically calls IShutdownActions
 		}
@@ -105,6 +105,30 @@ namespace Dapplo.Addons.Tests
 			{
 				Assert.True(bootstrapper.IsMutexLocked);
 			}
+		}
+
+		[Fact]
+		public async Task Test_StartupException()
+		{
+			using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
+			{
+				bootstrapper.Add(".", "Dapplo.*.dll");
+				// Add test project, without having a direct reference
+#if DEBUG
+				bootstrapper.Add(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug", "Dapplo.*.dll");
+#else
+				bootstrapper.Add(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release", "Dapplo.*.dll");
+#endif
+
+				// Initialize, so we can export
+				Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");
+
+				bootstrapper.Export(true);
+				// Start the composition, and IStartupActions
+				await Assert.ThrowsAsync<StartupException>(async () => await bootstrapper.RunAsync().ConfigureAwait(false));
+
+			}
+			// Dispose automatically calls IShutdownActions
 		}
 	}
 }

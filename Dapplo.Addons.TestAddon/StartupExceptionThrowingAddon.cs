@@ -1,5 +1,5 @@
 ﻿//  Dapplo - building blocks for desktop applications
-//  Copyright (C) 2016 Dapplo
+//  Copyright (C) 2015-2016 Dapplo
 // 
 //  For more information see: http://dapplo.net/
 //  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -21,26 +21,35 @@
 
 #region using
 
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Threading;
 using System.Threading.Tasks;
+using Dapplo.Config.Ini;
+using Dapplo.Log.Facade;
 
 #endregion
 
-namespace Dapplo.Addons
+namespace Dapplo.Addons.TestAddon
 {
-	/// <summary>
-	///     The IStartupAction is an interface for modules that can be started when the application starts
-	///     Extend you module with this interface, and use the StartupActionAttribute to annotate the module
-	/// </summary>
-	public interface IStartupAction : IModule
+	[StartupAction(AwaitStart = true, StartupOrder = 1)]
+	[ShutdownAction]
+	public class StartupExceptionThrowingAddon : IStartupAction
 	{
 		/// <summary>
-		///     Perform a start of whatever needs to be started.
-		///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
-		///     throw a StartupException if something went terribly wrong and the application should NOT continue
+		/// This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
 		/// </summary>
-		/// <param name="token">CancellationToken</param>
-		/// <returns>Task</returns>
-		Task StartAsync(CancellationToken token = default(CancellationToken));
+		[Import(AllowDefault = true)]
+		private bool ThrowStartupException { get; set; }
+
+		public Task StartAsync(CancellationToken token = new CancellationToken())
+		{
+			if (ThrowStartupException)
+			{
+				throw new StartupException("I was ordered to!!!");
+			}
+			return Task.FromResult(true);
+		}
 	}
 }

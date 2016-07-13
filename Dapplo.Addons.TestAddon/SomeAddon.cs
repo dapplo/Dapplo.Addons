@@ -45,6 +45,12 @@ namespace Dapplo.Addons.TestAddon
 		[ImportMany]
 		public IEnumerable<IIniSection> MyConfigs { get; set; }
 
+		/// <summary>
+		/// This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
+		/// </summary>
+		[Import(AllowDefault = true)]
+		private bool ThrowStartupException { get; set; }
+
 		public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
 		{
 			await Task.Delay(100, token).ConfigureAwait(false);
@@ -54,6 +60,10 @@ namespace Dapplo.Addons.TestAddon
 
 		public async Task StartAsync(CancellationToken token = new CancellationToken())
 		{
+			if (ThrowStartupException)
+			{
+				throw new StartupException("I was ordered to!!!");
+			}
 			foreach (var iniSection in MyConfigs)
 			{
 				var name = iniSection.GetSectionName();

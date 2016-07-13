@@ -571,7 +571,7 @@ namespace Dapplo.Addons.Bootstrapper
 				{
 					Log.Debug().WriteLine("Disposing...");
 					// dispose managed state (managed objects) here.
-					Task.Run(async () => await StopAsync()).Wait();
+					Task.Run(async () => await StopAsync().ConfigureAwait(false)).Wait();
 				}
 				// Dispose unmanaged objects here
 				// DO NOT CALL any managed objects here, outside of the disposing = true, as this is also used when a distructor is called

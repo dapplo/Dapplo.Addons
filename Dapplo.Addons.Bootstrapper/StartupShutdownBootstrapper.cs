@@ -206,21 +206,46 @@ namespace Dapplo.Addons.Bootstrapper
 						}
 					}
 				}
+				catch (StartupException)
+				{
+					Log.Fatal().WriteLine("StartupException cancels the startup.");
+					throw;
+				}
 				catch (Exception ex)
 				{
 					Log.Error().WriteLine(ex, "Exception executing IStartupAction {0}: ", lazyStartupAction.Value.GetType());
 				}
 			}
+
 			// Await all remaining tasks
 			if (tasks.Any())
 			{
-				await WhenAll(tasks, false).ConfigureAwait(false);
+				try
+				{
+					await WhenAll(tasks, false).ConfigureAwait(false);
+				}
+				catch (StartupException)
+				{
+					Log.Fatal().WriteLine("Startup will be cancelled due to the previous StartupException.");
+					throw;
+				}
 			}
 			// If there is logging, log any exceptions of tasks that aren't awaited
 			if (nonAwaitables.Count > 0 && Log.IsErrorEnabled())
 			{
 				// ReSharper disable once UnusedVariable
-				var ignoreTask = WhenAll(nonAwaitables);
+				var ignoreTask = Task.Run(async () =>
+				{
+					try
+					{
+						await WhenAll(nonAwaitables).ConfigureAwait(false);
+					}
+					catch (StartupException)
+					{
+						// Ignore the exception, just log information
+						Log.Info().WriteLine("Ignoring StartupException, as the startup has AwaitStart set to false.");
+					}
+				}, cancellationToken);
 			}
 		}
 
@@ -254,9 +279,15 @@ namespace Dapplo.Addons.Bootstrapper
 				{
 					await taskInfo.Value.ConfigureAwait(false);
 				}
+				catch (StartupException ex)
+				{
+					Log.Error().WriteLine(ex, "StartupException in {0}", taskInfo.Key);
+					// Break execution
+					throw;
+				}
 				catch (Exception ex)
 				{
-					Log.Error().WriteLine(ex, "Exception using {0}", taskInfo.Key);
+					Log.Error().WriteLine(ex, "Exception in {0}", taskInfo.Key);
 					if (!ignoreExceptions)
 					{
 						throw;
