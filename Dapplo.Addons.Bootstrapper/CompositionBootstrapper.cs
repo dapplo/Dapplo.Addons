@@ -32,6 +32,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapplo.Log.Facade;
+using Dapplo.Utils;
 
 #endregion
 
@@ -74,7 +75,7 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <summary>
 		///     Is this initialized?
 		/// </summary>
-		protected bool IsInitialized { get; set; }
+		public bool IsInitialized { get; set; }
 
 		/// <summary>
 		///     List of all known assemblies.
@@ -567,11 +568,14 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			if (!_disposedValue)
 			{
-				if (disposing)
+				if (disposing && IsInitialized)
 				{
 					Log.Debug().WriteLine("Disposing...");
 					// dispose managed state (managed objects) here.
-					Task.Run(async () => await StopAsync().ConfigureAwait(false)).Wait();
+					using (new NoSynchronizationContextScope())
+					{
+						StopAsync().Wait();
+					}
 				}
 				// Dispose unmanaged objects here
 				// DO NOT CALL any managed objects here, outside of the disposing = true, as this is also used when a distructor is called

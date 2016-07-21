@@ -35,6 +35,11 @@ namespace Dapplo.Addons
 	public interface IBootstrapper : IServiceLocator, IServiceExporter, IServiceRepository, IDisposable
 	{
 		/// <summary>
+		///  Is this IBootstrapper initialized?
+		/// </summary>
+		bool IsInitialized { get; }
+
+		/// <summary>
 		///     Initialize the bootstrapper
 		/// </summary>
 		Task<bool> InitializeAsync(CancellationToken cancellationToken);
