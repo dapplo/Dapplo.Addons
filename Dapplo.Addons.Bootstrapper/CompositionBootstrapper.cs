@@ -482,25 +482,60 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				throw new ArgumentNullException(nameof(directory));
 			}
+
+			Log.Debug().WriteLine("Scanning directory {0} with pattern {1}", directory, pattern);
+
+			// Special logic for non rooted directories
+			if (!Path.IsPathRooted(directory))
+			{
+				// Relative to the current working directory
+				ScanAndAddFiles(Path.Combine(Environment.CurrentDirectory, directory), pattern);
+				var exeDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+				if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
+				{
+					ScanAndAddFiles(Path.Combine(exeDirectory, directory), pattern);
+				}
+				return;
+			}
 			if (!Directory.Exists(directory))
 			{
 				throw new ArgumentException("Directory doesn't exist: " + directory);
 			}
-			Log.Debug().WriteLine("Scanning directory {0} with pattern {1}", directory, pattern);
-			var files = Directory.EnumerateFiles(directory, pattern, SearchOption.AllDirectories);
+			ScanAndAddFiles(directory, pattern);
+		}
 
-			foreach (var file in files)
+		/// <summary>
+		/// Helper method to scan and add files, called by Add
+		/// </summary>
+		/// <param name="directory">Directory to scan</param>
+		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
+		private void ScanAndAddFiles(string directory, string pattern)
+		{
+			if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
 			{
-				try
+				Log.Verbose().WriteLine("Skipping directory {0}", directory);
+				return;
+			}
+			try
+			{
+				var files = Directory.EnumerateFiles(directory, pattern, SearchOption.AllDirectories);
+				foreach (var file in files)
 				{
-					var assemblyCatalog = new AssemblyCatalog(file);
-					Add(assemblyCatalog);
+					try
+					{
+						var assemblyCatalog = new AssemblyCatalog(file);
+						Add(assemblyCatalog);
+					}
+					catch
+					{
+						// Ignore the exception, so we can continue, and don't log as this is handled in Add(assemblyCatalog);
+						Log.Error().WriteLine("Problem loading assembly from {0}", file);
+					}
 				}
-				catch
-				{
-					// Ignore the exception, so we can continue, and don't log as this is handled in Add(assemblyCatalog);
-					Log.Error().WriteLine("Problem loading assembly from {0}", file);
-				}
+			}
+			catch (Exception ex)
+			{
+				Log.Error().WriteLine(ex);
 			}
 		}
 
