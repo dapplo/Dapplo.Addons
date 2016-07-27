@@ -183,33 +183,26 @@ namespace Dapplo.Addons.Bootstrapper
 				string assemblyFile;
 				try
 				{
-					// Fix not rooted directories
+					// Fix not rooted directories, as this is not allowed
 					if (!Path.IsPathRooted(directory))
 					{
-						if (!Directory.Exists(directory))
+						// Relative to the current working directory
+						var tmpDirectory = Path.Combine(Environment.CurrentDirectory, directory);
+						if (!Directory.Exists(tmpDirectory))
 						{
-							// Relative to the current working directory
-							var tmpDirectory = Path.Combine(Environment.CurrentDirectory, directory);
+							var exeDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+							if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
+							{
+								tmpDirectory = Path.Combine(exeDirectory, directory);
+							}
 							if (!Directory.Exists(tmpDirectory))
 							{
-								var exeDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-								if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
-								{
-									tmpDirectory = Path.Combine(exeDirectory, directory);
-								}
-								if (!Directory.Exists(tmpDirectory))
-								{
-									Log.Verbose().WriteLine("AssemblyResolveDirectories entry {0} does not exist.", directory, tmpDirectory);
-									continue;
-								}
+								Log.Verbose().WriteLine("AssemblyResolveDirectories entry {0} does not exist.", directory, tmpDirectory);
+								continue;
 							}
-							Log.Verbose().WriteLine("Mapped {0} to {1}", directory, tmpDirectory);
-							directory = tmpDirectory;
 						}
-						else
-						{
-							Log.Verbose().WriteLine("AssemblyResolveDirectories entry {0} is not absolute.", directory);
-						}
+						Log.Verbose().WriteLine("Mapped {0} to {1}", directory, tmpDirectory);
+						directory = tmpDirectory;
 					}
 					assemblyFile = Path.Combine(directory, dllName);
 					if (!File.Exists(assemblyFile))
