@@ -34,7 +34,6 @@ using Dapplo.Log.Facade;
 namespace Dapplo.Addons.TestAddon
 {
 	[StartupAction(AwaitStart = true, StartupOrder = 1)]
-	[ShutdownAction]
 	public class StartupExceptionThrowingAddon : IStartupAction
 	{
 		/// <summary>

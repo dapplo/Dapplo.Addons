@@ -42,7 +42,7 @@ namespace Dapplo.Addons.Bootstrapper
 	///     A bootstrapper for making it possible to load Addons to Dapplo applications.
 	///     This uses MEF for loading and managing the Addons.
 	/// </summary>
-	public abstract class CompositionBootstrapper : IBootstrapper
+	public class CompositionBootstrapper : IBootstrapper
 	{
 		private const string NotInitialized = "Bootstrapper is not initialized";
 		private static readonly LogSource Log = new LogSource();
@@ -73,9 +73,141 @@ namespace Dapplo.Addons.Bootstrapper
 		protected bool IsAggregateCatalogConfigured { get; set; }
 
 		/// <summary>
-		///     Is this initialized?
+		///     Configure the AggregateCatalog, by adding the default assemblies
 		/// </summary>
-		public bool IsInitialized { get; set; }
+		protected virtual void Configure()
+		{
+			if (IsAggregateCatalogConfigured)
+			{
+				return;
+			}
+			// Register the AssemblyResolve event
+			AppDomain.CurrentDomain.AssemblyResolve += AddonResolveEventHandler;
+
+			// Add the entry assembly, which should be the application, but not the calling or executing (as this is Dapplo.Addons)
+			var applicationAssembly = Assembly.GetEntryAssembly();
+			if (applicationAssembly != null && applicationAssembly != GetType().Assembly)
+			{
+				Add(applicationAssembly);
+			}
+		}
+
+		/// <summary>
+		///     Unconfigure the AggregateCatalog
+		/// </summary>
+		protected virtual void Unconfigure()
+		{
+			if (!IsAggregateCatalogConfigured)
+			{
+				return;
+			}
+			IsAggregateCatalogConfigured = false;
+			// Unregister the AssemblyResolve event
+			AppDomain.CurrentDomain.AssemblyResolve -= AddonResolveEventHandler;
+
+			KnownAssemblies.Clear();
+		}
+
+		#region Assembly resolving
+
+		private static readonly IDictionary<string, Assembly> Assemblies = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>
+		///     A resolver which takes care of loading DLL's which are referenced from AddOns but not found
+		/// </summary>
+		/// <param name="sender">object</param>
+		/// <param name="resolveEventArgs">ResolveEventArgs</param>
+		/// <returns>Assembly</returns>
+		protected Assembly AddonResolveEventHandler(object sender, ResolveEventArgs resolveEventArgs)
+		{
+			Assembly assembly;
+			var assemblyName = GetAssemblyName(resolveEventArgs);
+			if (!Assemblies.TryGetValue(assemblyName, out assembly))
+			{
+				Log.Verbose().WriteLine("Resolving name: {0}", resolveEventArgs.Name);
+				var addonDirectories = (from addonFile in KnownFiles
+										select Path.GetDirectoryName(addonFile)).Union(AssemblyResolveDirectories).Distinct();
+
+				foreach (var directoryEntry in addonDirectories)
+				{
+					var directory = directoryEntry;
+					string assemblyFile;
+					try
+					{
+						// Fix not rooted directories
+						if (!Path.IsPathRooted(directory))
+						{
+							if (!Directory.Exists(directory))
+							{
+								// Relative to the current working directory
+								var tmpDirectory = Path.Combine(Environment.CurrentDirectory, directory);
+								if (!Directory.Exists(tmpDirectory))
+								{
+									var exeDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+									if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
+									{
+										tmpDirectory = Path.Combine(exeDirectory, directory);
+									}
+									if (!Directory.Exists(tmpDirectory))
+									{
+										Log.Verbose().WriteLine("AssemblyResolveDirectories entry {0} does not exist.", directory, tmpDirectory);
+										continue;
+									}
+								}
+								Log.Verbose().WriteLine("Mapped {0} to {1}", directory, tmpDirectory);
+								directory = tmpDirectory;
+							}
+							else
+							{
+								Log.Verbose().WriteLine("AssemblyResolveDirectories entry {0} is not absolute.", directory);
+							}
+						}
+						assemblyFile = Path.Combine(directory, GetAssemblyName(resolveEventArgs) + ".dll");
+						if (!File.Exists(assemblyFile))
+						{
+							continue;
+						}
+					}
+					catch (Exception ex)
+					{
+						Log.Error().WriteLine(ex, "AssemblyResolveDirectories entry {0} will be skipped.", directory);
+						continue;
+					}
+
+					// Now try to load
+					try
+					{
+						assembly = Assembly.LoadFile(assemblyFile);
+						Assemblies[assemblyName] = assembly;
+						Log.Verbose().WriteLine("Loaded {0} to satisfy resolving {1}", assemblyFile, assemblyName);
+					}
+					catch (Exception ex)
+					{
+						Log.Error().WriteLine(ex, "Couldn't read {0}, to load {1}", assemblyFile, assemblyName);
+					}
+					break;
+				}
+			}
+			if (assembly == null)
+			{
+				Log.Warn().WriteLine("Couldn't resolve {0}", assemblyName);
+			}
+			return assembly;
+		}
+
+		/// <summary>
+		///     Helper to get the assembly name
+		/// </summary>
+		/// <param name="args"></param>
+		/// <returns></returns>
+		private static string GetAssemblyName(ResolveEventArgs args)
+		{
+			var indexOf = args.Name.IndexOf(",", StringComparison.Ordinal);
+			return indexOf > -1 ? args.Name.Substring(0, indexOf) : args.Name;
+		}
+		#endregion
+
+		#region IServiceRepository
 
 		/// <summary>
 		///     List of all known assemblies.
@@ -88,6 +220,309 @@ namespace Dapplo.Addons.Bootstrapper
 		///     This is internally needed to resolved dependencies.
 		/// </summary>
 		public IList<string> KnownFiles { get; } = new List<string>();
+
+
+		/// <summary>
+		///     A list of all directories where the bootstrapper will look to resolve
+		///     This is internally needed to resolved dependencies.
+		/// </summary>
+		public IList<string> AssemblyResolveDirectories { get; } = new List<string>();
+
+
+		/// <summary>
+		///     Add an assembly to the AggregateCatalog.Catalogs
+		///     In english: make the items in the assembly discoverable
+		/// </summary>
+		/// <param name="assembly">Assembly to add</param>
+		public void Add(Assembly assembly)
+		{
+			if (assembly == null)
+			{
+				throw new ArgumentNullException(nameof(assembly));
+			}
+			var assemblyCatalog = new AssemblyCatalog(assembly);
+			Add(assemblyCatalog);
+		}
+
+		/// <summary>
+		///     Add an AssemblyCatalog AggregateCatalog.Catalogs
+		///     But only if the AssemblyCatalog has parts
+		/// </summary>
+		/// <param name="assemblyCatalog">AssemblyCatalog to add</param>
+		public void Add(AssemblyCatalog assemblyCatalog)
+		{
+			if (assemblyCatalog == null)
+			{
+				throw new ArgumentNullException(nameof(assemblyCatalog));
+			}
+			if (KnownAssemblies.Contains(assemblyCatalog.Assembly))
+			{
+				return;
+			}
+			try
+			{
+				Log.Debug().WriteLine("Adding assembly {0}", assemblyCatalog.Assembly.FullName);
+				if (assemblyCatalog.Parts.ToList().Count > 0)
+				{
+					AggregateCatalog.Catalogs.Add(assemblyCatalog);
+					Log.Debug().WriteLine("Adding file {0}", assemblyCatalog.Assembly.Location);
+					KnownFiles.Add(assemblyCatalog.Assembly.Location);
+				}
+				Log.Verbose().WriteLine("Added assembly {0}", assemblyCatalog.Assembly.FullName);
+				// Always add the assembly, even if there are no parts, so we can resolve certain "non" parts in ExportProviders.
+				KnownAssemblies.Add(assemblyCatalog.Assembly);
+			}
+			catch (ReflectionTypeLoadException rtlEx)
+			{
+				Log.Error().WriteLine(rtlEx, "Couldn't add the supplied assembly. Details follow:");
+				foreach (var loaderException in rtlEx.LoaderExceptions)
+				{
+					Log.Error().WriteLine(loaderException, loaderException.Message);
+				}
+				throw;
+			}
+			catch (Exception ex)
+			{
+				Log.Error().WriteLine(ex, "Couldn't add the supplied assembly catalog.");
+				throw;
+			}
+		}
+
+		/// <summary>
+		///     Add the assemblies (with parts) found in the specified directory
+		/// </summary>
+		/// <param name="directory">Directory to scan</param>
+		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
+		public void Add(string directory, string pattern = "*.dll")
+		{
+			if (directory == null)
+			{
+				throw new ArgumentNullException(nameof(directory));
+			}
+
+			Log.Debug().WriteLine("Scanning directory {0} with pattern {1}", directory, pattern);
+
+			// Special logic for non rooted directories
+			if (!Path.IsPathRooted(directory))
+			{
+				// Relative to the current working directory
+				ScanAndAddFiles(Path.Combine(Environment.CurrentDirectory, directory), pattern);
+				var exeDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+				if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
+				{
+					ScanAndAddFiles(Path.Combine(exeDirectory, directory), pattern);
+				}
+				return;
+			}
+			if (!Directory.Exists(directory))
+			{
+				throw new ArgumentException("Directory doesn't exist: " + directory);
+			}
+			ScanAndAddFiles(directory, pattern);
+		}
+
+		/// <summary>
+		/// Helper method to scan and add files, called by Add
+		/// </summary>
+		/// <param name="directory">Directory to scan</param>
+		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
+		private void ScanAndAddFiles(string directory, string pattern)
+		{
+			if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+			{
+				Log.Verbose().WriteLine("Skipping directory {0}", directory);
+				return;
+			}
+			try
+			{
+				var files = Directory.EnumerateFiles(directory, pattern, SearchOption.AllDirectories);
+				foreach (var file in files)
+				{
+					try
+					{
+						var assemblyCatalog = new AssemblyCatalog(file);
+						Add(assemblyCatalog);
+					}
+					catch
+					{
+						// Ignore the exception, so we can continue, and don't log as this is handled in Add(assemblyCatalog);
+						Log.Error().WriteLine("Problem loading assembly from {0}", file);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Log.Error().WriteLine(ex);
+			}
+		}
+
+		/// <summary>
+		///     Add the assembly for the specified type
+		/// </summary>
+		/// <param name="type">The assembly for the type is retrieved add added via the Add(Assembly) method</param>
+		public void Add(Type type)
+		{
+			if (type == null)
+			{
+				throw new ArgumentNullException(nameof(type));
+			}
+			var typeAssembly = Assembly.GetAssembly(type);
+			Add(typeAssembly);
+		}
+
+		/// <summary>
+		///     Add the ExportProvider to the export providers which are used in the CompositionContainer
+		/// </summary>
+		/// <param name="exportProvider">ExportProvider</param>
+		public void Add(ExportProvider exportProvider)
+		{
+			if (exportProvider == null)
+			{
+				throw new ArgumentNullException(nameof(exportProvider));
+			}
+			Log.Verbose().WriteLine("Adding ExportProvider: {0}", exportProvider.GetType().FullName);
+			ExportProviders.Add(exportProvider);
+		}
+		#endregion
+
+		#region IServiceLocator
+
+		/// <summary>
+		///     Fill all the imports in the object isntance
+		/// </summary>
+		/// <param name="importingObject">object to fill the imports for</param>
+		public void FillImports(object importingObject)
+		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
+			if (importingObject == null)
+			{
+				throw new ArgumentNullException(nameof(importingObject));
+			}
+			if (Log.IsDebugEnabled())
+			{
+				Log.Debug().WriteLine("Filling imports of {0}", importingObject.GetType());
+			}
+			Container.SatisfyImportsOnce(importingObject);
+		}
+
+		/// <summary>
+		///     Simple "service-locater"
+		/// </summary>
+		/// <typeparam name="T">Type to locate</typeparam>
+		/// <returns>Lazy T</returns>
+		public Lazy<T> GetExport<T>()
+		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
+			if (Log.IsVerboseEnabled())
+			{
+				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
+			}
+			return Container.GetExport<T>();
+		}
+
+		/// <summary>
+		///     Simple "service-locater" with meta-data
+		/// </summary>
+		/// <typeparam name="T">Type to locate</typeparam>
+		/// <typeparam name="TMetaData">Type for the meta-data</typeparam>
+		/// <returns>Lazy T,TMetaData</returns>
+		public Lazy<T, TMetaData> GetExport<T, TMetaData>()
+		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
+			if (Log.IsVerboseEnabled())
+			{
+				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
+			}
+			return Container.GetExport<T, TMetaData>();
+		}
+
+		/// <summary>
+		///     Simple "service-locater"
+		/// </summary>
+		/// <param name="type">Type to locate</param>
+		/// <param name="contractname">Name of the contract, null or an empty string</param>
+		/// <returns>object for type</returns>
+		public object GetExport(Type type, string contractname = "")
+		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
+			if (Log.IsVerboseEnabled())
+			{
+				Log.Verbose().WriteLine("Getting export for {0}", type);
+			}
+			var lazyResult = Container.GetExports(type, null, contractname).FirstOrDefault();
+			return lazyResult?.Value;
+		}
+
+		/// <summary>
+		///     Simple "service-locater" to get multiple exports
+		/// </summary>
+		/// <typeparam name="T">Type to locate</typeparam>
+		/// <returns>IEnumerable of Lazy T</returns>
+		public IEnumerable<Lazy<T>> GetExports<T>()
+		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
+			if (Log.IsVerboseEnabled())
+			{
+				Log.Verbose().WriteLine("Getting exports for {0}", typeof(T));
+			}
+			return Container.GetExports<T>();
+		}
+
+		/// <summary>
+		///     Simple "service-locater" to get multiple exports
+		/// </summary>
+		/// <param name="type">Type to locate</param>
+		/// <param name="contractname">Name of the contract, null or an empty string</param>
+		/// <returns>IEnumerable of Lazy object</returns>
+		public IEnumerable<Lazy<object>> GetExports(Type type, string contractname = "")
+		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
+			if (Log.IsVerboseEnabled())
+			{
+				Log.Verbose().WriteLine("Getting exports for {0}", type);
+			}
+			return Container.GetExports(type, null, contractname);
+		}
+
+		/// <summary>
+		///     Simple "service-locater" to get multiple exports with meta-data
+		/// </summary>
+		/// <typeparam name="T">Type to locate</typeparam>
+		/// <typeparam name="TMetaData">Type for the meta-data</typeparam>
+		/// <returns>IEnumerable of Lazy T,TMetaData</returns>
+		public IEnumerable<Lazy<T, TMetaData>> GetExports<T, TMetaData>()
+		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
+			if (Log.IsVerboseEnabled())
+			{
+				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
+			}
+			return Container.GetExports<T, TMetaData>();
+		}
+		#endregion
+
+		#region IServiceExporter
 
 		/// <summary>
 		///     Export an object
@@ -225,140 +660,13 @@ namespace Dapplo.Addons.Bootstrapper
 			batch.RemovePart(part);
 			Container.Compose(batch);
 		}
+		#endregion
 
+		#region IBootstrapper
 		/// <summary>
-		///     Fill all the imports in the object isntance
+		///     Is this initialized?
 		/// </summary>
-		/// <param name="importingObject">object to fill the imports for</param>
-		public void FillImports(object importingObject)
-		{
-			if (!IsInitialized)
-			{
-				throw new InvalidOperationException(NotInitialized);
-			}
-			if (importingObject == null)
-			{
-				throw new ArgumentNullException(nameof(importingObject));
-			}
-			if (Log.IsDebugEnabled())
-			{
-				Log.Debug().WriteLine("Filling imports of {0}", importingObject.GetType());
-			}
-			Container.SatisfyImportsOnce(importingObject);
-		}
-
-		/// <summary>
-		///     Simple "service-locater"
-		/// </summary>
-		/// <typeparam name="T">Type to locate</typeparam>
-		/// <returns>Lazy T</returns>
-		public Lazy<T> GetExport<T>()
-		{
-			if (!IsInitialized)
-			{
-				throw new InvalidOperationException(NotInitialized);
-			}
-			if (Log.IsVerboseEnabled())
-			{
-				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
-			}
-			return Container.GetExport<T>();
-		}
-
-		/// <summary>
-		///     Simple "service-locater" with meta-data
-		/// </summary>
-		/// <typeparam name="T">Type to locate</typeparam>
-		/// <typeparam name="TMetaData">Type for the meta-data</typeparam>
-		/// <returns>Lazy T,TMetaData</returns>
-		public Lazy<T, TMetaData> GetExport<T, TMetaData>()
-		{
-			if (!IsInitialized)
-			{
-				throw new InvalidOperationException(NotInitialized);
-			}
-			if (Log.IsVerboseEnabled())
-			{
-				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
-			}
-			return Container.GetExport<T, TMetaData>();
-		}
-
-		/// <summary>
-		///     Simple "service-locater"
-		/// </summary>
-		/// <param name="type">Type to locate</param>
-		/// <param name="contractname">Name of the contract, null or an empty string</param>
-		/// <returns>object for type</returns>
-		public object GetExport(Type type, string contractname = "")
-		{
-			if (!IsInitialized)
-			{
-				throw new InvalidOperationException(NotInitialized);
-			}
-			if (Log.IsVerboseEnabled())
-			{
-				Log.Verbose().WriteLine("Getting export for {0}", type);
-			}
-			var lazyResult = Container.GetExports(type, null, contractname).FirstOrDefault();
-			return lazyResult?.Value;
-		}
-
-		/// <summary>
-		///     Simple "service-locater" to get multiple exports
-		/// </summary>
-		/// <param name="type">Type to locate</param>
-		/// <param name="contractname">Name of the contract, null or an empty string</param>
-		/// <returns>IEnumerable of Lazy object</returns>
-		public IEnumerable<Lazy<object>> GetExports(Type type, string contractname = "")
-		{
-			if (!IsInitialized)
-			{
-				throw new InvalidOperationException(NotInitialized);
-			}
-			if (Log.IsVerboseEnabled())
-			{
-				Log.Verbose().WriteLine("Getting exports for {0}", type);
-			}
-			return Container.GetExports(type, null, contractname);
-		}
-
-		/// <summary>
-		///     Simple "service-locater" to get multiple exports
-		/// </summary>
-		/// <typeparam name="T">Type to locate</typeparam>
-		/// <returns>IEnumerable of Lazy T</returns>
-		public IEnumerable<Lazy<T>> GetExports<T>()
-		{
-			if (!IsInitialized)
-			{
-				throw new InvalidOperationException(NotInitialized);
-			}
-			if (Log.IsVerboseEnabled())
-			{
-				Log.Verbose().WriteLine("Getting exports for {0}", typeof(T));
-			}
-			return Container.GetExports<T>();
-		}
-
-		/// <summary>
-		///     Simple "service-locater" to get multiple exports with meta-data
-		/// </summary>
-		/// <typeparam name="T">Type to locate</typeparam>
-		/// <typeparam name="TMetaData">Type for the meta-data</typeparam>
-		/// <returns>IEnumerable of Lazy T,TMetaData</returns>
-		public IEnumerable<Lazy<T, TMetaData>> GetExports<T, TMetaData>()
-		{
-			if (!IsInitialized)
-			{
-				throw new InvalidOperationException(NotInitialized);
-			}
-			if (Log.IsVerboseEnabled())
-			{
-				Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
-			}
-			return Container.GetExports<T, TMetaData>();
-		}
+		public bool IsInitialized { get; set; }
 
 		/// <summary>
 		///     Initialize the bootstrapper
@@ -367,7 +675,11 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			Log.Debug().WriteLine("Initializing");
 			IsInitialized = true;
-			ConfigureAggregateCatalog();
+
+			// Configure first, this can be overloaded
+			Configure();
+
+			// Now create the container
 			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags, ExportProviders.ToArray());
 			// Make this bootstrapper as Dapplo.Addons.IServiceLocator
 			Export<IServiceLocator>(this);
@@ -406,175 +718,19 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			if (IsInitialized)
 			{
+				// Unconfigure can be overloaded
+				Unconfigure();
+				// Now dispose the container
+				Container?.Dispose();
+				Container = null;
 				Log.Debug().WriteLine("Stopped");
 				IsInitialized = false;
 			}
 			return Task.FromResult(!IsInitialized);
 		}
+		#endregion
 
-		/// <summary>
-		///     Add an assembly to the AggregateCatalog.Catalogs
-		///     In english: make the items in the assembly discoverable
-		/// </summary>
-		/// <param name="assembly">Assembly to add</param>
-		public void Add(Assembly assembly)
-		{
-			if (assembly == null)
-			{
-				throw new ArgumentNullException(nameof(assembly));
-			}
-			var assemblyCatalog = new AssemblyCatalog(assembly);
-			Add(assemblyCatalog);
-		}
-
-		/// <summary>
-		///     Add an AssemblyCatalog AggregateCatalog.Catalogs
-		///     But only if the AssemblyCatalog has parts
-		/// </summary>
-		/// <param name="assemblyCatalog">AssemblyCatalog to add</param>
-		public void Add(AssemblyCatalog assemblyCatalog)
-		{
-			if (assemblyCatalog == null)
-			{
-				throw new ArgumentNullException(nameof(assemblyCatalog));
-			}
-			if (KnownAssemblies.Contains(assemblyCatalog.Assembly))
-			{
-				return;
-			}
-			try
-			{
-				Log.Debug().WriteLine("Adding assembly {0}", assemblyCatalog.Assembly.FullName);
-				if (assemblyCatalog.Parts.ToList().Count > 0)
-				{
-					AggregateCatalog.Catalogs.Add(assemblyCatalog);
-					Log.Debug().WriteLine("Adding file {0}", assemblyCatalog.Assembly.Location);
-					KnownFiles.Add(assemblyCatalog.Assembly.Location);
-				}
-				Log.Verbose().WriteLine("Added assembly {0}", assemblyCatalog.Assembly.FullName);
-				// Always add the assembly, even if there are no parts, so we can resolve certain "non" parts in ExportProviders.
-				KnownAssemblies.Add(assemblyCatalog.Assembly);
-			}
-			catch (ReflectionTypeLoadException rtlEx)
-			{
-				Log.Error().WriteLine(rtlEx, "Couldn't add the supplied assembly. Details follow:");
-				foreach(var loaderException in rtlEx.LoaderExceptions)
-				{
-					Log.Error().WriteLine(loaderException, loaderException.Message);
-				}
-				throw;
-			}
-			catch (Exception ex)
-			{
-				Log.Error().WriteLine(ex, "Couldn't add the supplied assembly catalog.");
-				throw;
-			}
-		}
-
-		/// <summary>
-		///     Add the assemblies (with parts) found in the specified directory
-		/// </summary>
-		/// <param name="directory">Directory to scan</param>
-		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
-		public void Add(string directory, string pattern = "*.dll")
-		{
-			if (directory == null)
-			{
-				throw new ArgumentNullException(nameof(directory));
-			}
-
-			Log.Debug().WriteLine("Scanning directory {0} with pattern {1}", directory, pattern);
-
-			// Special logic for non rooted directories
-			if (!Path.IsPathRooted(directory))
-			{
-				// Relative to the current working directory
-				ScanAndAddFiles(Path.Combine(Environment.CurrentDirectory, directory), pattern);
-				var exeDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-				if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
-				{
-					ScanAndAddFiles(Path.Combine(exeDirectory, directory), pattern);
-				}
-				return;
-			}
-			if (!Directory.Exists(directory))
-			{
-				throw new ArgumentException("Directory doesn't exist: " + directory);
-			}
-			ScanAndAddFiles(directory, pattern);
-		}
-
-		/// <summary>
-		/// Helper method to scan and add files, called by Add
-		/// </summary>
-		/// <param name="directory">Directory to scan</param>
-		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
-		private void ScanAndAddFiles(string directory, string pattern)
-		{
-			if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
-			{
-				Log.Verbose().WriteLine("Skipping directory {0}", directory);
-				return;
-			}
-			try
-			{
-				var files = Directory.EnumerateFiles(directory, pattern, SearchOption.AllDirectories);
-				foreach (var file in files)
-				{
-					try
-					{
-						var assemblyCatalog = new AssemblyCatalog(file);
-						Add(assemblyCatalog);
-					}
-					catch
-					{
-						// Ignore the exception, so we can continue, and don't log as this is handled in Add(assemblyCatalog);
-						Log.Error().WriteLine("Problem loading assembly from {0}", file);
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				Log.Error().WriteLine(ex);
-			}
-		}
-
-		/// <summary>
-		///     Add the assembly for the specified type
-		/// </summary>
-		/// <param name="type">The assembly for the type is retrieved add added via the Add(Assembly) method</param>
-		public void Add(Type type)
-		{
-			if (type == null)
-			{
-				throw new ArgumentNullException(nameof(type));
-			}
-			var typeAssembly = Assembly.GetAssembly(type);
-			Add(typeAssembly);
-		}
-
-		/// <summary>
-		///     Add the ExportProvider to the export providers which are used in the CompositionContainer
-		/// </summary>
-		/// <param name="exportProvider">ExportProvider</param>
-		public void Add(ExportProvider exportProvider)
-		{
-			if (exportProvider == null)
-			{
-				throw new ArgumentNullException(nameof(exportProvider));
-			}
-			Log.Verbose().WriteLine("Adding ExportProvider: {0}", exportProvider.GetType().FullName);
-			ExportProviders.Add(exportProvider);
-		}
-
-		/// <summary>
-		///     Override this method to extend what is loaded into the Catalog
-		/// </summary>
-		protected virtual void ConfigureAggregateCatalog()
-		{
-			Log.Verbose().WriteLine("Configuring");
-			IsAggregateCatalogConfigured = true;
-		}
+		#region IServiceProvider
 
 		/// <summary>
 		/// Implement IServiceProdiver
@@ -589,6 +745,7 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			return GetExport(serviceType);
 		}
+		#endregion
 
 		#region IDisposable Support
 

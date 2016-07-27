@@ -26,6 +26,7 @@ using Dapplo.Log.XUnit;
 using Dapplo.Log.Facade;
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -43,6 +44,32 @@ namespace Dapplo.Addons.Tests
 			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
 		}
 
+		/// <summary>
+		/// Allows setting the Entry Assembly when needed. 
+		/// Use SetEntryAssembly() only for tests
+		/// </summary>
+		/// <param name="assembly">Assembly to set as entry assembly</param>
+		private static void SetEntryAssembly(Assembly assembly)
+		{
+			if (Assembly.GetEntryAssembly() != null)
+			{
+				return;
+			}
+			var manager = new AppDomainManager();
+			var entryAssemblyfield = manager.GetType().GetField("m_entryAssembly", BindingFlags.Instance | BindingFlags.NonPublic);
+			if (entryAssemblyfield != null)
+			{
+				entryAssemblyfield.SetValue(manager, assembly);
+			}
+
+			var domain = AppDomain.CurrentDomain;
+			var domainManagerField = domain.GetType().GetField("_domainManager", BindingFlags.Instance | BindingFlags.NonPublic);
+			if (domainManagerField != null)
+			{
+				domainManagerField.SetValue(domain, manager);
+			}
+		}
+
 		[Fact]
 		public void TestNewNullApplicationName()
 		{
@@ -52,6 +79,8 @@ namespace Dapplo.Addons.Tests
 		[Fact]
 		public async Task TestStartupShutdown()
 		{
+			// Especially for testing
+			SetEntryAssembly(GetType().Assembly);
 			using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
 			{
 				bootstrapper.Add(".", "Dapplo.*.dll");

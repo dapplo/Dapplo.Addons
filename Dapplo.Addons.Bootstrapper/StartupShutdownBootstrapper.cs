@@ -36,7 +36,7 @@ namespace Dapplo.Addons.Bootstrapper
 	/// <summary>
 	///     A bootstrapper, which has functionality for the startup and shutdown actions
 	/// </summary>
-	public class StartupShutdownBootstrapper : SimpleBootstrapper
+	public class StartupShutdownBootstrapper : CompositionBootstrapper
 	{
 		private static readonly LogSource Log = new LogSource();
 

@@ -37,8 +37,6 @@ namespace Dapplo.Addons.Tests
 {
 	public class CompositionBootstrapperTests
 	{
-		private const string ApplicationName = "Dapplo";
-
 		public CompositionBootstrapperTests(ITestOutputHelper testOutputHelper)
 		{
 			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
@@ -47,8 +45,7 @@ namespace Dapplo.Addons.Tests
 		[Fact]
 		public void TestNotInitialized()
 		{
-			// SimpleBootstrapper extends CompositionBootstrapper
-			var cb = new SimpleBootstrapper();
+			var cb = new CompositionBootstrapper();
 			Assert.Throws<InvalidOperationException>(() => cb.Export("Hello"));
 			Assert.Throws<InvalidOperationException>(() => cb.GetExport<string>());
 			Assert.Throws<InvalidOperationException>(() => cb.GetExport<string, IStartupActionMetadata>());
@@ -65,8 +62,7 @@ namespace Dapplo.Addons.Tests
 		[Fact]
 		public async Task TestArgumentNull()
 		{
-			// SimpleBootstrapper extends CompositionBootstrapper
-			var cb = new SimpleBootstrapper();
+			var cb = new CompositionBootstrapper();
 			Assert.Throws<ArgumentNullException>(() => cb.Add((Assembly)null));
 			Assert.Throws<ArgumentNullException>(() => cb.Add((AssemblyCatalog)null));
 			Assert.Throws<ArgumentNullException>(() => cb.Add((string)null));

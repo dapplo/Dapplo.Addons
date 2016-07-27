@@ -48,6 +48,12 @@ namespace Dapplo.Addons
 		IList<string> KnownFiles { get; }
 
 		/// <summary>
+		///     A list of all directories where the Resolving-Bootstrapper will look to resolve
+		///     This is internally needed to resolved dependencies.
+		/// </summary>
+		IList<string> AssemblyResolveDirectories { get; }
+
+		/// <summary>
 		///     Add an assembly to the AggregateCatalog.Catalogs
 		///     In english: make the items in the assembly discoverable
 		/// </summary>
