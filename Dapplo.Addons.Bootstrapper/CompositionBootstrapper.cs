@@ -129,71 +129,112 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			Assembly assembly;
 			var assemblyName = GetAssemblyName(resolveEventArgs);
-			if (!Assemblies.TryGetValue(assemblyName, out assembly))
-			{
-				Log.Verbose().WriteLine("Resolving name: {0}", resolveEventArgs.Name);
-				var addonDirectories = (from addonFile in KnownFiles
-										select Path.GetDirectoryName(addonFile)).Union(AssemblyResolveDirectories).Distinct();
 
-				foreach (var directoryEntry in addonDirectories)
+			// check if we already got the assembly, if so return it.
+			if (Assemblies.TryGetValue(assemblyName, out assembly))
+			{
+				Log.Verbose().WriteLine("Returning cached assembly for: {0}", resolveEventArgs.Name);
+				return assembly;
+			}
+
+			var dllName = GetAssemblyName(resolveEventArgs) + ".dll";
+			Log.Verbose().WriteLine("Trying to resolving {0}", resolveEventArgs.Name);
+
+			// Loop over all known assemblies, to see if the dll is available as resource in there.
+			// If so and try to load this!
+			foreach (var availableAssembly in Assemblies.Values)
+			{
+				foreach (var resourceName in availableAssembly.GetManifestResourceNames())
 				{
-					var directory = directoryEntry;
-					string assemblyFile;
-					try
+					if (!resourceName.EndsWith(dllName))
 					{
-						// Fix not rooted directories
-						if (!Path.IsPathRooted(directory))
-						{
-							if (!Directory.Exists(directory))
-							{
-								// Relative to the current working directory
-								var tmpDirectory = Path.Combine(Environment.CurrentDirectory, directory);
-								if (!Directory.Exists(tmpDirectory))
-								{
-									var exeDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-									if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
-									{
-										tmpDirectory = Path.Combine(exeDirectory, directory);
-									}
-									if (!Directory.Exists(tmpDirectory))
-									{
-										Log.Verbose().WriteLine("AssemblyResolveDirectories entry {0} does not exist.", directory, tmpDirectory);
-										continue;
-									}
-								}
-								Log.Verbose().WriteLine("Mapped {0} to {1}", directory, tmpDirectory);
-								directory = tmpDirectory;
-							}
-							else
-							{
-								Log.Verbose().WriteLine("AssemblyResolveDirectories entry {0} is not absolute.", directory);
-							}
-						}
-						assemblyFile = Path.Combine(directory, GetAssemblyName(resolveEventArgs) + ".dll");
-						if (!File.Exists(assemblyFile))
-						{
-							continue;
-						}
-					}
-					catch (Exception ex)
-					{
-						Log.Error().WriteLine(ex, "AssemblyResolveDirectories entry {0} will be skipped.", directory);
 						continue;
 					}
-
-					// Now try to load
+					Log.Verbose().WriteLine("Potential match for {0} in assembly {1} (resource {2})", assemblyName, availableAssembly.FullName, resourceName);
 					try
 					{
-						assembly = Assembly.LoadFile(assemblyFile);
-						Assemblies[assemblyName] = assembly;
-						Log.Verbose().WriteLine("Loaded {0} to satisfy resolving {1}", assemblyFile, assemblyName);
+						using (var assemblyStream = availableAssembly.GetManifestResourceStream(resourceName))
+						using (var memoryStream = new MemoryStream())
+						{
+							if (assemblyStream != null)
+							{
+								Log.Verbose().WriteLine("Loaded {0} from assembly {1} (resource {2})", assemblyName, availableAssembly.FullName, resourceName);
+								assemblyStream.CopyTo(memoryStream);
+								assembly = Assembly.Load(memoryStream.ToArray());
+								Assemblies[assemblyName] = assembly;
+								return assembly;
+							}
+						}
+						Log.Verbose().WriteLine("Couldn't load {0} from assembly {1} (resource {2})", assemblyName, availableAssembly.FullName, resourceName);
 					}
 					catch (Exception ex)
 					{
-						Log.Error().WriteLine(ex, "Couldn't read {0}, to load {1}", assemblyFile, assemblyName);
+						Log.Warn().WriteLine(ex, "Couldn't load resource-stream {0} from {1}", availableAssembly.FullName, resourceName);
 					}
-					break;
 				}
+			}
+			var addonDirectories = (from addonFile in KnownFiles
+									select Path.GetDirectoryName(addonFile))
+									.Union(AssemblyResolveDirectories).Distinct();
+
+			foreach (var directoryEntry in addonDirectories)
+			{
+				var directory = directoryEntry;
+				string assemblyFile;
+				try
+				{
+					// Fix not rooted directories
+					if (!Path.IsPathRooted(directory))
+					{
+						if (!Directory.Exists(directory))
+						{
+							// Relative to the current working directory
+							var tmpDirectory = Path.Combine(Environment.CurrentDirectory, directory);
+							if (!Directory.Exists(tmpDirectory))
+							{
+								var exeDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+								if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
+								{
+									tmpDirectory = Path.Combine(exeDirectory, directory);
+								}
+								if (!Directory.Exists(tmpDirectory))
+								{
+									Log.Verbose().WriteLine("AssemblyResolveDirectories entry {0} does not exist.", directory, tmpDirectory);
+									continue;
+								}
+							}
+							Log.Verbose().WriteLine("Mapped {0} to {1}", directory, tmpDirectory);
+							directory = tmpDirectory;
+						}
+						else
+						{
+							Log.Verbose().WriteLine("AssemblyResolveDirectories entry {0} is not absolute.", directory);
+						}
+					}
+					assemblyFile = Path.Combine(directory, dllName);
+					if (!File.Exists(assemblyFile))
+					{
+						continue;
+					}
+				}
+				catch (Exception ex)
+				{
+					Log.Error().WriteLine(ex, "AssemblyResolveDirectories entry {0} will be skipped.", directory);
+					continue;
+				}
+
+				// Now try to load
+				try
+				{
+					assembly = Assembly.LoadFile(assemblyFile);
+					Assemblies[assemblyName] = assembly;
+					Log.Verbose().WriteLine("Loaded {0} to satisfy resolving {1}", assemblyFile, assemblyName);
+				}
+				catch (Exception ex)
+				{
+					Log.Error().WriteLine(ex, "Couldn't read {0}, to load {1}", assemblyFile, assemblyName);
+				}
+				break;
 			}
 			if (assembly == null)
 			{
