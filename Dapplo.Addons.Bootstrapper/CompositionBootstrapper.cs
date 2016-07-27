@@ -73,6 +73,15 @@ namespace Dapplo.Addons.Bootstrapper
 		protected bool IsAggregateCatalogConfigured { get; set; }
 
 		/// <summary>
+		/// The constructor makes sure resolving issues while adding can be solved.
+		/// </summary>
+		public CompositionBootstrapper()
+		{
+			// Register the AssemblyResolve event
+			AppDomain.CurrentDomain.AssemblyResolve += AddonResolveEventHandler;
+		}
+
+		/// <summary>
 		///     Configure the AggregateCatalog, by adding the default assemblies
 		/// </summary>
 		protected virtual void Configure()
@@ -81,8 +90,6 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				return;
 			}
-			// Register the AssemblyResolve event
-			AppDomain.CurrentDomain.AssemblyResolve += AddonResolveEventHandler;
 
 			// Add the entry assembly, which should be the application, but not the calling or executing (as this is Dapplo.Addons)
 			var applicationAssembly = Assembly.GetEntryAssembly();
@@ -227,7 +234,6 @@ namespace Dapplo.Addons.Bootstrapper
 		///     This is internally needed to resolved dependencies.
 		/// </summary>
 		public IList<string> AssemblyResolveDirectories { get; } = new List<string>();
-
 
 		/// <summary>
 		///     Add an assembly to the AggregateCatalog.Catalogs
