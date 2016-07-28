@@ -347,10 +347,14 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				// Relative to the current working directory
 				ScanAndAddFiles(Path.Combine(Environment.CurrentDirectory, directory), pattern);
-				var exeDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-				if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
+				var assemblyLocation = Assembly.GetExecutingAssembly().Location;
+				if (!string.IsNullOrEmpty(assemblyLocation) && File.Exists(assemblyLocation))
 				{
-					ScanAndAddFiles(Path.Combine(exeDirectory, directory), pattern);
+					var exeDirectory = Path.GetDirectoryName(assemblyLocation);
+					if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
+					{
+						ScanAndAddFiles(Path.Combine(exeDirectory, directory), pattern);
+					}
 				}
 				return;
 			}
