@@ -73,15 +73,6 @@ namespace Dapplo.Addons.Bootstrapper
 		protected bool IsAggregateCatalogConfigured { get; set; }
 
 		/// <summary>
-		/// The constructor makes sure resolving issues while adding can be solved.
-		/// </summary>
-		public CompositionBootstrapper()
-		{
-			// Register the AssemblyResolve event
-			AppDomain.CurrentDomain.AssemblyResolve += AddonResolveEventHandler;
-		}
-
-		/// <summary>
 		///     Configure the AggregateCatalog, by adding the default assemblies
 		/// </summary>
 		protected virtual void Configure()
@@ -109,143 +100,14 @@ namespace Dapplo.Addons.Bootstrapper
 				return;
 			}
 			IsAggregateCatalogConfigured = false;
-			// Unregister the AssemblyResolve event
-			AppDomain.CurrentDomain.AssemblyResolve -= AddonResolveEventHandler;
 
+			// Remove all references to the assemblies
 			KnownAssemblies.Clear();
 		}
 
 		#region Assembly resolving
 
-		private static readonly IDictionary<string, Assembly> Assemblies = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
 
-		/// <summary>
-		///     A resolver which takes care of loading DLL's which are referenced from AddOns but not found
-		/// </summary>
-		/// <param name="sender">object</param>
-		/// <param name="resolveEventArgs">ResolveEventArgs</param>
-		/// <returns>Assembly</returns>
-		protected Assembly AddonResolveEventHandler(object sender, ResolveEventArgs resolveEventArgs)
-		{
-			Assembly assembly;
-			var assemblyName = GetAssemblyName(resolveEventArgs);
-
-			// check if we already got the assembly, if so return it.
-			if (Assemblies.TryGetValue(assemblyName, out assembly))
-			{
-				Log.Verbose().WriteLine("Returning cached assembly for: {0}", resolveEventArgs.Name);
-				return assembly;
-			}
-
-			var dllName = GetAssemblyName(resolveEventArgs) + ".dll";
-			Log.Verbose().WriteLine("Trying to resolving {0}", resolveEventArgs.Name);
-
-			// Loop over all known assemblies, to see if the dll is available as resource in there.
-			// If so and try to load this!
-			foreach (var availableAssembly in Assemblies.Values)
-			{
-				foreach (var resourceName in availableAssembly.GetManifestResourceNames())
-				{
-					if (!resourceName.EndsWith(dllName))
-					{
-						continue;
-					}
-					Log.Verbose().WriteLine("Potential match for {0} in assembly {1} (resource {2})", assemblyName, availableAssembly.FullName, resourceName);
-					try
-					{
-						using (var assemblyStream = availableAssembly.GetManifestResourceStream(resourceName))
-						using (var memoryStream = new MemoryStream())
-						{
-							if (assemblyStream != null)
-							{
-								Log.Verbose().WriteLine("Loaded {0} from assembly {1} (resource {2})", assemblyName, availableAssembly.FullName, resourceName);
-								assemblyStream.CopyTo(memoryStream);
-								assembly = Assembly.Load(memoryStream.ToArray());
-								Assemblies[assemblyName] = assembly;
-								return assembly;
-							}
-						}
-						Log.Verbose().WriteLine("Couldn't load {0} from assembly {1} (resource {2})", assemblyName, availableAssembly.FullName, resourceName);
-					}
-					catch (Exception ex)
-					{
-						Log.Warn().WriteLine(ex, "Couldn't load resource-stream {0} from {1}", availableAssembly.FullName, resourceName);
-					}
-				}
-			}
-			var addonDirectories = (from addonFile in KnownFiles
-									select Path.GetDirectoryName(addonFile))
-									.Union(AssemblyResolveDirectories).Distinct();
-
-			foreach (var directoryEntry in addonDirectories)
-			{
-				var directory = directoryEntry;
-				string assemblyFile;
-				try
-				{
-					// Fix not rooted directories, as this is not allowed
-					if (!Path.IsPathRooted(directory))
-					{
-						// Relative to the current working directory
-						var tmpDirectory = Path.Combine(Environment.CurrentDirectory, directory);
-						if (!Directory.Exists(tmpDirectory))
-						{
-							var exeDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-							if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
-							{
-								tmpDirectory = Path.Combine(exeDirectory, directory);
-							}
-							if (!Directory.Exists(tmpDirectory))
-							{
-								Log.Verbose().WriteLine("AssemblyResolveDirectories entry {0} does not exist.", directory, tmpDirectory);
-								continue;
-							}
-						}
-						Log.Verbose().WriteLine("Mapped {0} to {1}", directory, tmpDirectory);
-						directory = tmpDirectory;
-					}
-					assemblyFile = Path.Combine(directory, dllName);
-					if (!File.Exists(assemblyFile))
-					{
-						continue;
-					}
-				}
-				catch (Exception ex)
-				{
-					Log.Error().WriteLine(ex, "AssemblyResolveDirectories entry {0} will be skipped.", directory);
-					continue;
-				}
-
-				// Now try to load
-				try
-				{
-					assembly = Assembly.LoadFile(assemblyFile);
-					Assemblies[assemblyName] = assembly;
-					Log.Verbose().WriteLine("Loaded {0} to satisfy resolving {1}", assemblyFile, assemblyName);
-				}
-				catch (Exception ex)
-				{
-					Log.Error().WriteLine(ex, "Couldn't read {0}, to load {1}", assemblyFile, assemblyName);
-				}
-				break;
-			}
-			if (assembly == null)
-			{
-				Log.Warn().WriteLine("Couldn't resolve {0}", assemblyName);
-			}
-			return assembly;
-		}
-
-		/// <summary>
-		///     Helper to get the assembly name
-		/// </summary>
-		/// <param name="args"></param>
-		/// <returns></returns>
-		private static string GetAssemblyName(ResolveEventArgs args)
-		{
-			var indexOf = args.Name.IndexOf(",", StringComparison.Ordinal);
-			return indexOf > -1 ? args.Name.Substring(0, indexOf) : args.Name;
-		}
 		#endregion
 
 		#region IServiceRepository
@@ -262,13 +124,6 @@ namespace Dapplo.Addons.Bootstrapper
 		/// </summary>
 		public IList<string> KnownFiles { get; } = new List<string>();
 
-
-		/// <summary>
-		///     A list of all directories where the bootstrapper will look to resolve
-		///     This is internally needed to resolved dependencies.
-		/// </summary>
-		public IList<string> AssemblyResolveDirectories { get; } = new List<string>();
-
 		/// <summary>
 		///     Add an assembly to the AggregateCatalog.Catalogs
 		///     In english: make the items in the assembly discoverable
@@ -279,6 +134,10 @@ namespace Dapplo.Addons.Bootstrapper
 			if (assembly == null)
 			{
 				throw new ArgumentNullException(nameof(assembly));
+			}
+			if (KnownAssemblies.Contains(assembly))
+			{
+				return;
 			}
 			var assemblyCatalog = new AssemblyCatalog(assembly);
 			Add(assemblyCatalog);
@@ -329,7 +188,7 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		///     Add the assemblies (with parts) found in the specified directory
+		///     Add the assemblies (with parts) found in the specified directory, or manifest resources
 		/// </summary>
 		/// <param name="directory">Directory to scan</param>
 		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
@@ -342,27 +201,10 @@ namespace Dapplo.Addons.Bootstrapper
 
 			Log.Debug().WriteLine("Scanning directory {0} with pattern {1}", directory, pattern);
 
-			// Special logic for non rooted directories
-			if (!Path.IsPathRooted(directory))
+			foreach (var dir in Resolver.DirectoriesFor(directory))
 			{
-				// Relative to the current working directory
-				ScanAndAddFiles(Path.Combine(Environment.CurrentDirectory, directory), pattern);
-				var assemblyLocation = Assembly.GetExecutingAssembly().Location;
-				if (!string.IsNullOrEmpty(assemblyLocation) && File.Exists(assemblyLocation))
-				{
-					var exeDirectory = Path.GetDirectoryName(assemblyLocation);
-					if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
-					{
-						ScanAndAddFiles(Path.Combine(exeDirectory, directory), pattern);
-					}
-				}
-				return;
+				ScanAndAddFiles(directory, pattern);
 			}
-			if (!Directory.Exists(directory))
-			{
-				throw new ArgumentException("Directory doesn't exist: " + directory);
-			}
-			ScanAndAddFiles(directory, pattern);
 		}
 
 		/// <summary>
@@ -372,31 +214,24 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
 		private void ScanAndAddFiles(string directory, string pattern)
 		{
-			if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+			var files = Resolver.ScanDirectories(new[] {directory}, pattern, false);
+			foreach (var file in files)
 			{
-				Log.Verbose().WriteLine("Skipping directory {0}", directory);
-				return;
-			}
-			try
-			{
-				var files = Directory.EnumerateFiles(directory, pattern, SearchOption.AllDirectories);
-				foreach (var file in files)
+				try
 				{
-					try
+					var assembly = Resolver.LoadAssemblyFromFile(file);
+					if (KnownAssemblies.Contains(assembly))
 					{
-						var assemblyCatalog = new AssemblyCatalog(file);
-						Add(assemblyCatalog);
+						continue;
 					}
-					catch
-					{
-						// Ignore the exception, so we can continue, and don't log as this is handled in Add(assemblyCatalog);
-						Log.Error().WriteLine("Problem loading assembly from {0}", file);
-					}
+					var assemblyCatalog = new AssemblyCatalog(assembly);
+					Add(assemblyCatalog);
 				}
-			}
-			catch (Exception ex)
-			{
-				Log.Error().WriteLine(ex);
+				catch
+				{
+					// Ignore the exception, so we can continue, and don't log as this is handled in Add(assemblyCatalog);
+					Log.Error().WriteLine("Problem loading assembly from {0}", file);
+				}
 			}
 		}
 

@@ -40,18 +40,12 @@ namespace Dapplo.Addons
 		/// <summary>
 		///     all assemblies this bootstrapper knows
 		/// </summary>
-		IList<Assembly> KnownAssemblies { get; }
+		IEnumerable<Assembly> KnownAssemblies { get; }
 
 		/// <summary>
 		///     All addon files this bootstrapper knows
 		/// </summary>
 		IList<string> KnownFiles { get; }
-
-		/// <summary>
-		///     A list of all directories where the Resolving-Bootstrapper will look to resolve
-		///     This is internally needed to resolved dependencies.
-		/// </summary>
-		IList<string> AssemblyResolveDirectories { get; }
 
 		/// <summary>
 		///     Add an assembly to the AggregateCatalog.Catalogs
