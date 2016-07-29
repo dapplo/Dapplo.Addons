@@ -40,7 +40,7 @@ namespace Dapplo.Addons
 		/// <summary>
 		///     all assemblies this bootstrapper knows
 		/// </summary>
-		IEnumerable<Assembly> KnownAssemblies { get; }
+		IList<Assembly> KnownAssemblies { get; }
 
 		/// <summary>
 		///     All addon files this bootstrapper knows
@@ -62,11 +62,12 @@ namespace Dapplo.Addons
 		void Add(AssemblyCatalog assemblyCatalog);
 
 		/// <summary>
-		///     Add the assemblies (with parts) found in the specified directory
+		///     Add the assemblies (with parts) found in the specified directory or embedded
 		/// </summary>
 		/// <param name="directory">Directory to scan</param>
 		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
-		void Add(string directory, string pattern = "*.dll");
+		/// <param name="loadEmbedded">true, which is default, to also load embedded matching dlls</param>
+		void Add(string directory, string pattern = "*.dll", bool loadEmbedded = true);
 
 		/// <summary>
 		///     Add the assembly for the specified type

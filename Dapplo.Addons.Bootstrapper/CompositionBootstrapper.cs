@@ -26,13 +26,14 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.ComponentModel.Composition.Primitives;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapplo.Log.Facade;
 using Dapplo.Utils;
+using Dapplo.Utils.Embedded;
+using Dapplo.Utils.Resolving;
 
 #endregion
 
@@ -192,7 +193,8 @@ namespace Dapplo.Addons.Bootstrapper
 		/// </summary>
 		/// <param name="directory">Directory to scan</param>
 		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
-		public void Add(string directory, string pattern = "*.dll")
+		/// <param name="loadEmbedded"></param>
+		public void Add(string directory, string pattern = "*.dll", bool loadEmbedded = true)
 		{
 			if (directory == null)
 			{
@@ -201,25 +203,13 @@ namespace Dapplo.Addons.Bootstrapper
 
 			Log.Debug().WriteLine("Scanning directory {0} with pattern {1}", directory, pattern);
 
-			foreach (var dir in Resolver.DirectoriesFor(directory))
-			{
-				ScanAndAddFiles(directory, pattern);
-			}
-		}
+			var directoriesToScan = FileLocations.DirectoriesFor(directory);
 
-		/// <summary>
-		/// Helper method to scan and add files, called by Add
-		/// </summary>
-		/// <param name="directory">Directory to scan</param>
-		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
-		private void ScanAndAddFiles(string directory, string pattern)
-		{
-			var files = Resolver.ScanDirectories(new[] {directory}, pattern, false);
-			foreach (var file in files)
+			foreach (var file in FileLocations.Scan(directoriesToScan, pattern))
 			{
 				try
 				{
-					var assembly = Resolver.LoadAssemblyFromFile(file);
+					var assembly = AssemblyResolver.LoadAssemblyFromFile(file);
 					if (KnownAssemblies.Contains(assembly))
 					{
 						continue;
@@ -231,6 +221,28 @@ namespace Dapplo.Addons.Bootstrapper
 				{
 					// Ignore the exception, so we can continue, and don't log as this is handled in Add(assemblyCatalog);
 					Log.Error().WriteLine("Problem loading assembly from {0}", file);
+				}
+			}
+			if (loadEmbedded)
+			{
+				foreach (var resourceTuple in EmbeddedResources.FindEmbeddedResources(KnownAssemblies, ""))
+				{
+					try
+					{
+						AssemblyResolver.LoadEmbeddedAssembly())
+						var assembly = AssemblyResolver.LoadAssemblyFromFile(file);
+						if (KnownAssemblies.Contains(assembly))
+						{
+							continue;
+						}
+						var assemblyCatalog = new AssemblyCatalog(assembly);
+						Add(assemblyCatalog);
+					}
+					catch
+					{
+						// Ignore the exception, so we can continue, and don't log as this is handled in Add(assemblyCatalog);
+						Log.Error().WriteLine("Problem loading assembly from {0}", file);
+					}
 				}
 			}
 		}
