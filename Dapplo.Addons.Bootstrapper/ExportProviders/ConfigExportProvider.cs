@@ -91,8 +91,9 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 					{
 						contractType = Type.GetType(assemblyQualifiedName, false, true);
 					}
-					catch
+					catch (Exception ex)
 					{
+						Log.Verbose().WriteLine("Couldn't get type {0} due to {1}", assemblyQualifiedName, ex.Message);
 						// Ignore & break the loop at it is most likely a problem with the contract name
 						break;
 					}
@@ -100,6 +101,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 					// Go to next assembly if it wasn't found
 					if (contractType == null)
 					{
+						Log.Verbose().WriteLine("Couldn't get type {0}", assemblyQualifiedName);
 						// Add null value, so we don't try it again
 						continue;
 					}
@@ -113,6 +115,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 					// Check if it is derrived from the exporting base type
 					if (!typeof(TExportType).IsAssignableFrom(contractType))
 					{
+						Log.Verbose().WriteLine("Type {0} is not assignable to basetype {1}", contractType, typeof(TExportType).Name)
 						continue;
 					}
 
