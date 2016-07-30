@@ -229,8 +229,7 @@ namespace Dapplo.Addons.Bootstrapper
 				{
 					try
 					{
-						AssemblyResolver.LoadEmbeddedAssembly())
-						var assembly = AssemblyResolver.LoadAssemblyFromFile(file);
+						var assembly = resourceTuple.Item1.LoadEmbeddedAssembly(resourceTuple.Item2);
 						if (KnownAssemblies.Contains(assembly))
 						{
 							continue;
@@ -241,7 +240,7 @@ namespace Dapplo.Addons.Bootstrapper
 					catch
 					{
 						// Ignore the exception, so we can continue, and don't log as this is handled in Add(assemblyCatalog);
-						Log.Error().WriteLine("Problem loading assembly from {0}", file);
+						Log.Error().WriteLine("Problem loading assembly from embedded resource {0} in assembly {1}", resourceTuple.Item2, resourceTuple.Item1.GetName().Name);
 					}
 				}
 			}
