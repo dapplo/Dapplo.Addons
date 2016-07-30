@@ -89,7 +89,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 					Type contractType;
 					try
 					{
-						contractType = Type.GetType(assemblyQualifiedName, false, true);
+						contractType = Type.GetType(assemblyQualifiedName, true, true);
 					}
 					catch (Exception ex)
 					{
