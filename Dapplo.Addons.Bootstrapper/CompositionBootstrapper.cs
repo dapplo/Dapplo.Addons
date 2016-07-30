@@ -225,7 +225,8 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			if (loadEmbedded)
 			{
-				foreach (var resourceTuple in EmbeddedResources.FindEmbeddedResources(KnownAssemblies, ""))
+				var fileRegex = FilePattern.FilePatternToRegex(pattern);
+				foreach (var resourceTuple in EmbeddedResources.FindEmbeddedResources(KnownAssemblies, fileRegex))
 				{
 					try
 					{
