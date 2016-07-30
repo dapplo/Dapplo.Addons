@@ -209,9 +209,11 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				try
 				{
+					Log.Verbose().WriteLine("Trying to load {0}", file);
 					var assembly = AssemblyResolver.LoadAssemblyFromFile(file);
 					if (KnownAssemblies.Contains(assembly))
 					{
+						Log.Verbose().WriteLine("Skipping {0} as it was already loaded", file);
 						continue;
 					}
 					var assemblyCatalog = new AssemblyCatalog(assembly);
@@ -482,7 +484,7 @@ namespace Dapplo.Addons.Bootstrapper
 			var typeIdentity = AttributedModelServices.GetTypeIdentity(type);
 			if (metadata == null)
 			{
-				metadata = new Dictionary<string, object>();
+				metadata = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 			}
 			if (!metadata.ContainsKey(CompositionConstants.ExportTypeIdentityMetadataName))
 			{

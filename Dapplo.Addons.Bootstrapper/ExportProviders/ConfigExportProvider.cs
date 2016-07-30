@@ -43,7 +43,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 		private static readonly LogSource Log = new LogSource();
 		private readonly IBootstrapper _bootstrapper;
 		private readonly IConfigProvider _configProvider;
-		private readonly IDictionary<string, Export> _loopup = new Dictionary<string, Export>();
+		private readonly IDictionary<string, Export> _loopup = new Dictionary<string, Export>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
 		///     Create a ConfigExportProvider which is for the specified application, IConfigProvider and works with the supplied
@@ -117,7 +117,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 					}
 
 					// Generate the export & meta-data
-					var metadata = new Dictionary<string, object>
+					var metadata = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
 					{
 						{CompositionConstants.ExportTypeIdentityMetadataName, AttributedModelServices.GetTypeIdentity(contractType)}
 					};
