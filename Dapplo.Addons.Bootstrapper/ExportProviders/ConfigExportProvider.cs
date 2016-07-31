@@ -80,20 +80,15 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 				// Loop over all the supplied assemblies, these should come from the bootstrapper
 				foreach (var assembly in _bootstrapper.KnownAssemblies)
 				{
-					// Make an AssemblyQualifiedName from the contract name
-					var assemblyQualifiedName = $"{definition.ContractName}, {assembly.FullName}";
-
-					Log.Verbose().WriteLine("Checking if {0} can be found in {1}", definition.ContractName, assembly.FullName);
-
 					// Try to get it, don't throw an exception if not found
 					Type contractType;
 					try
 					{
-						contractType = Type.GetType(assemblyQualifiedName, true, true);
+						contractType = assembly.GetType(definition.ContractName, false, true);
 					}
 					catch (Exception ex)
 					{
-						Log.Verbose().WriteLine("Couldn't get type {0} due to {1}", assemblyQualifiedName, ex.Message);
+						Log.Verbose().WriteLine("Couldn't get type {0} due to {1}", definition.ContractName, ex.Message);
 						// Ignore & break the loop at it is most likely a problem with the contract name
 						break;
 					}
@@ -102,7 +97,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 					if (contractType == null)
 					{
 						// Add null value, so we don't try it again
-						Log.Verbose().WriteLine("Couldn't get type {0}", assemblyQualifiedName);
+						Log.Verbose().WriteLine("Type {0} couldn't be found in {1}", definition.ContractName, assembly.FullName);
 						continue;
 					}
 
@@ -119,6 +114,8 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 						Log.Verbose().WriteLine("Type {0} is not assignable to basetype {1}", contractType, typeof(TExportType).Name);
 						continue;
 					}
+
+					Log.Verbose().WriteLine("Type {0} found in {1}", definition.ContractName, assembly.FullName);
 
 					// Generate the export & meta-data
 					var metadata = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)

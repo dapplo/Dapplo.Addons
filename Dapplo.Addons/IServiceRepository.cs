@@ -25,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition.Hosting;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 #endregion
 
@@ -48,6 +49,19 @@ namespace Dapplo.Addons
 		IList<string> KnownFiles { get; }
 
 		/// <summary>
+		/// Add a scan directory
+		/// </summary>
+		/// <param name="directory">string with the directory</param>
+		void AddScanDirectory(string directory);
+
+		/// <summary>
+		///     Add an assembly to the AggregateCatalog.Catalogs
+		///     In english: make the items in the assembly discoverable
+		/// </summary>
+		/// <param name="assemblyName">Name of the Assembly to add</param>
+		void Add(string assemblyName);
+
+		/// <summary>
 		///     Add an assembly to the AggregateCatalog.Catalogs
 		///     In english: make the items in the assembly discoverable
 		/// </summary>
@@ -65,9 +79,17 @@ namespace Dapplo.Addons
 		///     Add the assemblies (with parts) found in the specified directory or embedded
 		/// </summary>
 		/// <param name="directory">Directory to scan</param>
-		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
+		/// <param name="pattern">Regex pattern to use for the scan, default is all assemblies</param>
 		/// <param name="loadEmbedded">true, which is default, to also load embedded matching dlls</param>
-		void Add(string directory, string pattern = "*.dll", bool loadEmbedded = true);
+		void Add(string directory, Regex pattern = null, bool loadEmbedded = true);
+
+		/// <summary>
+		///     Add the assemblies (with parts) found in the specified directory or embedded
+		/// </summary>
+		/// <param name="directory">Directory to scan</param>
+		/// <param name="pattern">string with regex pattern to use for the scan, default is all assemblies</param>
+		/// <param name="loadEmbedded">true, which is default, to also load embedded matching dlls</param>
+		void Add(string directory, string pattern, bool loadEmbedded = true);
 
 		/// <summary>
 		///     Add the assembly for the specified type

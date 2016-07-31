@@ -34,6 +34,7 @@ using Dapplo.Log.Facade;
 using Dapplo.Utils;
 using Dapplo.Utils.Embedded;
 using Dapplo.Utils.Resolving;
+using System.Text.RegularExpressions;
 
 #endregion
 
@@ -47,6 +48,7 @@ namespace Dapplo.Addons.Bootstrapper
 	{
 		private const string NotInitialized = "Bootstrapper is not initialized";
 		private static readonly LogSource Log = new LogSource();
+		private static readonly Regex AssemblyRegex = new Regex($@".*(\.exe|\.exe\.gz|\.dll|\.dll\.gz)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 		/// <summary>
 		///     The AggregateCatalog contains all the catalogs with the assemblies in it.
@@ -82,6 +84,10 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				return;
 			}
+
+			// Make sure the assembly resolver is active
+			// this makes sure assemblies which are embedded or in a subdirectory can be found.
+			AssemblyResolver.RegisterAssemblyResolve();
 
 			// Add the entry assembly, which should be the application, but not the calling or executing (as this is Dapplo.Addons)
 			var applicationAssembly = Assembly.GetEntryAssembly();
@@ -126,6 +132,15 @@ namespace Dapplo.Addons.Bootstrapper
 		public IList<string> KnownFiles { get; } = new List<string>();
 
 		/// <summary>
+		/// Add the specified directory to have the bootstrapper look for assemblies
+		/// </summary>
+		/// <param name="directory">string with the directory</param>
+		public void AddScanDirectory(string directory)
+		{
+			AssemblyResolver.AddDirectory(directory);
+		}
+
+		/// <summary>
 		///     Add an assembly to the AggregateCatalog.Catalogs
 		///     In english: make the items in the assembly discoverable
 		/// </summary>
@@ -157,6 +172,7 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			if (KnownAssemblies.Contains(assemblyCatalog.Assembly))
 			{
+				Log.Verbose().WriteLine("Skipping assembly {0}, we already added it", assemblyCatalog.Assembly.FullName);
 				return;
 			}
 			try
@@ -189,35 +205,69 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
+		/// Add the assembly with the specified name
+		/// </summary>
+		/// <param name="assemblyName">string with the assembly name</param>
+		public void Add(string assemblyName)
+		{
+			if (string.IsNullOrEmpty(assemblyName))
+			{
+				throw new ArgumentNullException(nameof(assemblyName));
+			}
+			try
+			{
+				Log.Verbose().WriteLine("Trying to load {0}", assemblyName);
+				var assembly = AssemblyResolver.FindAssembly(assemblyName);
+				Add(assembly);
+			}
+			catch
+			{
+				// Ignore the exception, so we can continue, and don't log as this is handled in Add(assembly);
+				Log.Error().WriteLine("Problem loading assembly {0}", assemblyName);
+			}
+		}
+
+		/// <summary>
+		///     Add the assemblies (with parts) found in the specified directory, or manifest resources
+		///     Be carefull with the pattern, every found file will be loaded!
+		/// </summary>
+		/// <param name="directory">Directory to scan</param>
+		/// <param name="pattern">Pattern to use for the scan, default all dlls will be found</param>
+		/// <param name="loadEmbedded"></param>
+		public void Add(string directory, string pattern, bool loadEmbedded = true)
+		{
+			if (string.IsNullOrEmpty(pattern))
+			{
+				throw new ArgumentNullException(nameof(pattern));
+			}
+			Add(directory, new Regex(pattern), loadEmbedded);
+		}
+
+		/// <summary>
 		///     Add the assemblies (with parts) found in the specified directory, or manifest resources
 		/// </summary>
 		/// <param name="directory">Directory to scan</param>
-		/// <param name="pattern">Pattern to use for the scan, default is "*.dll"</param>
+		/// <param name="pattern">Pattern to use for the scan, default all dlls will be found</param>
 		/// <param name="loadEmbedded"></param>
-		public void Add(string directory, string pattern = "*.dll", bool loadEmbedded = true)
+		public void Add(string directory, Regex pattern = null, bool loadEmbedded = true)
 		{
 			if (directory == null)
 			{
 				throw new ArgumentNullException(nameof(directory));
 			}
+			var regex = pattern ?? AssemblyRegex;
 
-			Log.Debug().WriteLine("Scanning directory {0} with pattern {1}", directory, pattern);
+			Log.Debug().WriteLine("Scanning directory {0}", directory);
 
 			var directoriesToScan = FileLocations.DirectoriesFor(directory);
 
-			foreach (var file in FileLocations.Scan(directoriesToScan, pattern))
+			foreach (var file in FileLocations.Scan(directoriesToScan, regex).Select(x => x.Item1))
 			{
 				try
 				{
 					Log.Verbose().WriteLine("Trying to load {0}", file);
 					var assembly = AssemblyResolver.LoadAssemblyFromFile(file);
-					if (KnownAssemblies.Contains(assembly))
-					{
-						Log.Verbose().WriteLine("Skipping {0} as it was already loaded", file);
-						continue;
-					}
-					var assemblyCatalog = new AssemblyCatalog(assembly);
-					Add(assemblyCatalog);
+					Add(assembly);
 				}
 				catch
 				{
@@ -227,18 +277,12 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			if (loadEmbedded)
 			{
-				var fileRegex = FilePattern.FilePatternToRegex(pattern);
-				foreach (var resourceTuple in EmbeddedResources.FindEmbeddedResources(KnownAssemblies, fileRegex))
+				foreach (var resourceTuple in EmbeddedResources.FindEmbeddedResources(KnownAssemblies, pattern))
 				{
 					try
 					{
 						var assembly = resourceTuple.Item1.LoadEmbeddedAssembly(resourceTuple.Item2);
-						if (KnownAssemblies.Contains(assembly))
-						{
-							continue;
-						}
-						var assemblyCatalog = new AssemblyCatalog(assembly);
-						Add(assemblyCatalog);
+						Add(assembly);
 					}
 					catch
 					{
