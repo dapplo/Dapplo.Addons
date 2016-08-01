@@ -65,7 +65,7 @@ namespace Dapplo.Addons.Tests
 			var cb = new CompositionBootstrapper();
 			Assert.Throws<ArgumentNullException>(() => cb.Add((Assembly)null));
 			Assert.Throws<ArgumentNullException>(() => cb.Add((AssemblyCatalog)null));
-			Assert.Throws<ArgumentNullException>(() => cb.Add((string)null));
+			Assert.Throws<ArgumentNullException>(() => cb.FindAndLoadAssembly(null));
 			Assert.Throws<ArgumentNullException>(() => cb.Add((Type)null));
 			Assert.Throws<ArgumentNullException>(() => cb.Add((ExportProvider)null));
 			await cb.InitializeAsync().ConfigureAwait(false);

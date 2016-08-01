@@ -1,25 +1,29 @@
-﻿//  Dapplo - building blocks for desktop applications
-//  Copyright (C) 2016 Dapplo
-// 
-//  For more information see: http://dapplo.net/
-//  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
-// 
-//  This file is part of Dapplo.Addons
-// 
-//  Dapplo.Addons is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU Lesser General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-// 
-//  Dapplo.Addons is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU Lesser General Public License for more details.
-// 
-//  You should have a copy of the GNU Lesser General Public License
-//  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+﻿#region Dapplo 2016 - GNU Lesser General Public License
 
-#region using
+// Dapplo - building blocks for .NET applications
+// Copyright (C) 2016 Dapplo
+// 
+// For more information see: http://dapplo.net/
+// Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+// 
+// This file is part of Dapplo.Addons
+// 
+// Dapplo.Addons is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// Dapplo.Addons is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// 
+// You should have a copy of the GNU Lesser General Public License
+// along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+
+#endregion
+
+#region Usings
 
 using System;
 using System.Collections.Generic;
@@ -28,13 +32,13 @@ using System.ComponentModel.Composition.Hosting;
 using System.ComponentModel.Composition.Primitives;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapplo.Log.Facade;
 using Dapplo.Utils;
 using Dapplo.Utils.Embedded;
 using Dapplo.Utils.Resolving;
-using System.Text.RegularExpressions;
 
 #endregion
 
@@ -48,7 +52,6 @@ namespace Dapplo.Addons.Bootstrapper
 	{
 		private const string NotInitialized = "Bootstrapper is not initialized";
 		private static readonly LogSource Log = new LogSource();
-		private static readonly Regex AssemblyRegex = new Regex($@".*(\.exe|\.exe\.gz|\.dll|\.dll\.gz)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 		/// <summary>
 		///     The AggregateCatalog contains all the catalogs with the assemblies in it.
@@ -74,6 +77,24 @@ namespace Dapplo.Addons.Bootstrapper
 		///     Specify if the Aggregate Catalog is configured
 		/// </summary>
 		protected bool IsAggregateCatalogConfigured { get; set; }
+
+		#region IServiceProvider
+
+		/// <summary>
+		///     Implement IServiceProdiver
+		/// </summary>
+		/// <param name="serviceType">Type</param>
+		/// <returns>Instance of the serviceType</returns>
+		public object GetService(Type serviceType)
+		{
+			if (!IsInitialized)
+			{
+				throw new InvalidOperationException(NotInitialized);
+			}
+			return GetExport(serviceType);
+		}
+
+		#endregion
 
 		/// <summary>
 		///     Configure the AggregateCatalog, by adding the default assemblies
@@ -114,7 +135,6 @@ namespace Dapplo.Addons.Bootstrapper
 
 		#region Assembly resolving
 
-
 		#endregion
 
 		#region IServiceRepository
@@ -132,7 +152,7 @@ namespace Dapplo.Addons.Bootstrapper
 		public IList<string> KnownFiles { get; } = new List<string>();
 
 		/// <summary>
-		/// Add the specified directory to have the bootstrapper look for assemblies
+		///     Add the specified directory to have the bootstrapper look for assemblies
 		/// </summary>
 		/// <param name="directory">string with the directory</param>
 		public void AddScanDirectory(string directory)
@@ -205,10 +225,11 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		/// Add the assembly with the specified name
+		///     Find the the assembly with the specified name, and load it.
+		///     The assembly will be searched in the directories added by AddScanDirectory, and also in the embedded resources.
 		/// </summary>
 		/// <param name="assemblyName">string with the assembly name</param>
-		public void Add(string assemblyName)
+		public void FindAndLoadAssembly(string assemblyName)
 		{
 			if (string.IsNullOrEmpty(assemblyName))
 			{
@@ -218,7 +239,14 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				Log.Verbose().WriteLine("Trying to load {0}", assemblyName);
 				var assembly = AssemblyResolver.FindAssembly(assemblyName);
-				Add(assembly);
+				if (assembly != null)
+				{
+					Add(assembly);
+				}
+				else
+				{
+					Log.Warn().WriteLine("Couldn't load {0}", assemblyName);
+				}
 			}
 			catch
 			{
@@ -228,40 +256,68 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		///     Add the assemblies (with parts) found in the specified directory, or manifest resources
-		///     Be carefull with the pattern, every found file will be loaded!
+		///     Find the assemblies (with parts) found in default directories, or manifest resources, matching the specified filepattern.
 		/// </summary>
-		/// <param name="directory">Directory to scan</param>
-		/// <param name="pattern">Pattern to use for the scan, default all dlls will be found</param>
-		/// <param name="loadEmbedded"></param>
-		public void Add(string directory, string pattern, bool loadEmbedded = true)
+		/// <param name="pattern">File-Pattern to use for the scan, default all dlls will be found</param>
+		/// <param name="loadEmbedded">bool specifying if embedded resources should be used. default is true</param>
+		public void FindAndLoadAssemblies(string pattern = "*", bool loadEmbedded = true)
 		{
 			if (string.IsNullOrEmpty(pattern))
 			{
 				throw new ArgumentNullException(nameof(pattern));
 			}
-			Add(directory, new Regex(pattern), loadEmbedded);
+			FindAndLoadAssemblies(AssemblyResolver.Directories, AssemblyResolver.FilenameToRegex(pattern), loadEmbedded);
 		}
 
 		/// <summary>
-		///     Add the assemblies (with parts) found in the specified directory, or manifest resources
+		///     Find the assemblies (with parts) found in the specified directory, or manifest resources, matching the specified filepattern.
 		/// </summary>
 		/// <param name="directory">Directory to scan</param>
-		/// <param name="pattern">Pattern to use for the scan, default all dlls will be found</param>
-		/// <param name="loadEmbedded"></param>
-		public void Add(string directory, Regex pattern = null, bool loadEmbedded = true)
+		/// <param name="pattern">File-Pattern to use for the scan, default all dlls will be found</param>
+		/// <param name="loadEmbedded">bool specifying if embedded resources should be used. default is true</param>
+		public void FindAndLoadAssembliesFromDirectory(string directory, string pattern = "*", bool loadEmbedded = true)
+		{
+			if (string.IsNullOrEmpty(pattern))
+			{
+				throw new ArgumentNullException(nameof(pattern));
+			}
+			FindAndLoadAssembliesFromDirectory(directory, AssemblyResolver.FilenameToRegex(pattern), loadEmbedded);
+		}
+
+		/// <summary>
+		///     Find the assemblies (with parts) found in the specified directory, or manifest resources, matching the specified regex.
+		/// </summary>
+		/// <param name="directory">Directory to scan</param>
+		/// <param name="pattern">Regex to use for the scan, when null all dlls will be found</param>
+		/// <param name="loadEmbedded">bool specifying if embedded resources should be used. default is true</param>
+		public void FindAndLoadAssembliesFromDirectory(string directory, Regex pattern, bool loadEmbedded = true)
 		{
 			if (directory == null)
 			{
 				throw new ArgumentNullException(nameof(directory));
 			}
-			var regex = pattern ?? AssemblyRegex;
-
 			Log.Debug().WriteLine("Scanning directory {0}", directory);
 
 			var directoriesToScan = FileLocations.DirectoriesFor(directory);
+			FindAndLoadAssemblies(directoriesToScan, pattern, loadEmbedded);
+		}
 
-			foreach (var file in FileLocations.Scan(directoriesToScan, regex).Select(x => x.Item1))
+		/// <summary>
+		///     Find the assemblies (with parts) found in the specified directories, or manifest resources, matching the specified regex.
+		/// </summary>
+		/// <param name="directories">Directory to scan</param>
+		/// <param name="pattern">Regex to use for the scan, when null all dlls will be found</param>
+		/// <param name="loadEmbedded">bool specifying if embedded resources should be used. default is true</param>
+		public void FindAndLoadAssemblies(IEnumerable<string> directories, Regex pattern, bool loadEmbedded = true)
+		{
+			if (directories == null)
+			{
+				throw new ArgumentNullException(nameof(directories));
+			}
+			// check if there is a pattern, use the all assemblies in the directory if none is given
+			pattern = pattern ?? AssemblyResolver.FilenameToRegex("*");
+
+			foreach (var file in FileLocations.Scan(directories, pattern).Select(x => x.Item1))
 			{
 				try
 				{
@@ -277,7 +333,7 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			if (loadEmbedded)
 			{
-				foreach (var resourceTuple in EmbeddedResources.FindEmbeddedResources(KnownAssemblies, pattern))
+				foreach (var resourceTuple in KnownAssemblies.FindEmbeddedResources(pattern))
 				{
 					try
 					{
@@ -320,6 +376,7 @@ namespace Dapplo.Addons.Bootstrapper
 			Log.Verbose().WriteLine("Adding ExportProvider: {0}", exportProvider.GetType().FullName);
 			ExportProviders.Add(exportProvider);
 		}
+
 		#endregion
 
 		#region IServiceLocator
@@ -457,6 +514,7 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			return Container.GetExports<T, TMetaData>();
 		}
+
 		#endregion
 
 		#region IServiceExporter
@@ -597,9 +655,11 @@ namespace Dapplo.Addons.Bootstrapper
 			batch.RemovePart(part);
 			Container.Compose(batch);
 		}
+
 		#endregion
 
 		#region IBootstrapper
+
 		/// <summary>
 		///     Is this initialized?
 		/// </summary>
@@ -665,23 +725,7 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			return Task.FromResult(!IsInitialized);
 		}
-		#endregion
 
-		#region IServiceProvider
-
-		/// <summary>
-		/// Implement IServiceProdiver
-		/// </summary>
-		/// <param name="serviceType">Type</param>
-		/// <returns>Instance of the serviceType</returns>
-		public object GetService(Type serviceType)
-		{
-			if (!IsInitialized)
-			{
-				throw new InvalidOperationException(NotInitialized);
-			}
-			return GetExport(serviceType);
-		}
 		#endregion
 
 		#region IDisposable Support

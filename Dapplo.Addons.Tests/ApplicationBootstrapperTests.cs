@@ -84,14 +84,14 @@ namespace Dapplo.Addons.Tests
 			using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
 			{
 				// Add all file starting with Dapplo and ending on .dll or .dll.gz
-				bootstrapper.Add(".", @"Dapplo[^\\]*(\.dll|\.dll\.gz)");
+				bootstrapper.FindAndLoadAssemblies("Dapplo*");
 				// Add test project, without having a direct reference
 #if DEBUG
 				bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");
 #else
 				bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release");
 #endif
-				bootstrapper.Add("Dapplo.Addons.TestAddon");
+				bootstrapper.FindAndLoadAssembly("Dapplo.Addons.TestAddon");
 
 				// Test if our test addon was loaded
 				Assert.True(bootstrapper.KnownFiles.Count(addon => addon.EndsWith("TestAddon.dll")) > 0);
@@ -145,14 +145,14 @@ namespace Dapplo.Addons.Tests
 			using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
 			{
 				// Add all file starting with Dapplo and ending on .dll or .dll.gz
-				bootstrapper.Add(".", @"Dapplo[^\\]*(\.dll|\.dll\.gz)");
+				bootstrapper.FindAndLoadAssemblies("Dapplo*");
 				// Add test project, without having a direct reference
 #if DEBUG
 				bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");
 #else
 				bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release");
 #endif
-				bootstrapper.Add("Dapplo.Addons.TestAddon");
+				bootstrapper.FindAndLoadAssembly("Dapplo.Addons.TestAddon");
 
 				// Initialize, so we can export
 				Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");
