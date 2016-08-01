@@ -260,13 +260,14 @@ namespace Dapplo.Addons.Bootstrapper
 		/// </summary>
 		/// <param name="pattern">File-Pattern to use for the scan, default all dlls will be found</param>
 		/// <param name="loadEmbedded">bool specifying if embedded resources should be used. default is true</param>
-		public void FindAndLoadAssemblies(string pattern = "*", bool loadEmbedded = true)
+		/// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
+		public void FindAndLoadAssemblies(string pattern = "*", bool loadEmbedded = true, IEnumerable<string> extensions = null)
 		{
 			if (string.IsNullOrEmpty(pattern))
 			{
 				throw new ArgumentNullException(nameof(pattern));
 			}
-			FindAndLoadAssemblies(AssemblyResolver.Directories, AssemblyResolver.FilenameToRegex(pattern), loadEmbedded);
+			FindAndLoadAssemblies(AssemblyResolver.Directories, AssemblyResolver.FilenameToRegex(pattern, true, extensions), loadEmbedded);
 		}
 
 		/// <summary>
@@ -275,13 +276,14 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <param name="directory">Directory to scan</param>
 		/// <param name="pattern">File-Pattern to use for the scan, default all dlls will be found</param>
 		/// <param name="loadEmbedded">bool specifying if embedded resources should be used. default is true</param>
-		public void FindAndLoadAssembliesFromDirectory(string directory, string pattern = "*", bool loadEmbedded = true)
+		/// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
+		public void FindAndLoadAssembliesFromDirectory(string directory, string pattern = "*", bool loadEmbedded = true, IEnumerable<string> extensions = null)
 		{
 			if (string.IsNullOrEmpty(pattern))
 			{
 				throw new ArgumentNullException(nameof(pattern));
 			}
-			FindAndLoadAssembliesFromDirectory(directory, AssemblyResolver.FilenameToRegex(pattern), loadEmbedded);
+			FindAndLoadAssembliesFromDirectory(directory, AssemblyResolver.FilenameToRegex(pattern, true, extensions), loadEmbedded);
 		}
 
 		/// <summary>
@@ -315,7 +317,7 @@ namespace Dapplo.Addons.Bootstrapper
 				throw new ArgumentNullException(nameof(directories));
 			}
 			// check if there is a pattern, use the all assemblies in the directory if none is given
-			pattern = pattern ?? AssemblyResolver.FilenameToRegex("*");
+			pattern = pattern ?? AssemblyResolver.FilenameToRegex("*", true);
 
 			foreach (var file in FileLocations.Scan(directories, pattern).Select(x => x.Item1))
 			{

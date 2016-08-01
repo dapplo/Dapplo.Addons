@@ -80,7 +80,8 @@ namespace Dapplo.Addons
 		/// </summary>
 		/// <param name="pattern">File-Pattern to use for the scan, default all dlls will be found</param>
 		/// <param name="loadEmbedded">bool specifying if embedded resources should be used. default is true</param>
-		void FindAndLoadAssemblies(string pattern = "*", bool loadEmbedded = true);
+		/// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
+		void FindAndLoadAssemblies(string pattern = "*", bool loadEmbedded = true, IEnumerable<string> extensions = null);
 
 		/// <summary>
 		///     Add the assemblies (with parts) found in the specified directory or embedded
@@ -96,7 +97,8 @@ namespace Dapplo.Addons
 		/// <param name="directory">Directory to scan</param>
 		/// <param name="pattern">string with regex pattern to use for the scan, default is all assemblies</param>
 		/// <param name="loadEmbedded">true, which is default, to also load embedded matching dlls</param>
-		void FindAndLoadAssembliesFromDirectory(string directory, string pattern, bool loadEmbedded = true);
+		/// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
+		void FindAndLoadAssembliesFromDirectory(string directory, string pattern = "*", bool loadEmbedded = true, IEnumerable<string> extensions = null);
 
 		/// <summary>
 		///     Find the assemblies (with parts) found in the specified directories, or manifest resources, matching the specified regex.
