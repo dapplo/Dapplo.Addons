@@ -1,25 +1,29 @@
-﻿//  Dapplo - building blocks for desktop applications
-//  Copyright (C) 2016 Dapplo
-// 
-//  For more information see: http://dapplo.net/
-//  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
-// 
-//  This file is part of Dapplo.Addons
-// 
-//  Dapplo.Addons is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU Lesser General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-// 
-//  Dapplo.Addons is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU Lesser General Public License for more details.
-// 
-//  You should have a copy of the GNU Lesser General Public License
-//  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+﻿#region Dapplo 2016 - GNU Lesser General Public License
 
-#region using
+// Dapplo - building blocks for .NET applications
+// Copyright (C) 2016 Dapplo
+// 
+// For more information see: http://dapplo.net/
+// Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+// 
+// This file is part of Dapplo.Addons
+// 
+// Dapplo.Addons is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// Dapplo.Addons is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// 
+// You should have a copy of the GNU Lesser General Public License
+// along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+
+#endregion
+
+#region Usings
 
 using System;
 using System.Security.AccessControl;
@@ -116,7 +120,8 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			catch (UnauthorizedAccessException e)
 			{
-				_log.Error().WriteLine(e, "{0} is most likely already running for a different user in the same session, can't create/get mutex {1} due to error.", _resourceName, _mutexId);
+				_log.Error()
+					.WriteLine(e, "{0} is most likely already running for a different user in the same session, can't create/get mutex {1} due to error.", _resourceName, _mutexId);
 				IsLocked = false;
 			}
 			catch (Exception ex)

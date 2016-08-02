@@ -25,30 +25,29 @@
 
 #region Usings
 
-using System.ComponentModel.Composition;
-using System.Threading;
-using System.Threading.Tasks;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.ComponentModel.Composition.Hosting;
+using System.ComponentModel.Composition.Primitives;
+using Dapplo.Log.Facade;
 
 #endregion
 
-namespace Dapplo.Addons.TestAddon
+namespace Dapplo.Addons.Bootstrapper.ExportProviders
 {
-	[StartupAction(AwaitStart = true, StartupOrder = 1)]
-	public class StartupExceptionThrowingAddon : IStartupAction
+	/// <summary>
+	///     This contains the reused caches for the generic ConfigExportProvider
+	/// </summary>
+	public abstract class BaseConfigExportProvider : ExportProvider
 	{
 		/// <summary>
-		///     This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
+		/// The logger for the ConfigExportProvider
 		/// </summary>
-		[Import(AllowDefault = true)]
-		private bool ThrowStartupException { get; set; }
-
-		public Task StartAsync(CancellationToken token = new CancellationToken())
-		{
-			if (ThrowStartupException)
-			{
-				throw new StartupException("I was ordered to!!!");
-			}
-			return Task.FromResult(true);
-		}
+		protected static readonly LogSource Log = new LogSource(typeof(ConfigExportProvider<>));
+		/// <summary>
+		/// Type-Cache for all the ConfigExportProvider 
+		/// </summary>
+		protected static readonly IDictionary<string, Type> TypeLookupDictionary = new ConcurrentDictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
 	}
 }

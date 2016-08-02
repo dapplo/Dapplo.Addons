@@ -1,33 +1,39 @@
-﻿//  Dapplo - building blocks for desktop applications
-//  Copyright (C) 2016 Dapplo
-// 
-//  For more information see: http://dapplo.net/
-//  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
-// 
-//  This file is part of Dapplo.Addons
-// 
-//  Dapplo.Addons is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU Lesser General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-// 
-//  Dapplo.Addons is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU Lesser General Public License for more details.
-// 
-//  You should have a copy of the GNU Lesser General Public License
-//  along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+﻿#region Dapplo 2016 - GNU Lesser General Public License
 
-#region using
+// Dapplo - building blocks for .NET applications
+// Copyright (C) 2016 Dapplo
+// 
+// For more information see: http://dapplo.net/
+// Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+// 
+// This file is part of Dapplo.Addons
+// 
+// Dapplo.Addons is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// Dapplo.Addons is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// 
+// You should have a copy of the GNU Lesser General Public License
+// along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+
+#endregion
+
+#region Usings
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.ComponentModel.Composition.Primitives;
-using Dapplo.Log.Facade;
 using Dapplo.Config;
+using Dapplo.Log.Facade;
+using Dapplo.Utils.Resolving;
 
 #endregion
 
@@ -37,13 +43,12 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 	///     The ConfigExportProvider takes care of resolving MEF imports for Dapplo.Config based types.
 	///     It will register and create the type derrived classes, and return the export so it can be injected
 	/// </summary>
-	public class ConfigExportProvider<TExportType> : ExportProvider
+	public class ConfigExportProvider<TExportType> : BaseConfigExportProvider
 	{
 		// ReSharper disable once StaticMemberInGenericType
-		private static readonly LogSource Log = new LogSource();
 		private readonly IBootstrapper _bootstrapper;
 		private readonly IConfigProvider _configProvider;
-		private readonly IDictionary<string, Export> _loopup = new Dictionary<string, Export>(StringComparer.OrdinalIgnoreCase);
+		private readonly IDictionary<string, Export> _lookup = new Dictionary<string, Export>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
 		///     Create a ConfigExportProvider which is for the specified application, IConfigProvider and works with the supplied
@@ -65,23 +70,31 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 		/// <returns>Export</returns>
 		protected override IEnumerable<Export> GetExportsCore(ImportDefinition definition, AtomicComposition atomicComposition)
 		{
+			if (definition.ContractName.StartsWith("System."))
+			{
+				Log.Verbose().WriteLine("skipping contract {0} as it is from the system namespace.", definition.ContractName);
+				yield break;
+			}
 			Export export;
 			// See if we already cached the value
-			if (_loopup.TryGetValue(definition.ContractName, out export))
+			if (_lookup.TryGetValue(definition.ContractName, out export))
 			{
 				if (export != null)
 				{
 					yield return export;
 				}
+				yield break;
 			}
-			else
+			Type exportType = typeof(TExportType);
+			Type contractType;
+
+			if (!TypeLookupDictionary.TryGetValue(definition.ContractName, out contractType))
 			{
-				Log.Verbose().WriteLine("Searching for an export {0}", definition.ContractName);
+				Log.Verbose().WriteLine("Searching for an export {0} and testing if it's a {1}", definition.ContractName, exportType.Name);
 				// Loop over all the supplied assemblies, these should come from the bootstrapper
-				foreach (var assembly in _bootstrapper.KnownAssemblies)
+				foreach (var assembly in AssemblyResolver.AssemblyCache)
 				{
 					// Try to get it, don't throw an exception if not found
-					Type contractType;
 					try
 					{
 						contractType = assembly.GetType(definition.ContractName, false, true);
@@ -100,49 +113,58 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 						Log.Verbose().WriteLine("Type {0} couldn't be found in {1}", definition.ContractName, assembly.FullName);
 						continue;
 					}
+					Log.Verbose().WriteLine("Found Type {0} in {1}", definition.ContractName, assembly.FullName);
 
-					if (contractType == typeof(TExportType))
-					{
-						// We can't export the base type itself
-						Log.Verbose().WriteLine("Skipping, can't export base type itself");
-						break;
-					}
-
-					// Check if it is derrived from the exporting base type
-					if (!typeof(TExportType).IsAssignableFrom(contractType))
-					{
-						Log.Verbose().WriteLine("Type {0} is not assignable to basetype {1}", contractType, typeof(TExportType).Name);
-						continue;
-					}
-
-					Log.Verbose().WriteLine("Type {0} found in {1}", definition.ContractName, assembly.FullName);
-
-					// Generate the export & meta-data
-					var metadata = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
-					{
-						{CompositionConstants.ExportTypeIdentityMetadataName, AttributedModelServices.GetTypeIdentity(contractType)}
-					};
-
-					// Create instance
-					var instance = _configProvider.Get(contractType);
-
-					// Make sure it's exported
-					var contractName = AttributedModelServices.GetContractName(contractType);
-					_bootstrapper?.Export(contractName, instance);
-
-					// create the export so we can store and return it
-					export = new Export(new ExportDefinition(contractName, metadata), () => instance);
-					// store the export for fast retrieval
-					_loopup.Add(definition.ContractName, export);
-					yield return export;
-					// Nothing more to do, break
-					yield break;
+					// Store the Type to the contract name, so we can find the type quicker the next time a request was made to a different ConfigExportProvider
+					TypeLookupDictionary[definition.ContractName] = contractType;
+					break;
 				}
-				Log.Verbose().WriteLine("Marking {0} as not a {1}", definition.ContractName, typeof(TExportType));
+			}
+
+			if (contractType == null)
+			{
+				Log.Verbose().WriteLine("Couldn't find {0}", definition.ContractName);
 
 				// Add null value, so we don't try it again
-				_loopup.Add(definition.ContractName, null);
+				_lookup.Add(definition.ContractName, null);
+				yield break;
 			}
+			
+			// Special test needed due to assembly loading?
+			if (contractType.GUID == exportType.GUID)
+			{
+				// We can't export the base type itself
+				Log.Verbose().WriteLine("Skipping, can't export base type itself");
+				_lookup.Add(definition.ContractName, null);
+				yield break;
+			}
+
+			// Check if it is derrived from the exporting base type
+			if (!exportType.IsAssignableFrom(contractType))
+			{
+				Log.Verbose().WriteLine("Type {0} is not assignable to basetype {1}", contractType, exportType.FullName);
+				_lookup.Add(definition.ContractName, null);
+				yield break;
+			}
+
+			// Generate the export & meta-data
+			var metadata = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+			{
+				{CompositionConstants.ExportTypeIdentityMetadataName, AttributedModelServices.GetTypeIdentity(contractType)}
+			};
+
+			// Create instance
+			var instance = _configProvider.Get(contractType);
+
+			// Make sure it's exported
+			var contractName = AttributedModelServices.GetContractName(contractType);
+			_bootstrapper?.Export(contractName, instance);
+
+			// create the export so we can store and return it
+			export = new Export(new ExportDefinition(contractName, metadata), () => instance);
+			// store the export for fast retrieval
+			_lookup.Add(definition.ContractName, export);
+			yield return export;
 		}
 	}
 }

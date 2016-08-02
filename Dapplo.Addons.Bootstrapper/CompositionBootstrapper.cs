@@ -143,7 +143,7 @@ namespace Dapplo.Addons.Bootstrapper
 		///     List of all known assemblies.
 		///     This might be needed in e.g. a Caliburn Micro bootstrapper, so it can locate a view for a view model.
 		/// </summary>
-		public IList<Assembly> KnownAssemblies { get; } = new List<Assembly>();
+		public ISet<string> KnownAssemblies { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
 		///     Get a list of all known file locations.
@@ -171,8 +171,10 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				throw new ArgumentNullException(nameof(assembly));
 			}
-			if (KnownAssemblies.Contains(assembly))
+
+			if (KnownAssemblies.Contains(assembly.FullName))
 			{
+				Log.Verbose().WriteLine("Skipping assembly {0}, we already added it", assembly.FullName);
 				return;
 			}
 			var assemblyCatalog = new AssemblyCatalog(assembly);
@@ -190,23 +192,23 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				throw new ArgumentNullException(nameof(assemblyCatalog));
 			}
-			if (KnownAssemblies.Contains(assemblyCatalog.Assembly))
+			if (KnownAssemblies.Contains(assemblyCatalog.Assembly.FullName))
 			{
 				Log.Verbose().WriteLine("Skipping assembly {0}, we already added it", assemblyCatalog.Assembly.FullName);
 				return;
 			}
 			try
 			{
-				Log.Debug().WriteLine("Adding assembly {0}", assemblyCatalog.Assembly.FullName);
+				Log.Verbose().WriteLine("Adding assembly {0}", assemblyCatalog.Assembly.FullName);
 				if (assemblyCatalog.Parts.ToList().Count > 0)
 				{
 					AggregateCatalog.Catalogs.Add(assemblyCatalog);
-					Log.Debug().WriteLine("Adding file {0}", assemblyCatalog.Assembly.Location);
+					Log.Verbose().WriteLine("Adding file {0}", assemblyCatalog.Assembly.Location);
 					KnownFiles.Add(assemblyCatalog.Assembly.Location);
 				}
 				Log.Verbose().WriteLine("Added assembly {0}", assemblyCatalog.Assembly.FullName);
 				// Always add the assembly, even if there are no parts, so we can resolve certain "non" parts in ExportProviders.
-				KnownAssemblies.Add(assemblyCatalog.Assembly);
+				KnownAssemblies.Add(assemblyCatalog.Assembly.FullName);
 			}
 			catch (ReflectionTypeLoadException rtlEx)
 			{
@@ -229,7 +231,8 @@ namespace Dapplo.Addons.Bootstrapper
 		///     The assembly will be searched in the directories added by AddScanDirectory, and also in the embedded resources.
 		/// </summary>
 		/// <param name="assemblyName">string with the assembly name</param>
-		public void FindAndLoadAssembly(string assemblyName)
+		/// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
+		public void FindAndLoadAssembly(string assemblyName, IEnumerable<string> extensions = null)
 		{
 			if (string.IsNullOrEmpty(assemblyName))
 			{
@@ -238,7 +241,7 @@ namespace Dapplo.Addons.Bootstrapper
 			try
 			{
 				Log.Verbose().WriteLine("Trying to load {0}", assemblyName);
-				var assembly = AssemblyResolver.FindAssembly(assemblyName);
+				var assembly = AssemblyResolver.FindAssembly(assemblyName, extensions);
 				if (assembly != null)
 				{
 					Add(assembly);
@@ -256,7 +259,8 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		///     Find the assemblies (with parts) found in default directories, or manifest resources, matching the specified filepattern.
+		///     Find the assemblies (with parts) found in default directories, or manifest resources, matching the specified
+		///     filepattern.
 		/// </summary>
 		/// <param name="pattern">File-Pattern to use for the scan, default all dlls will be found</param>
 		/// <param name="loadEmbedded">bool specifying if embedded resources should be used. default is true</param>
@@ -271,7 +275,8 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		///     Find the assemblies (with parts) found in the specified directory, or manifest resources, matching the specified filepattern.
+		///     Find the assemblies (with parts) found in the specified directory, or manifest resources, matching the specified
+		///     filepattern.
 		/// </summary>
 		/// <param name="directory">Directory to scan</param>
 		/// <param name="pattern">File-Pattern to use for the scan, default all dlls will be found</param>
@@ -287,7 +292,8 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		///     Find the assemblies (with parts) found in the specified directory, or manifest resources, matching the specified regex.
+		///     Find the assemblies (with parts) found in the specified directory, or manifest resources, matching the specified
+		///     regex.
 		/// </summary>
 		/// <param name="directory">Directory to scan</param>
 		/// <param name="pattern">Regex to use for the scan, when null all dlls will be found</param>
@@ -305,10 +311,11 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		///     Find the assemblies (with parts) found in the specified directories, or manifest resources, matching the specified regex.
+		///     Find the assemblies (with parts) found in the specified directories, or manifest resources, matching the specified
+		///     regex.
 		/// </summary>
 		/// <param name="directories">Directory to scan</param>
-		/// <param name="pattern">Regex to use for the scan, when null all dlls will be found</param>
+		/// <param name="pattern">Regex to use for the scan, when null all files ending on .dll (and .dll.gz) will be loaded</param>
 		/// <param name="loadEmbedded">bool specifying if embedded resources should be used. default is true</param>
 		public void FindAndLoadAssemblies(IEnumerable<string> directories, Regex pattern, bool loadEmbedded = true)
 		{
@@ -317,7 +324,7 @@ namespace Dapplo.Addons.Bootstrapper
 				throw new ArgumentNullException(nameof(directories));
 			}
 			// check if there is a pattern, use the all assemblies in the directory if none is given
-			pattern = pattern ?? AssemblyResolver.FilenameToRegex("*", true);
+			pattern = pattern ?? AssemblyResolver.FilenameToRegex("*");
 
 			foreach (var file in FileLocations.Scan(directories, pattern).Select(x => x.Item1))
 			{
@@ -335,7 +342,7 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			if (loadEmbedded)
 			{
-				foreach (var resourceTuple in KnownAssemblies.FindEmbeddedResources(pattern))
+				foreach (var resourceTuple in AssemblyResolver.AssemblyCache.FindEmbeddedResources(pattern))
 				{
 					try
 					{
