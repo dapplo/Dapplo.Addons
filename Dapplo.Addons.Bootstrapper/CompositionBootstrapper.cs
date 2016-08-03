@@ -203,10 +203,12 @@ namespace Dapplo.Addons.Bootstrapper
 				if (assemblyCatalog.Parts.ToList().Count > 0)
 				{
 					AggregateCatalog.Catalogs.Add(assemblyCatalog);
-					Log.Verbose().WriteLine("Adding file {0}", assemblyCatalog.Assembly.Location);
-					KnownFiles.Add(assemblyCatalog.Assembly.Location);
+					if (!string.IsNullOrEmpty(assemblyCatalog.Assembly.Location))
+					{
+						Log.Verbose().WriteLine("Adding file {0}", assemblyCatalog.Assembly.Location);
+						KnownFiles.Add(assemblyCatalog.Assembly.Location);
+					}
 				}
-				Log.Verbose().WriteLine("Added assembly {0}", assemblyCatalog.Assembly.FullName);
 				// Always add the assembly, even if there are no parts, so we can resolve certain "non" parts in ExportProviders.
 				KnownAssemblies.Add(assemblyCatalog.Assembly.FullName);
 			}
