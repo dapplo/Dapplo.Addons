@@ -331,7 +331,7 @@ namespace Dapplo.Addons.Bootstrapper
 			// check if there is a pattern, use the all assemblies in the directory if none is given
 			pattern = pattern ?? AssemblyResolver.FilenameToRegex("*");
 
-			foreach (var file in FileLocations.Scan(directories, pattern).Select(x => x.Item1))
+			foreach (var file in FileLocations.Scan(directories.ToList(), pattern).Select(x => x.Item1))
 			{
 				try
 				{
