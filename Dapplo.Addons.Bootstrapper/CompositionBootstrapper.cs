@@ -78,6 +78,15 @@ namespace Dapplo.Addons.Bootstrapper
 		/// </summary>
 		protected bool IsAggregateCatalogConfigured { get; set; }
 
+		/// <summary>
+		/// Make sure the assembly resolver is active as soon as the Bootstrapper is initialized.
+		///Tthis makes sure assemblies which are embedded or in a subdirectory can be found.
+		/// </summary>
+		public CompositionBootstrapper()
+		{
+			AssemblyResolver.RegisterAssemblyResolve();
+		}
+
 		#region IServiceProvider
 
 		/// <summary>
@@ -106,10 +115,6 @@ namespace Dapplo.Addons.Bootstrapper
 				return;
 			}
 
-			// Make sure the assembly resolver is active
-			// this makes sure assemblies which are embedded or in a subdirectory can be found.
-			AssemblyResolver.RegisterAssemblyResolve();
-
 			// Add the entry assembly, which should be the application, but not the calling or executing (as this is Dapplo.Addons)
 			var applicationAssembly = Assembly.GetEntryAssembly();
 			if (applicationAssembly != null && applicationAssembly != GetType().Assembly)
@@ -131,11 +136,9 @@ namespace Dapplo.Addons.Bootstrapper
 
 			// Remove all references to the assemblies
 			KnownAssemblies.Clear();
+
+			AssemblyResolver.UnregisterAssemblyResolve();
 		}
-
-		#region Assembly resolving
-
-		#endregion
 
 		#region IServiceRepository
 
