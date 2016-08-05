@@ -116,7 +116,7 @@ namespace Dapplo.Addons.Bootstrapper
 				}
 				catch (Exception ex)
 				{
-					Log.Error().WriteLine(ex, "Exception instantiating IShutdownAction, probably a MEF issue.");
+					Log.Error().WriteLine(ex, "Exception instantiating IShutdownAction, probably a MEF issue. (ignoring in shutdown)");
 					continue;
 				}
 
@@ -183,6 +183,11 @@ namespace Dapplo.Addons.Bootstrapper
 					try
 					{
 						startupAction = lazyStartupAction.Value;
+					}
+					catch (CompositionException cEx)
+					{
+						Log.Error().WriteLine(cEx, "MEF Exception instantiating IStartupAction.");
+						throw;
 					}
 					catch (Exception ex)
 					{
