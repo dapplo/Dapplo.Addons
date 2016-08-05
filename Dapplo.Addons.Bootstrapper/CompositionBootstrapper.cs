@@ -276,7 +276,8 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				throw new ArgumentNullException(nameof(pattern));
 			}
-			FindAndLoadAssemblies(AssemblyResolver.Directories, AssemblyResolver.FilenameToRegex(pattern, true, extensions), loadEmbedded);
+			var regex = FileTools.FilenameToRegex(pattern, extensions ?? AssemblyResolver.Extensions);
+			FindAndLoadAssemblies(AssemblyResolver.Directories, regex, loadEmbedded);
 		}
 
 		/// <summary>
@@ -293,7 +294,8 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				throw new ArgumentNullException(nameof(pattern));
 			}
-			FindAndLoadAssembliesFromDirectory(directory, AssemblyResolver.FilenameToRegex(pattern, true, extensions), loadEmbedded);
+			var regex = FileTools.FilenameToRegex(pattern, extensions ?? AssemblyResolver.Extensions);
+			FindAndLoadAssembliesFromDirectory(directory, regex, loadEmbedded);
 		}
 
 		/// <summary>
@@ -329,7 +331,7 @@ namespace Dapplo.Addons.Bootstrapper
 				throw new ArgumentNullException(nameof(directories));
 			}
 			// check if there is a pattern, use the all assemblies in the directory if none is given
-			pattern = pattern ?? AssemblyResolver.FilenameToRegex("*");
+			pattern = pattern ?? FileTools.FilenameToRegex("*", AssemblyResolver.Extensions);
 
 			foreach (var file in FileLocations.Scan(directories.ToList(), pattern).Select(x => x.Item1))
 			{
