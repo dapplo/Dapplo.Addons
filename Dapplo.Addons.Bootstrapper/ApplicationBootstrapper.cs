@@ -147,44 +147,49 @@ namespace Dapplo.Addons.Bootstrapper
 		}
 
 		/// <summary>
-		///     Initialize the application bootstrapper
+		///     Initialize the application bootstrapper, this makes sure the configuration and languages can be loaded
 		/// </summary>
-		/// <returns></returns>
+		/// <returns>bool with value of IsInitialized</returns>
 		public override async Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			Log.Verbose().WriteLine("Trying to initialize application {0}", _applicationName);
-			// Only allow if the resource is locked by us, or if no lock is needed
+			if (IniConfigForExport == null)
+			{
+				IniConfigForExport = IniConfig.Current;
+			}
+
+			if (IniConfigForExport != null)
+			{
+				Log.Verbose().WriteLine("Loading IniConfig");
+				await IniConfigForExport.LoadIfNeededAsync(cancellationToken).ConfigureAwait(false);
+			}
+
+			if (LanguageLoaderForExport == null)
+			{
+				LanguageLoaderForExport = LanguageLoader.Current;
+			}
+
+			if (LanguageLoaderForExport != null)
+			{
+				Log.Verbose().WriteLine("Loading Languages");
+				await LanguageLoaderForExport.LoadIfNeededAsync(cancellationToken).ConfigureAwait(false);
+			}
+
+			await base.InitializeAsync(cancellationToken).ConfigureAwait(false);
+			return IsInitialized;
+		}
+
+		/// <summary>
+		///     Override the run to prevent starting when the mutex isn't locked
+		/// </summary>
+		public override async Task<bool> RunAsync(CancellationToken cancellationToken = new CancellationToken())
+		{
 			if (_resourceMutex == null || _resourceMutex.IsLocked)
 			{
-				if (IniConfigForExport == null)
-				{
-					IniConfigForExport = IniConfig.Current;
-				}
-
-				if (IniConfigForExport != null)
-				{
-					Log.Verbose().WriteLine("Loading IniConfig");
-					await IniConfigForExport.LoadIfNeededAsync(cancellationToken).ConfigureAwait(false);
-				}
-
-				if (LanguageLoaderForExport == null)
-				{
-					LanguageLoaderForExport = LanguageLoader.Current;
-				}
-
-				if (LanguageLoaderForExport != null)
-				{
-					Log.Verbose().WriteLine("Loading Languages");
-					await LanguageLoaderForExport.LoadIfNeededAsync(cancellationToken).ConfigureAwait(false);
-				}
-
-				await base.InitializeAsync(cancellationToken).ConfigureAwait(false);
+				return await base.RunAsync(cancellationToken);
 			}
-			else
-			{
-				Log.Error().WriteLine("Can't initialize {0} due to missing mutex lock", _applicationName);
-			}
-			return IsInitialized;
+			Log.Error().WriteLine("Can't Run {0} due to missing mutex lock", _applicationName);
+			return false;
 		}
 
 		#region IDisposable Support
