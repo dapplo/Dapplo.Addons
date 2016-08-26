@@ -8,7 +8,7 @@ branches:
   - master
 assembly_info:
   patch: true
-  file: '**\AssemblyInfo.*'
+  file: 'src\**\AssemblyInfo.*'
   assembly_version: '{version}'
   assembly_file_version: '{version}'
   assembly_informational_version: '{version}'
@@ -18,16 +18,16 @@ before_build:
   - nuget restore
   - ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { $env:is_not_pr = "true"; }
 before_package:
-  - ps: Remove-Item packages\OpenCover* -include ("*.pdb", "*.sln", "*.csproj") -recurse
+  - ps: Remove-Item src\packages\OpenCover* -include ("*.pdb", "*.sln", "*.csproj") -recurse
   - GitLink .\
 after_test:
 # This runs the tests with OpenCover and publishes the report to Coverall
-  - ps: .\CreateCoverage.ps1
+  - ps: .\src\CreateCoverage.ps1
 environment:
   COVERALLS_REPO_TOKEN:
     secure: hmXmadCb4cGSBxriCSnrIAtRJF5Jz42rEKKfzJR8HdvY/PFIFUhWZu1xSgN237Se
 build:
-  project: Dapplo.Addons.sln
+  project: src\Dapplo.Addons.sln
   publish_nuget: true
   publish_nuget_symbols: false
   verbosity: minimal
