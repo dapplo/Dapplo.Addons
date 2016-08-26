@@ -14,6 +14,7 @@ assembly_info:
   assembly_informational_version: '{version}'
 install:
   - choco install gitlink -y
+  - choco install docfx -y
 before_build:
   - nuget restore
   - ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { $env:is_not_pr = "true"; }
@@ -23,6 +24,7 @@ before_package:
 after_test:
 # This runs the tests with OpenCover and publishes the report to Coverall
   - ps: .\src\CreateCoverage.ps1
+  - docfx
 environment:
   COVERALLS_REPO_TOKEN:
     secure: hmXmadCb4cGSBxriCSnrIAtRJF5Jz42rEKKfzJR8HdvY/PFIFUhWZu1xSgN237Se

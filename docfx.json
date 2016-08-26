@@ -1,0 +1,32 @@
+{
+	"metadata" : [{
+			"src" : [{
+					"files" : ["**/*.csproj"],
+					"exclude" : ["**/bin/**", "**/obj/**", "packages/**"],
+					"src" : "src"
+				}
+			],
+			"dest" : "obj/api"
+		}
+	],
+	"build" : {
+		"content" : [
+			{
+				"files" : ["articles/**/*.md", "*.md", "toc.yml"],
+			},
+			{
+				"files" : ["**/*.yml"],
+				"src" : "obj/api"
+			}
+		],
+		"resource" : [{
+				"files" : ["articles/images/**"]
+			}
+		],
+		"globalMetadata" : {
+			"_appTitle" : "Dapplo Addons",
+			"_enableSearch" : true
+		},
+		"dest" : "_site"
+	}
+}
