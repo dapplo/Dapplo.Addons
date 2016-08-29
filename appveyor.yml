@@ -16,7 +16,7 @@ install:
   - choco install gitlink -y
   - choco install docfx -y
 before_build:
-  - nuget restore
+  - nuget restore src
   - ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { $env:is_not_pr = "true"; }
 before_package:
   - ps: Remove-Item src\packages\OpenCover* -include ("*.pdb", "*.sln", "*.csproj") -recurse
