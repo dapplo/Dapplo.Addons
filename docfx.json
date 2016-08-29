@@ -1,7 +1,7 @@
 {
 	"metadata" : [{
 			"src" : [{
-					"files" : ["**/*.csproj"],
+					"files" : ["Dapplo.Addons/*.csproj","Dapplo.Addons.Bootstrapper/*.csproj"],
 					"exclude" : ["**/bin/**", "**/obj/**", "packages/**"],
 					"src" : "src"
 				}
