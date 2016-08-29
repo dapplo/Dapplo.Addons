@@ -23,7 +23,7 @@ before_package:
   - GitLink .\
 after_test:
 # This runs the tests with OpenCover and publishes the report to Coverall
-  - ps: .\src\CreateCoverage.ps1
+  - ps: .\src\CreateCoverage.ps1 src
   - docfx
 environment:
   COVERALLS_REPO_TOKEN:
