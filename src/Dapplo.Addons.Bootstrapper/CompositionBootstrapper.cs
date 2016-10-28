@@ -61,7 +61,7 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <summary>
 		///     Specify how the composition is made, is used in the Run()
 		/// </summary>
-		protected CompositionOptions CompositionOptionFlags { get; set; } = CompositionOptions.DisableSilentRejection | CompositionOptions.ExportCompositionService;
+		protected CompositionOptions CompositionOptionFlags { get; set; } = CompositionOptions.DisableSilentRejection | CompositionOptions.ExportCompositionService | CompositionOptions.IsThreadSafe;
 
 		/// <summary>
 		///     The CompositionContainer

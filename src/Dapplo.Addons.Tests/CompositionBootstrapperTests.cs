@@ -49,34 +49,55 @@ namespace Dapplo.Addons.Tests
 		[Fact]
 		public async Task TestArgumentNull()
 		{
-			var cb = new CompositionBootstrapper();
-			Assert.Throws<ArgumentNullException>(() => cb.Add((Assembly) null));
-			Assert.Throws<ArgumentNullException>(() => cb.Add((AssemblyCatalog) null));
-			Assert.Throws<ArgumentNullException>(() => cb.FindAndLoadAssembly(null));
-			Assert.Throws<ArgumentNullException>(() => cb.Add((Type) null));
-			Assert.Throws<ArgumentNullException>(() => cb.Add((ExportProvider) null));
-			await cb.InitializeAsync().ConfigureAwait(false);
-			Assert.Throws<ArgumentNullException>(() => cb.Export<string>(null));
-			Assert.Throws<ArgumentNullException>(() => cb.Release(null));
-			Assert.Throws<ArgumentNullException>(() => cb.FillImports(null));
-			cb.Dispose();
+			var compositionBootstrapper = new CompositionBootstrapper();
+			Assert.Throws<ArgumentNullException>(() => compositionBootstrapper.Add((Assembly) null));
+			Assert.Throws<ArgumentNullException>(() => compositionBootstrapper.Add((AssemblyCatalog) null));
+			Assert.Throws<ArgumentNullException>(() => compositionBootstrapper.FindAndLoadAssembly(null));
+			Assert.Throws<ArgumentNullException>(() => compositionBootstrapper.Add((Type) null));
+			Assert.Throws<ArgumentNullException>(() => compositionBootstrapper.Add((ExportProvider) null));
+			await compositionBootstrapper.InitializeAsync().ConfigureAwait(false);
+			Assert.Throws<ArgumentNullException>(() => compositionBootstrapper.Export<string>(null));
+			Assert.Throws<ArgumentNullException>(() => compositionBootstrapper.Release(null));
+			Assert.Throws<ArgumentNullException>(() => compositionBootstrapper.FillImports(null));
+			compositionBootstrapper.Dispose();
 		}
 
 		[Fact]
 		public void TestNotInitialized()
 		{
-			var cb = new CompositionBootstrapper();
-			Assert.Throws<InvalidOperationException>(() => cb.Export("Hello"));
-			Assert.Throws<InvalidOperationException>(() => cb.GetExport<string>());
-			Assert.Throws<InvalidOperationException>(() => cb.GetExport<string, IStartupActionMetadata>());
-			Assert.Throws<InvalidOperationException>(() => cb.GetExport(typeof(string)));
-			Assert.Throws<InvalidOperationException>(() => cb.GetService(typeof(string)));
-			Assert.Throws<InvalidOperationException>(() => cb.GetExports(typeof(string)));
-			Assert.Throws<InvalidOperationException>(() => cb.GetExports<string>());
-			Assert.Throws<InvalidOperationException>(() => cb.GetExports<string, IStartupActionMetadata>());
-			Assert.Throws<InvalidOperationException>(() => cb.Release(null));
-			Assert.Throws<InvalidOperationException>(() => cb.FillImports(null));
-			cb.Dispose();
+			var compositionBootstrapper = new CompositionBootstrapper();
+			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.Export("Hello"));
+			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExport<string>());
+			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExport<string, IStartupActionMetadata>());
+			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExport(typeof(string)));
+			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetService(typeof(string)));
+			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExports(typeof(string)));
+			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExports<string>());
+			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExports<string, IStartupActionMetadata>());
+			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.Release(null));
+			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.FillImports(null));
+			compositionBootstrapper.Dispose();
+		}
+
+		[Fact]
+		public async Task TestExportRelease()
+		{
+			using (var compositionBootstrapper = new CompositionBootstrapper())
+			{
+				await compositionBootstrapper.InitializeAsync().ConfigureAwait(false);
+
+				// Create a string export with "Hello"
+				var export = compositionBootstrapper.Export("Hello");
+				// Make sure it's there
+				Assert.Equal("Hello", compositionBootstrapper.GetExport(typeof(string)));
+				// Remove it
+				compositionBootstrapper.Release(export);
+
+				// Create a string export with "World"
+				compositionBootstrapper.Export("World");
+				// Make sure it's there
+				Assert.Equal("World", compositionBootstrapper.GetExport(typeof(string)));
+			}
 		}
 	}
 }
