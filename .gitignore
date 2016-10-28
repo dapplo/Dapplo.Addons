@@ -190,3 +190,6 @@ ModelManifest.xml
 
 # Ignore DocFx site, it's generated
 _site
+
+# Ignore code-coverage
+CoverageReport
