@@ -30,7 +30,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 using NuGet;
 
 #endregion

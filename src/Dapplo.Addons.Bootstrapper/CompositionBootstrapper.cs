@@ -35,7 +35,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 using Dapplo.Utils;
 using Dapplo.Utils.Embedded;
 using Dapplo.Utils.Resolving;

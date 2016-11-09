@@ -31,7 +31,7 @@ using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper.ExportProviders;
 using Dapplo.Config.Ini;
 using Dapplo.Config.Language;
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 
 #endregion
 

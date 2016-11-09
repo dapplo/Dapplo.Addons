@@ -30,7 +30,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.Composition.Hosting;
 using System.ComponentModel.Composition.Primitives;
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 
 #endregion
 

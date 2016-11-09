@@ -31,7 +31,7 @@ using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.ComponentModel.Composition.Primitives;
 using Dapplo.Config;
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 using Dapplo.Utils.Resolving;
 
 #endregion
