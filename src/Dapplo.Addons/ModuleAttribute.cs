@@ -41,7 +41,7 @@ namespace Dapplo.Addons
 	/// </summary>
 	[MetadataAttribute]
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-	public abstract class ModuleAttribute : ExportAttribute
+	public abstract class ModuleAttribute : InheritedExportAttribute
 	{
 		/// <summary>
 		///     Constructor with a contractname, and a type
