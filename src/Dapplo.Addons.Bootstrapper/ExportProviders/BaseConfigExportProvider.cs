@@ -44,10 +44,15 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 		/// <summary>
 		/// The logger for the ConfigExportProvider
 		/// </summary>
-		protected static readonly LogSource Log = new LogSource(typeof(ConfigExportProvider<>));
+		protected static readonly LogSource Log = new LogSource(typeof(ConfigExportProvider<,>));
 		/// <summary>
 		/// Type-Cache for all the ConfigExportProvider 
 		/// </summary>
 		protected static readonly IDictionary<string, Type> TypeLookupDictionary = new ConcurrentDictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>
+		/// Use this to initialize your export provider, this is called right before the actual exporting starts
+		/// </summary>
+		public abstract void Initialize();
 	}
 }

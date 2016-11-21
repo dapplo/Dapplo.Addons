@@ -46,6 +46,9 @@ namespace Dapplo.Addons.TestAddon
 		[Import]
 		public IThisIsConfiguration MyConfig { get; set; }
 
+		[Import]
+		public IThisIsSubConfiguration MysubConfig { get; set; }
+
 		[ImportMany]
 		public IEnumerable<IIniSection> MyConfigs { get; set; }
 

@@ -32,6 +32,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapplo.Log;
+using Dapplo.Addons.Bootstrapper.ExportProviders;
 
 #endregion
 
@@ -69,6 +70,14 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			Log.Debug().WriteLine("Starting");
 			var result = await base.RunAsync(cancellationToken).ConfigureAwait(false);
+
+			// With FillImports the Export providers will run, so they will have to be initialized before
+			foreach (var exportProvider in ExportProviders)
+			{
+				var baseConfigExportProvider = exportProvider as BaseConfigExportProvider;
+				baseConfigExportProvider?.Initialize();
+			}
+
 			FillImports(this);
 			if (AutoStartup)
 			{

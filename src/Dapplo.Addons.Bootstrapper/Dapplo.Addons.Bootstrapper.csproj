@@ -35,8 +35,8 @@
     <DocumentationFile>bin\Release\Dapplo.Addons.Bootstrapper.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Dapplo.Config, Version=0.4.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Config.0.4.2\lib\net45\Dapplo.Config.dll</HintPath>
+    <Reference Include="Dapplo.Config, Version=0.4.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapplo.Config.0.4.4\lib\net45\Dapplo.Config.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Dapplo.InterfaceImpl, Version=0.2.5.0, Culture=neutral, processorArchitecture=MSIL">
