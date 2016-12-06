@@ -26,12 +26,11 @@
 #region Usings
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.ComponentModel.Composition.Primitives;
-using System.Linq;
-using Dapplo.Config;
 using Dapplo.Log;
 using Dapplo.Utils.Resolving;
 
@@ -40,43 +39,34 @@ using Dapplo.Utils.Resolving;
 namespace Dapplo.Addons.Bootstrapper.ExportProviders
 {
 	/// <summary>
-	///     The ConfigExportProvider takes care of resolving MEF imports for Dapplo.Config based types.
-	///     It will register and create the type derrived classes, and return the export so it can be injected
+	///     The ServiceProviderExportProvider is an ExportProvider which can solve special cases by using
+	///     an IServiceLocator implementation to resolve type requests. Meaning it can do last minute dynamic lookups.
+	///     The IServiceLocator will create the type derrived classes, and this ExportProvider will create the export so it can be injected
 	/// </summary>
-	/// <typeparam name="TExportType">The actual exported type</typeparam>
-	/// <typeparam name="TExportSubType">Sub-types are types which can be used to separate the TExportType into modular parts</typeparam>
-	public class ConfigExportProvider<TExportType, TExportSubType> : BaseConfigExportProvider
+	public class ServiceProviderExportProvider : ExportProvider
 	{
-		// ReSharper disable once StaticMemberInGenericType
-		private readonly IBootstrapper _bootstrapper;
-		private readonly IConfigProvider _configProvider;
-		private readonly IDictionary<string, Export> _lookup = new Dictionary<string, Export>(StringComparer.OrdinalIgnoreCase);
-		private readonly Type _exportType = typeof(TExportType);
-		private readonly Type _exportSubType = typeof(TExportSubType);
+		private static readonly LogSource Log = new LogSource();
 
 		/// <summary>
-		///     Create a ConfigExportProvider which is for the specified application, IConfigProvider and works with the supplied
+		/// Type-Cache for all the ServiceExportProvider 
+		/// </summary>
+		protected static readonly IDictionary<string, Type> TypeLookupDictionary = new ConcurrentDictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+
+		// ReSharper disable once StaticMemberInGenericType
+		private readonly IBootstrapper _bootstrapper;
+		private readonly IServiceProvider _serviceProvider;
+		private readonly IDictionary<string, Export> _lookup = new Dictionary<string, Export>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>
+		///     Create a ServiceExportProvider which is for the specified application, IConfigProvider and works with the supplied
 		///     assemblies
 		/// </summary>
-		/// <param name="configProvider">provider needed for the registering</param>
+		/// <param name="serviceProvider">provider needed for the registering</param>
 		/// <param name="bootstrapper">IBootstrapper</param>
-		public ConfigExportProvider(IConfigProvider configProvider, IBootstrapper bootstrapper)
+		public ServiceProviderExportProvider(IServiceProvider serviceProvider, IBootstrapper bootstrapper)
 		{
-			_configProvider = configProvider;
+			_serviceProvider = serviceProvider;
 			_bootstrapper = bootstrapper;
-		}
-
-		/// <inheritdoc />
-		public override void Initialize()
-		{
-			foreach (var assembly in AssemblyResolver.AssemblyCache.Where(a => !a.GetName().Name.StartsWith("System")))
-			{
-				var configTypes = assembly.DefinedTypes.Where(t => t.GUID != _exportType.GUID && !t.ContainsGenericParameters && _exportType.IsAssignableFrom(t));
-				foreach (var configType in configTypes)
-				{
-					CreateExport(configType);
-				}
-			}
 		}
 
 		/// <summary>
@@ -102,10 +92,17 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 				_lookup.Add(specifiedContractName, export);
 				return export;
 			}
-			// Create instance
-			var instance = _configProvider.Get(contractType);
 
-			// Make sure it's exported
+			// Create / get instance
+			var instance = _serviceProvider.GetService(contractType);
+			if (instance == null)
+			{
+				// So we couldn't get an instance, add null so we don't try again.
+				_lookup.Add(specifiedContractName, null);
+				return null;
+			}
+
+			// Make sure it's exported (is this needed?)
 			_bootstrapper?.Export(contractName, instance);
 
 			// Generate the export & meta-data
@@ -153,7 +150,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 
 			if (!TypeLookupDictionary.TryGetValue(definition.ContractName, out contractType))
 			{
-				Log.Verbose().WriteLine("Searching for an export {0} and testing if it's a {1}", definition.ContractName, _exportType.Name);
+				Log.Verbose().WriteLine("Searching for an export {0}", definition.ContractName);
 				// Loop over all the supplied assemblies, these should come from the bootstrapper
 				foreach (var assembly in AssemblyResolver.AssemblyCache)
 				{
@@ -178,57 +175,21 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 					}
 					Log.Verbose().WriteLine("Found Type {0} in {1}", definition.ContractName, assembly.FullName);
 
-					// Store the Type to the contract name, so we can find the type quicker the next time a request was made to a different ConfigExportProvider
+					// Store the Type to the contract name, so we can find the type quicker the next time a request was made to a different ServiceExportProvider
 					TypeLookupDictionary[definition.ContractName] = contractType;
 					break;
 				}
 			}
 
-			if (contractType == null)
-			{
-				Log.Verbose().WriteLine("Couldn't find {0}", definition.ContractName);
-
-				// Add null value, so we don't try it again
-				_lookup.Add(definition.ContractName, null);
-				yield break;
-			}
-			
-			// Special test needed due to assembly loading?
-			if (contractType.GUID == _exportType.GUID)
-			{
-				// We can't export the base type itself
-				Log.Verbose().WriteLine("Skipping, can't export base type itself");
-				_lookup.Add(definition.ContractName, null);
-				yield break;
-			}
-
-			// Check if it is derrived from the exporting base type
-			if (!_exportType.IsAssignableFrom(contractType))
-			{
-				Log.Verbose().WriteLine("Type {0} is not assignable to basetype {1}", contractType, _exportType.FullName);
-				if (_exportSubType.IsAssignableFrom(contractType))
-				{
-					var subType = contractType;
-					contractType = TypeLookupDictionary.Values.FirstOrDefault(s => _exportType.IsAssignableFrom(s) && subType.IsAssignableFrom(s));
-					if (contractType != null)
-					{
-						Log.Verbose().WriteLine("Type {0} is a sub-type of 'parent' {1}", subType, contractType);
-
-					}
-				}
-				else
-				{
-					contractType = null;
-				}
-				if (contractType == null)
-				{
-					_lookup.Add(definition.ContractName, null);
-					yield break;
-				}
-			}
-
+			// So we found a type, try to create a export for it. 
 			export = CreateExport(contractType, definition.ContractName);
-
+			if (export == null)
+			{
+				// No export
+				Log.Verbose().WriteLine("Couldn't find type for {0}", definition.ContractName);
+				yield break;
+			}
+			Log.Verbose().WriteLine("Export for {0} found as type {1}" , definition.ContractName, contractType);
 			yield return export;
 		}
 	}

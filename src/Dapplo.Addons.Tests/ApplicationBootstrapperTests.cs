@@ -30,6 +30,8 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper;
+using Dapplo.Addons.Bootstrapper.ExportProviders;
+using Dapplo.Ini;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
 using Xunit;
@@ -130,6 +132,11 @@ namespace Dapplo.Addons.Tests
 			{
 				// Add all file starting with Dapplo and ending on .dll or .dll.gz
 				bootstrapper.FindAndLoadAssemblies("Dapplo*");
+
+				var iniConfig = new IniConfig(ApplicationName, ApplicationName);
+
+				bootstrapper.ExportProviders.Add(new ServiceProviderExportProvider(iniConfig, bootstrapper));
+
 				// Add test project, without having a direct reference
 #if DEBUG
 				bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");

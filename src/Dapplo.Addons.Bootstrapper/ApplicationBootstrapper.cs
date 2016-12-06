@@ -26,11 +26,10 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper.ExportProviders;
-using Dapplo.Config.Ini;
-using Dapplo.Config.Language;
 using Dapplo.Log;
 
 #endregion
@@ -47,8 +46,6 @@ namespace Dapplo.Addons.Bootstrapper
 		private static readonly LogSource Log = new LogSource();
 		private readonly string _applicationName;
 		private readonly ResourceMutex _resourceMutex;
-		private IniConfig _iniConfig;
-		private LanguageLoader _languageLoader;
 
 		/// <summary>
 		///     Create the application bootstrapper, for the specified application name
@@ -79,72 +76,11 @@ namespace Dapplo.Addons.Bootstrapper
 		public bool AutoConfigure { get; set; } = true;
 
 		/// <summary>
-		///     Use this to set the IniConfig which is used to resolve IIniSection imports
-		/// </summary>
-		public IniConfig IniConfigForExport
-		{
-			get
-			{
-				lock (_applicationName)
-				{
-					if (_iniConfig == null && AutoConfigure)
-					{
-						IniConfigForExport = IniConfig.Current ?? new IniConfig(_applicationName, _applicationName);
-					}
-				}
-				return _iniConfig;
-			}
-			set
-			{
-				lock (_applicationName)
-				{
-					if (_iniConfig != null)
-					{
-						throw new InvalidOperationException("IniConfig already set.");
-					}
-					_iniConfig = value;
-					var exportProvider = new ConfigExportProvider<IIniSection, IIniSubSection>(value, this);
-					Add(exportProvider);
-				}
-			}
-		}
-
-		/// <summary>
 		///     Returns if the Mutex is locked, in other words if this ApplicationBootstrapper can continue
 		///     This also returns true if no mutex is used
 		/// </summary>
 		public bool IsMutexLocked => _resourceMutex == null || _resourceMutex.IsLocked;
 
-		/// <summary>
-		///     Use this to set the LanguageLoader which is used resolve ILanguage imports
-		/// </summary>
-		public LanguageLoader LanguageLoaderForExport
-		{
-			get
-			{
-				lock (_applicationName)
-				{
-					if (_languageLoader == null && AutoConfigure)
-					{
-						LanguageLoaderForExport = LanguageLoader.Current ?? new LanguageLoader(_applicationName);
-					}
-				}
-				return _languageLoader;
-			}
-			set
-			{
-				lock (_applicationName)
-				{
-					if (_languageLoader != null)
-					{
-						throw new InvalidOperationException("LanguageLoader already set.");
-					}
-					_languageLoader = value;
-					var exportProvider = new ConfigExportProvider<ILanguage, ILanguagePart>(value, this);
-					Add(exportProvider);
-				}
-			}
-		}
 
 		/// <summary>
 		///     Initialize the application bootstrapper, this makes sure the configuration and languages can be loaded
@@ -153,28 +89,6 @@ namespace Dapplo.Addons.Bootstrapper
 		public override async Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			Log.Verbose().WriteLine("Trying to initialize application {0}", _applicationName);
-			if (IniConfigForExport == null)
-			{
-				IniConfigForExport = IniConfig.Current;
-			}
-
-			if (IniConfigForExport != null)
-			{
-				Log.Verbose().WriteLine("Loading IniConfig");
-				await IniConfigForExport.LoadIfNeededAsync(cancellationToken).ConfigureAwait(false);
-			}
-
-			if (LanguageLoaderForExport == null)
-			{
-				LanguageLoaderForExport = LanguageLoader.Current;
-			}
-
-			if (LanguageLoaderForExport != null)
-			{
-				Log.Verbose().WriteLine("Loading Languages");
-				await LanguageLoaderForExport.LoadIfNeededAsync(cancellationToken).ConfigureAwait(false);
-			}
-
 			await base.InitializeAsync(cancellationToken).ConfigureAwait(false);
 			return IsInitialized;
 		}

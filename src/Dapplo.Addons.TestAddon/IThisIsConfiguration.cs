@@ -26,7 +26,7 @@
 #region Usings
 
 using System.ComponentModel;
-using Dapplo.Config.Ini;
+using Dapplo.Ini;
 
 #endregion
 
@@ -37,5 +37,6 @@ namespace Dapplo.Addons.TestAddon
 	{
 		[DefaultValue("Robin")]
 		string Name { get; set; }
+
 	}
 }

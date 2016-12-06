@@ -30,7 +30,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Threading;
 using System.Threading.Tasks;
-using Dapplo.Config.Ini;
+using Dapplo.Ini;
 using Dapplo.Log;
 
 #endregion

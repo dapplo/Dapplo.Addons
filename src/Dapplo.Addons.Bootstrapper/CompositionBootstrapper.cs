@@ -71,7 +71,7 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <summary>
 		///     List of ExportProviders
 		/// </summary>
-		protected IList<ExportProvider> ExportProviders { get; } = new List<ExportProvider>();
+		public IList<ExportProvider> ExportProviders { get; } = new List<ExportProvider>();
 
 		/// <summary>
 		///     Specify if the Aggregate Catalog is configured

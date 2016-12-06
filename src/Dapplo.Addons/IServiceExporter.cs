@@ -27,6 +27,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition.Hosting;
 using System.ComponentModel.Composition.Primitives;
 
 #endregion
@@ -84,5 +85,10 @@ namespace Dapplo.Addons
 		/// </summary>
 		/// <param name="part">ComposablePart from Export call</param>
 		void Release(ComposablePart part);
+
+		/// <summary>
+		/// The list of export providers used when an export cannot be found
+		/// </summary>
+		IList<ExportProvider> ExportProviders { get; }
 	}
 }
