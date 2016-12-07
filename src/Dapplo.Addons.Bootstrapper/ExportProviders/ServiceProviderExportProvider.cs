@@ -89,7 +89,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 			if (_lookup.TryGetValue(contractName, out export))
 			{
 				// Don't forget to register
-				_lookup.Add(specifiedContractName, export);
+				_lookup[specifiedContractName] = export;
 				return export;
 			}
 
@@ -98,7 +98,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 			if (instance == null)
 			{
 				// So we couldn't get an instance, add null so we don't try again.
-				_lookup.Add(specifiedContractName, null);
+				_lookup[specifiedContractName] = null;
 				return null;
 			}
 
@@ -114,13 +114,66 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 			export = new Export(new ExportDefinition(contractName, metadata), () => instance);
 
 			// store the export for fast retrieval
-			_lookup.Add(contractName, export);
+			_lookup[contractName] = export;
 			if (specifiedContractName != null && !contractName.Equals(specifiedContractName))
 			{
-				_lookup.Add(specifiedContractName, export);
+				_lookup[specifiedContractName] = export;
 			}
 			TypeLookupDictionary[contractName] = contractType;
 			return export;
+		}
+
+		/// <summary>
+		/// Do the actual resolving, try to find out what type is wanted
+		/// </summary>
+		/// <param name="definition">ImportDefinition</param>
+		/// <param name="contractType">Type or null</param>
+		/// <returns>true if found</returns>
+		private bool TryToResolveType(ImportDefinition definition, out Type contractType)
+		{
+			if (!TypeLookupDictionary.TryGetValue(definition.ContractName, out contractType))
+			{
+				Log.Verbose().WriteLine("Searching for an export {0}", definition.ContractName);
+				// Loop over all the supplied assemblies, these should come from the bootstrapper
+				foreach (var assembly in AssemblyResolver.AssemblyCache)
+				{
+					// Try to get it, don't throw an exception if not found
+					try
+					{
+						contractType = assembly.GetType(definition.ContractName, false, true);
+					}
+					catch (Exception ex)
+					{
+						Log.Verbose().WriteLine("Couldn't get type {0} due to {1}", definition.ContractName, ex.Message);
+						// Ignore & break the loop at it is most likely a problem with the contract name
+						break;
+					}
+
+					// Go to next assembly if it wasn't found
+					if (contractType == null)
+					{
+						Log.Verbose().WriteLine("Type {0} couldn't be found in {1}", definition.ContractName, assembly.FullName);
+						continue;
+					}
+					Log.Verbose().WriteLine("Found Type {0} in {1}", definition.ContractName, assembly.FullName);
+
+					// Store the Type to the contract name, so we can find the type quicker the next time a request was made to a different ServiceExportProvider
+					TypeLookupDictionary[definition.ContractName] = contractType;
+					break;
+				}
+				// Check if type is not found, so we store this in the dictionary
+				if (contractType == null)
+				{
+					TypeLookupDictionary[definition.ContractName] = null;
+				}
+			}
+
+			// Log if the type was not found
+			if (contractType == null)
+			{
+				Log.Verbose().WriteLine("Couldn't find type for {0}", definition.ContractName);
+			}
+			return contractType != null;
 		}
 
 		/// <summary>
@@ -146,51 +199,36 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 				}
 				yield break;
 			}
+
 			Type contractType;
-
-			if (!TypeLookupDictionary.TryGetValue(definition.ContractName, out contractType))
+			if (TryToResolveType(definition, out contractType))
 			{
-				Log.Verbose().WriteLine("Searching for an export {0}", definition.ContractName);
-				// Loop over all the supplied assemblies, these should come from the bootstrapper
-				foreach (var assembly in AssemblyResolver.AssemblyCache)
+				// So we found a type, try to create a export for it. 
+				try
 				{
-					// Try to get it, don't throw an exception if not found
-					try
-					{
-						contractType = assembly.GetType(definition.ContractName, false, true);
-					}
-					catch (Exception ex)
-					{
-						Log.Verbose().WriteLine("Couldn't get type {0} due to {1}", definition.ContractName, ex.Message);
-						// Ignore & break the loop at it is most likely a problem with the contract name
-						break;
-					}
-
-					// Go to next assembly if it wasn't found
-					if (contractType == null)
-					{
-						// Add null value, so we don't try it again
-						Log.Verbose().WriteLine("Type {0} couldn't be found in {1}", definition.ContractName, assembly.FullName);
-						continue;
-					}
-					Log.Verbose().WriteLine("Found Type {0} in {1}", definition.ContractName, assembly.FullName);
-
-					// Store the Type to the contract name, so we can find the type quicker the next time a request was made to a different ServiceExportProvider
-					TypeLookupDictionary[definition.ContractName] = contractType;
-					break;
+					export = CreateExport(contractType, definition.ContractName);
 				}
+				catch (Exception ex)
+				{
+					var message = $"Exception while creating an export for {definition.ContractName}";
+					Log.Error().WriteLine(ex, message);
+					throw new StartupException(message, ex);
+				}
+				if (export == null)
+				{
+					// No export
+					Log.Verbose().WriteLine("Couldn't create export for {0}", definition.ContractName);
+					yield break;
+				}
+				Log.Verbose().WriteLine("Export for {0} found as type {1}", definition.ContractName, contractType);
+				yield return export;
 			}
-
-			// So we found a type, try to create a export for it. 
-			export = CreateExport(contractType, definition.ContractName);
-			if (export == null)
+			else if (contractType == null)
 			{
-				// No export
+				// The type is not found
 				Log.Verbose().WriteLine("Couldn't find type for {0}", definition.ContractName);
-				yield break;
+				_lookup.Add(definition.ContractName, null);
 			}
-			Log.Verbose().WriteLine("Export for {0} found as type {1}" , definition.ContractName, contractType);
-			yield return export;
 		}
 	}
 }

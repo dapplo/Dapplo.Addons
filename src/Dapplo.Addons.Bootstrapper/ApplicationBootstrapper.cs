@@ -41,11 +41,15 @@ namespace Dapplo.Addons.Bootstrapper
 	///     It initializes the IniConfig and LanguageLoader, and makes Importing possible.
 	///     You can protect your application from starting multiple instances by specifying a Mutex-ID
 	/// </summary>
-	public class ApplicationBootstrapper : StartupShutdownBootstrapper
+	public class ApplicationBootstrapper : StartupShutdownBootstrapper, IApplicationBootstrapper
 	{
 		private static readonly LogSource Log = new LogSource();
-		private readonly string _applicationName;
 		private readonly ResourceMutex _resourceMutex;
+
+		/// <summary>
+		/// Returns the application name for this bootstrapper
+		/// </summary>
+		public string ApplicationName { get; }
 
 		/// <summary>
 		///     Create the application bootstrapper, for the specified application name
@@ -63,17 +67,12 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				throw new ArgumentNullException(nameof(applicationName));
 			}
-			_applicationName = applicationName;
+			ApplicationName = applicationName;
 			if (mutexId != null)
 			{
 				_resourceMutex = ResourceMutex.Create(mutexId, applicationName, global);
 			}
 		}
-
-		/// <summary>
-		///     If this is set to true, which is the default, IniConfig and LanguageLoader will be configured automatically.
-		/// </summary>
-		public bool AutoConfigure { get; set; } = true;
 
 		/// <summary>
 		///     Returns if the Mutex is locked, in other words if this ApplicationBootstrapper can continue
@@ -88,7 +87,7 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <returns>bool with value of IsInitialized</returns>
 		public override async Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			Log.Verbose().WriteLine("Trying to initialize application {0}", _applicationName);
+			Log.Verbose().WriteLine("Trying to initialize application {0}", ApplicationName);
 			await base.InitializeAsync(cancellationToken).ConfigureAwait(false);
 			return IsInitialized;
 		}
@@ -102,7 +101,7 @@ namespace Dapplo.Addons.Bootstrapper
 			{
 				return await base.RunAsync(cancellationToken);
 			}
-			Log.Error().WriteLine("Can't Run {0} due to missing mutex lock", _applicationName);
+			Log.Error().WriteLine("Can't Run {0} due to missing mutex lock", ApplicationName);
 			return false;
 		}
 

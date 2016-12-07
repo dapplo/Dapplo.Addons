@@ -194,7 +194,7 @@ namespace Dapplo.Addons.Bootstrapper
 					catch (Exception ex)
 					{
 						Log.Error().WriteLine(ex, "Exception instantiating IStartupAction, probably a MEF issue.");
-						continue;
+						throw;
 					}
 					if (Log.IsDebugEnabled())
 					{

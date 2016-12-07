@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IAction.cs" />
+    <Compile Include="IApplicationBootstrapper.cs" />
     <Compile Include="IServiceExporter.cs" />
     <Compile Include="IServiceRepository.cs" />
     <Compile Include="IModule.cs" />

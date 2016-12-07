@@ -128,13 +128,14 @@ namespace Dapplo.Addons.Tests
 		{
 			// Especially for testing
 			SetEntryAssembly(GetType().Assembly);
-			using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
+			using (IApplicationBootstrapper bootstrapper = new ApplicationBootstrapper(ApplicationName))
 			{
 				// Add all file starting with Dapplo and ending on .dll or .dll.gz
 				bootstrapper.FindAndLoadAssemblies("Dapplo*");
 
 				var iniConfig = new IniConfig(ApplicationName, ApplicationName);
-
+				// Fix startup issues due to unloaded configuration
+				await iniConfig.LoadIfNeededAsync();
 				bootstrapper.ExportProviders.Add(new ServiceProviderExportProvider(iniConfig, bootstrapper));
 
 				// Add test project, without having a direct reference
