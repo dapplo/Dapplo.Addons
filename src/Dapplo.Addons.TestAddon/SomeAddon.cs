@@ -39,7 +39,7 @@ namespace Dapplo.Addons.TestAddon
 {
 	[StartupAction(AwaitStart = false, StartupOrder = 1)]
 	[ShutdownAction]
-	public class SomeAddon : IStartupAction, IShutdownAction
+	public class SomeAddon : IAsyncStartupAction, IAsyncShutdownAction
 	{
 		private static readonly LogSource Log = new LogSource();
 

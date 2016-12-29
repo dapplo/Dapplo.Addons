@@ -32,7 +32,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapplo.Log;
-using Dapplo.Addons.Bootstrapper.ExportProviders;
 
 #endregion
 
@@ -47,11 +46,11 @@ namespace Dapplo.Addons.Bootstrapper
 
 		[ImportMany]
 		// ReSharper disable once FieldCanBeMadeReadOnly.Local
-		private IEnumerable<Lazy<IShutdownAction, IShutdownActionMetadata>> _shutdownActions = null;
+		private IEnumerable<Lazy<IShutdownModule, IShutdownMetadata>> _shutdownModules = null;
 
 		[ImportMany]
 		// ReSharper disable once FieldCanBeMadeReadOnly.Local
-		private IEnumerable<Lazy<IStartupAction, IStartupActionMetadata>> _startupActions = null;
+		private IEnumerable<Lazy<IStartupModule, IStartupMetadata>> _startupModules = null;
 
 		/// <summary>
 		///     Specifies if Dispose automatically calls the shutdown
@@ -87,56 +86,74 @@ namespace Dapplo.Addons.Bootstrapper
 		public async Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			Log.Debug().WriteLine("Shutdown of the shutdown actions, if any");
-			if (_shutdownActions == null)
+			if (_shutdownModules == null)
 			{
 				Log.Debug().WriteLine("No shutdown actions set...");
 				return;
 			}
-			var orderedActions = from export in _shutdownActions orderby export.Metadata.ShutdownOrder ascending select export;
+			var orderedShutdownModules = from export in _shutdownModules orderby export.Metadata.ShutdownOrder ascending select export;
 
 			var tasks = new List<KeyValuePair<Type, Task>>();
 
 			// Variable used for grouping the shutdowns
 			var groupingOrder = int.MaxValue;
 
-			foreach (var lazyShutdownAction in orderedActions)
+			foreach (var lazyShutdownModule in orderedShutdownModules)
 			{
 				// Check if we have all the startup actions belonging to a group
-				if (tasks.Count > 0 && groupingOrder != lazyShutdownAction.Metadata.ShutdownOrder)
+				if (tasks.Count > 0 && groupingOrder != lazyShutdownModule.Metadata.ShutdownOrder)
 				{
-					groupingOrder = lazyShutdownAction.Metadata.ShutdownOrder;
+					groupingOrder = lazyShutdownModule.Metadata.ShutdownOrder;
 
 					// Await all belonging to the same order "group"
 					await WhenAll(tasks).ConfigureAwait(false);
 					// Clean the tasks, we are finished.
 					tasks.Clear();
 				}
-				IShutdownAction shutdownAction;
+				IShutdownModule shutdownModule;
 				try
 				{
-					shutdownAction = lazyShutdownAction.Value;
+					shutdownModule = lazyShutdownModule.Value;
 				}
 				catch (Exception ex)
 				{
-					Log.Error().WriteLine(ex, "Exception instantiating IShutdownAction, probably a MEF issue. (ignoring in shutdown)");
+					Log.Error().WriteLine(ex, "Exception instantiating IShutdownModule, probably a MEF issue. (ignoring in shutdown)");
 					continue;
 				}
 
 				if (Log.IsDebugEnabled())
 				{
-					Log.Debug().WriteLine("Stopping {0}", shutdownAction.GetType());
+					Log.Debug().WriteLine("Stopping {0}", shutdownModule.GetType());
 				}
 
 				try
 				{
-					// Create a task (it will start running, but we don't await it yet)
-					var shutdownTask = shutdownAction.ShutdownAsync(cancellationToken);
-					// Store it for awaiting
-					tasks.Add(new KeyValuePair<Type, Task>(shutdownAction.GetType(), shutdownTask));
+					Task shutdownTask = null;
+
+					// Test if async / sync shutdown
+					IShutdownAction shutdownAction = shutdownModule as IShutdownAction;
+					if (shutdownAction != null)
+					{
+						shutdownTask = Task.Run(() => shutdownAction.Shutdown(), cancellationToken);
+					}
+					else
+					{
+						IAsyncShutdownAction asyncShutdownAction = shutdownModule as IAsyncShutdownAction;
+						if (asyncShutdownAction != null)
+						{
+							// Create a task (it will start running, but we don't await it yet)
+							shutdownTask = asyncShutdownAction.ShutdownAsync(cancellationToken);
+						}
+					}
+					if (shutdownTask != null)
+					{
+						// Store it for awaiting
+						tasks.Add(new KeyValuePair<Type, Task>(shutdownModule.GetType(), shutdownTask));
+					}
 				}
 				catch (Exception ex)
 				{
-					Log.Error().WriteLine(ex, "Exception executing IShutdownAction {0}: ", shutdownAction.GetType());
+					Log.Error().WriteLine(ex, "Exception executing IShutdownModule {0}: ", shutdownModule.GetType());
 				}
 			}
 			// Await all remaining tasks, as the system is shutdown we NEED to wait, and ignore but log their exceptions
@@ -155,12 +172,12 @@ namespace Dapplo.Addons.Bootstrapper
 		public async Task StartupAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			Log.Debug().WriteLine("Starting the startup actions, if any");
-			if (_startupActions == null)
+			if (_startupModules == null)
 			{
 				Log.Debug().WriteLine("No startup actions set...");
 				return;
 			}
-			var orderedActions = from export in _startupActions orderby export.Metadata.StartupOrder ascending select export;
+			var orderedStartupModules = from export in _startupModules orderby export.Metadata.StartupOrder ascending select export;
 
 			var tasks = new List<KeyValuePair<Type, Task>>();
 			var nonAwaitables = new List<KeyValuePair<Type, Task>>();
@@ -168,52 +185,71 @@ namespace Dapplo.Addons.Bootstrapper
 			// Variable used for grouping the startups
 			var groupingOrder = int.MaxValue;
 
-			foreach (var lazyStartupAction in orderedActions)
+			foreach (var lazyStartupModule in orderedStartupModules)
 			{
 				try
 				{
 					// Check if we have all the startup actions belonging to a group
-					if (tasks.Count > 0 && groupingOrder != lazyStartupAction.Metadata.StartupOrder)
+					if (tasks.Count > 0 && groupingOrder != lazyStartupModule.Metadata.StartupOrder)
 					{
-						groupingOrder = lazyStartupAction.Metadata.StartupOrder;
+						groupingOrder = lazyStartupModule.Metadata.StartupOrder;
 						// Await all belonging to the same order "group"
 						await WhenAll(tasks).ConfigureAwait(false);
 						// Clean the tasks, we are finished.
 						tasks.Clear();
 					}
-					IStartupAction startupAction;
+					IStartupModule startupModule;
 					try
 					{
-						startupAction = lazyStartupAction.Value;
+						startupModule = lazyStartupModule.Value;
 					}
 					catch (CompositionException cEx)
 					{
-						Log.Error().WriteLine(cEx, "MEF Exception instantiating IStartupAction.");
+						Log.Error().WriteLine(cEx, "MEF Exception instantiating IStartupModule.");
 						throw;
 					}
 					catch (Exception ex)
 					{
-						Log.Error().WriteLine(ex, "Exception instantiating IStartupAction, probably a MEF issue.");
+						Log.Error().WriteLine(ex, "Exception instantiating IStartupModule, probably a MEF issue.");
 						throw;
 					}
 					if (Log.IsDebugEnabled())
 					{
-						Log.Debug().WriteLine("Starting {0}", startupAction.GetType());
+						Log.Debug().WriteLine("Starting {0}", startupModule.GetType());
 					}
 
-					// Create a task (it will start running, but we don't await it yet)
-					var task = startupAction.StartAsync(cancellationToken);
-					// add the task to an await list, but only if needed!
-					if (lazyStartupAction.Metadata.AwaitStart)
+					Task startupTask = null;
+
+					// Test if async / sync startup
+					IStartupAction startupAction = startupModule as IStartupAction;
+					if (startupAction != null)
 					{
-						tasks.Add(new KeyValuePair<Type, Task>(lazyStartupAction.Value.GetType(), task));
+						// Wrap sync call as async task
+						startupTask = Task.Run(() => startupAction.Start(), cancellationToken);
 					}
 					else
 					{
-						if (Log.IsErrorEnabled())
+						IAsyncStartupAction asyncStartupAction = startupModule as IAsyncStartupAction;
+						if (asyncStartupAction != null)
 						{
-							// We do await for them, but just to catch any exceptions
-							nonAwaitables.Add(new KeyValuePair<Type, Task>(lazyStartupAction.Value.GetType(), task));
+							// Create a task (it will start running, but we don't await it yet)
+							startupTask = asyncStartupAction.StartAsync(cancellationToken);
+						}
+					}
+
+					if (startupTask != null)
+					{
+						if (lazyStartupModule.Metadata.AwaitStart)
+						{
+							tasks.Add(new KeyValuePair<Type, Task>(lazyStartupModule.Value.GetType(), startupTask));
+						}
+						else
+						{
+							if (Log.IsErrorEnabled())
+							{
+								// We do await for them, but just to catch any exceptions
+								nonAwaitables.Add(new KeyValuePair<Type, Task>(lazyStartupModule.Value.GetType(), startupTask));
+							}
 						}
 					}
 				}
@@ -224,7 +260,7 @@ namespace Dapplo.Addons.Bootstrapper
 				}
 				catch (Exception ex)
 				{
-					Log.Error().WriteLine(ex, "Exception executing IStartupAction {0}: ", lazyStartupAction.Value.GetType());
+					Log.Error().WriteLine(ex, "Exception executing IStartupAction {0}: ", lazyStartupModule.Value.GetType());
 				}
 			}
 

@@ -32,22 +32,14 @@ using System.ComponentModel;
 namespace Dapplo.Addons
 {
 	/// <summary>
-	///     Meta-data belonging to the StartupActionAttribute, which makes it possible to specify type-safe meta-data.
+	///     Meta-data belonging to the AsyncShutdownActionAttribute or ShutdownActionAttribute, which makes it possible to specify type-safe meta-data.
 	/// </summary>
-	public interface IStartupActionMetadata
+	public interface IShutdownMetadata
 	{
 		/// <summary>
-		///     Specify if the startup needs to be awaited, this could be set to false if you want to have a task doing something
-		///     in the background
-		///     In general you would like this to be true, otherwise depending code might be started to early
-		/// </summary>
-		[DefaultValue(true)]
-		bool AwaitStart { get; }
-
-		/// <summary>
-		///     Order in which IStartupAction.StartAsync is called
+		///     Order in which IShutdownAction.Shutdown / IAsyncShutdownAction.ShutdownAsync is called
 		/// </summary>
 		[DefaultValue(1)]
-		int StartupOrder { get; }
+		int ShutdownOrder { get; }
 	}
 }

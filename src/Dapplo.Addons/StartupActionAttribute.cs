@@ -33,23 +33,23 @@ using System.ComponentModel.Composition;
 namespace Dapplo.Addons
 {
 	/// <summary>
-	///     This is the attribute for a IStartupAction module
+	///     This is the attribute for a IStartupModule module
 	/// </summary>
 	[MetadataAttribute, AttributeUsage(AttributeTargets.Class, Inherited = false)]
-	public class StartupActionAttribute : ModuleAttribute, IStartupActionMetadata
+	public class StartupActionAttribute : ModuleAttribute, IStartupMetadata
 	{
 		/// <summary>
 		///     Default constructor
 		/// </summary>
-		public StartupActionAttribute() : base(typeof(IStartupAction))
+		public StartupActionAttribute() : base(typeof(IStartupModule))
 		{
 		}
 
 		/// <summary>
-		///     Use a specific contract name for the IStartupAction
+		///     Use a specific contract name for the IStartupModule
 		/// </summary>
 		/// <param name="contractName"></param>
-		public StartupActionAttribute(string contractName) : base(contractName, typeof(IStartupAction))
+		public StartupActionAttribute(string contractName) : base(contractName, typeof(IStartupModule))
 		{
 		}
 

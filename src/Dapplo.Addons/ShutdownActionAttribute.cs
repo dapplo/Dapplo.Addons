@@ -33,16 +33,16 @@ using System.ComponentModel.Composition;
 namespace Dapplo.Addons
 {
 	/// <summary>
-	///     This is the attribute which can be used for the type-safe meta-data
+	///     This is the attribute for a IShutdownModule module
 	/// </summary>
 	[MetadataAttribute]
 	[AttributeUsage(AttributeTargets.Class, Inherited = false)]
-	public class ShutdownActionAttribute : ModuleAttribute, IShutdownActionMetadata
+	public class ShutdownActionAttribute : ModuleAttribute, IShutdownMetadata
 	{
 		/// <summary>
 		///     Default constructor
 		/// </summary>
-		public ShutdownActionAttribute() : base(typeof(IShutdownAction))
+		public ShutdownActionAttribute() : base(typeof(IShutdownModule))
 		{
 		}
 
@@ -50,7 +50,7 @@ namespace Dapplo.Addons
 		///     Constructor with a contract name
 		/// </summary>
 		/// <param name="contractName"></param>
-		public ShutdownActionAttribute(string contractName) : base(contractName, typeof(IShutdownAction))
+		public ShutdownActionAttribute(string contractName) : base(contractName, typeof(IShutdownModule))
 		{
 		}
 

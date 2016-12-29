@@ -25,21 +25,24 @@
 
 #region Usings
 
-
+using System.Threading;
+using System.Threading.Tasks;
 
 #endregion
 
 namespace Dapplo.Addons
 {
 	/// <summary>
-	///     The IShutdownAction describes modules that are called on shutdown
+	///     The IAsyncShutdownAction describes modules that are called on shutdown
 	/// </summary>
-	public interface IShutdownAction : IShutdownModule
+	public interface IAsyncShutdownAction : IShutdownModule
 	{
 		/// <summary>
 		///     Perform a shutdown of whatever needs to be shutdown.
 		///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
 		/// </summary>
-		void Shutdown();
+		/// <param name="token">CancellationToken</param>
+		/// <returns>Task</returns>
+		Task ShutdownAsync(CancellationToken token = default(CancellationToken));
 	}
 }

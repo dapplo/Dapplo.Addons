@@ -32,14 +32,9 @@
 namespace Dapplo.Addons
 {
 	/// <summary>
-	///     The IShutdownAction describes modules that are called on shutdown
+	///     The IShutdownModule is a marker interface for modules that are called on shutdown
 	/// </summary>
-	public interface IShutdownAction : IShutdownModule
+	public interface IShutdownModule : IModule
 	{
-		/// <summary>
-		///     Perform a shutdown of whatever needs to be shutdown.
-		///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
-		/// </summary>
-		void Shutdown();
 	}
 }

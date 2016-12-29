@@ -68,12 +68,12 @@ namespace Dapplo.Addons.Tests
 			var compositionBootstrapper = new CompositionBootstrapper();
 			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.Export("Hello"));
 			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExport<string>());
-			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExport<string, IStartupActionMetadata>());
+			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExport<string, IStartupMetadata>());
 			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExport(typeof(string)));
 			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetService(typeof(string)));
 			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExports(typeof(string)));
 			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExports<string>());
-			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExports<string, IStartupActionMetadata>());
+			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExports<string, IStartupMetadata>());
 			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.Release(null));
 			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.FillImports(null));
 			compositionBootstrapper.Dispose();

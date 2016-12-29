@@ -42,13 +42,12 @@ namespace Dapplo.Addons.TestAddon
 		[Import(AllowDefault = true)]
 		private bool ThrowStartupException { get; set; }
 
-		public Task StartAsync(CancellationToken token = new CancellationToken())
+		public void Start()
 		{
 			if (ThrowStartupException)
 			{
 				throw new StartupException("I was ordered to!!!");
 			}
-			return Task.FromResult(true);
 		}
 	}
 }
