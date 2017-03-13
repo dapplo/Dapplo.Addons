@@ -52,6 +52,7 @@ namespace Dapplo.Addons.Bootstrapper
 	{
 		private const string NotInitialized = "Bootstrapper is not initialized";
 		private static readonly LogSource Log = new LogSource();
+		private readonly IList<IDisposable> _disposables = new List<IDisposable>();
 
 		/// <summary>
 		///     The AggregateCatalog contains all the catalogs with the assemblies in it.
@@ -755,22 +756,30 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <param name="disposing">bool</param>
 		protected virtual void Dispose(bool disposing)
 		{
-			if (!_disposedValue)
+			// Return fast
+			if (_disposedValue)
 			{
-				if (disposing && IsInitialized)
-				{
-					Log.Debug().WriteLine("Disposing...");
-					// dispose managed state (managed objects) here.
-					using (new NoSynchronizationContextScope())
-					{
-						StopAsync().Wait();
-					}
-				}
-				// Dispose unmanaged objects here
-				// DO NOT CALL any managed objects here, outside of the disposing = true, as this is also used when a distructor is called
-
-				_disposedValue = true;
+				return;
 			}
+			if (disposing && IsInitialized)
+			{
+				Log.Debug().WriteLine("Disposing...");
+				// dispose managed state (managed objects) here.
+				using (new NoSynchronizationContextScope())
+				{
+					StopAsync().Wait();
+				}
+				// dispose all registered disposables, in reversed order
+				foreach (var disposable in _disposables.Reverse())
+				{
+					disposable?.Dispose();
+				}
+				_disposables.Clear();
+			}
+			// Dispose unmanaged objects here
+			// DO NOT CALL any managed objects here, outside of the disposing = true, as this is also used when a distructor is called
+
+			_disposedValue = true;
 		}
 
 		/// <summary>
@@ -780,6 +789,12 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
 			Dispose(true);
+		}
+
+		/// <inheritdoc />
+		public void RegisterForDisposal(IDisposable disposable)
+		{
+			_disposables.Add(disposable);
 		}
 
 		#endregion

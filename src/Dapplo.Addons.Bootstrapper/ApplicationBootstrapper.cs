@@ -26,10 +26,8 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Dapplo.Addons.Bootstrapper.ExportProviders;
 using Dapplo.Log;
 
 #endregion

@@ -39,6 +39,12 @@ namespace Dapplo.Addons
 	public interface IBootstrapper : IServiceLocator, IServiceExporter, IServiceRepository, IDisposable
 	{
 		/// <summary>
+		/// Register a disposable, to dispose when the IBootstrapper is disposed
+		/// </summary>
+		/// <param name="disposable">IDisposable to dispose together with the bootstapper</param>
+		void RegisterForDisposal(IDisposable disposable);
+
+		/// <summary>
 		///     Is this IBootstrapper initialized?
 		/// </summary>
 		bool IsInitialized { get; }

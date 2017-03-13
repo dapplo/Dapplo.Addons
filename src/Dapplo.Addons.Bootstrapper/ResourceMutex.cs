@@ -40,7 +40,7 @@ namespace Dapplo.Addons.Bootstrapper
 	///     Simplifies the usage of the Mutex class, as described here:
 	///     https://msdn.microsoft.com/en-us/library/System.Threading.Mutex.aspx
 	/// </summary>
-	public class ResourceMutex : IDisposable
+	public sealed class ResourceMutex : IDisposable
 	{
 		private static LogSource _log = new LogSource();
 		private readonly string _mutexId;
@@ -50,12 +50,12 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <summary>
 		///     Private constructor
 		/// </summary>
-		/// <param name="mutexId"></param>
-		/// <param name="resourceName"></param>
+		/// <param name="mutexId">string with a unique Mutex ID</param>
+		/// <param name="resourceName">optional name for the resource</param>
 		private ResourceMutex(string mutexId, string resourceName = null)
 		{
 			_mutexId = mutexId;
-			_resourceName = resourceName ?? "some resource";
+			_resourceName = resourceName ?? mutexId;
 		}
 
 		/// <summary>
@@ -71,6 +71,10 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <param name="global">true to have a global mutex see: https://msdn.microsoft.com/en-us/library/bwe34f1k.aspx </param>
 		public static ResourceMutex Create(string mutexId, string resourceName = null, bool global = false)
 		{
+			if (mutexId == null)
+			{
+				throw new ArgumentNullException(nameof(mutexId));
+			}
 			var applicationMutex = new ResourceMutex((global ? @"Global\" : @"Local\") + mutexId, resourceName);
 			applicationMutex.Lock();
 			return applicationMutex;
@@ -141,7 +145,7 @@ namespace Dapplo.Addons.Bootstrapper
 		///     The real disposing code
 		/// </summary>
 		/// <param name="disposing">true if dispose is called, false when the finalizer is called</param>
-		protected virtual void Dispose(bool disposing)
+		private void Dispose(bool disposing)
 		{
 			if (!_disposedValue)
 			{

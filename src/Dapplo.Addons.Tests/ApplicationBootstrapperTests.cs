@@ -136,6 +136,8 @@ namespace Dapplo.Addons.Tests
 				var iniConfig = new IniConfig(ApplicationName, ApplicationName);
 				// Fix startup issues due to unloaded configuration
 				await iniConfig.LoadIfNeededAsync();
+				// Make sure the IniConfig is disposed
+				bootstrapper.RegisterForDisposal(iniConfig);
 				bootstrapper.ExportProviders.Add(new ServiceProviderExportProvider(iniConfig, bootstrapper));
 
 				// Add test project, without having a direct reference
