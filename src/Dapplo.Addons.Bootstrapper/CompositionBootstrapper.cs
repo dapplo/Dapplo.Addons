@@ -552,7 +552,7 @@ namespace Dapplo.Addons.Bootstrapper
 		public ComposablePart Export<T>(T obj, IDictionary<string, object> metadata = null)
 		{
 			var contractName = AttributedModelServices.GetContractName(typeof(T));
-			return Export(contractName, obj);
+			return Export(contractName, obj, metadata);
 		}
 
 		/// <summary>
@@ -565,7 +565,7 @@ namespace Dapplo.Addons.Bootstrapper
 		public ComposablePart Export(Type type, object obj, IDictionary<string, object> metadata = null)
 		{
 			var contractName = AttributedModelServices.GetContractName(type);
-			return Export(contractName, obj);
+			return Export(type, contractName, obj, metadata);
 		}
 
 		/// <summary>
