@@ -35,6 +35,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Dapplo.Addons.Bootstrapper.ExportProviders;
 using Dapplo.Log;
 using Dapplo.Utils;
 using Dapplo.Utils.Embedded;
@@ -386,10 +387,15 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <param name="exportProvider">ExportProvider</param>
 		public void Add(ExportProvider exportProvider)
 		{
+			if (IsInitialized)
+			{
+				throw new InvalidOperationException("Bootstrapper is already initialized, can't add ExportProviders afterwards.");
+			}
 			if (exportProvider == null)
 			{
 				throw new ArgumentNullException(nameof(exportProvider));
 			}
+
 			Log.Verbose().WriteLine("Adding ExportProvider: {0}", exportProvider.GetType().FullName);
 			ExportProviders.Add(exportProvider);
 		}
@@ -693,8 +699,10 @@ namespace Dapplo.Addons.Bootstrapper
 			// Configure first, this can be overloaded
 			Configure();
 
+			// Get all the export providers
+			var exportProviders = ExportProviders.Concat(new List<ExportProvider> {new ServiceProviderExportProvider(this)}).ToArray();
 			// Now create the container
-			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags, ExportProviders.ToArray());
+			Container = new CompositionContainer(AggregateCatalog, CompositionOptionFlags, exportProviders);
 			// Make this bootstrapper as Dapplo.Addons.IServiceLocator
 			Export<IServiceLocator>(this);
 			// Export this bootstrapper as Dapplo.Addons.IServiceExporter

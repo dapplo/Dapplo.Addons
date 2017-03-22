@@ -42,6 +42,7 @@ namespace Dapplo.Addons.Bootstrapper
 	/// </summary>
 	public sealed class ResourceMutex : IDisposable
 	{
+		// Special case, the _log is not readonly
 		private static LogSource _log = new LogSource();
 		private readonly string _mutexId;
 		private readonly string _resourceName;
@@ -103,17 +104,25 @@ namespace Dapplo.Addons.Bootstrapper
 				// 1) Create Mutex
 				_applicationMutex = new Mutex(true, _mutexId, out createdNew, mutexsecurity);
 				// 2) if the mutex wasn't created new get the right to it, this returns false if it's already locked
-				if (!createdNew && !_applicationMutex.WaitOne(100, false))
+				if (!createdNew)
 				{
-					_log.Warn().WriteLine("{0} is already in use, mutex {1} is NOT locked for the caller", _resourceName, _mutexId);
-					IsLocked = false;
-					// Clean up
-					_applicationMutex.Dispose();
-					_applicationMutex = null;
+					IsLocked = _applicationMutex.WaitOne(1000, false);
+					if (!IsLocked)
+					{
+						_log.Warn().WriteLine("Mutex {0} is already in use and couldn't be locked for the caller {1}", _mutexId, _resourceName);
+						// Clean up
+						_applicationMutex.Dispose();
+						_applicationMutex = null;
+					}
+					else
+					{
+						_log.Info().WriteLine("{0} has claimed the mutex {1}", _resourceName, _mutexId);
+					}
 				}
 				else
 				{
-					_log.Info().WriteLine(createdNew ? "{0} has created & claimed the mutex {1}" : "{0} has claimed the mutex {1}", _resourceName, _mutexId);
+					_log.Info().WriteLine("{0} has created & claimed the mutex {1}", _resourceName, _mutexId);
+
 				}
 			}
 			catch (AbandonedMutexException e)
@@ -124,8 +133,7 @@ namespace Dapplo.Addons.Bootstrapper
 			}
 			catch (UnauthorizedAccessException e)
 			{
-				_log.Error()
-					.WriteLine(e, "{0} is most likely already running for a different user in the same session, can't create/get mutex {1} due to error.", _resourceName, _mutexId);
+				_log.Error().WriteLine(e, "{0} is most likely already running for a different user in the same session, can't create/get mutex {1} due to error.", _resourceName, _mutexId);
 				IsLocked = false;
 			}
 			catch (Exception ex)
@@ -142,7 +150,7 @@ namespace Dapplo.Addons.Bootstrapper
 		private bool _disposedValue;
 
 		/// <summary>
-		///     The real disposing code
+		///     The real disposing code, do not call this from a different thread as the one creating the mutex
 		/// </summary>
 		/// <param name="disposing">true if dispose is called, false when the finalizer is called</param>
 		private void Dispose(bool disposing)
@@ -153,14 +161,17 @@ namespace Dapplo.Addons.Bootstrapper
 				{
 					try
 					{
-						_applicationMutex.ReleaseMutex();
-						_applicationMutex = null;
-						_log.Info().WriteLine("Released Mutex {0} for {1}", _mutexId, _resourceName);
+						if (IsLocked)
+						{
+							_applicationMutex.ReleaseMutex();
+							_log.Info().WriteLine("Released Mutex {0} for {1}", _mutexId, _resourceName);
+						}
 					}
 					catch (Exception ex)
 					{
 						_log.Error().WriteLine(ex, "Error releasing Mutex {0} for {1}", _mutexId, _resourceName);
 					}
+					_applicationMutex = null;
 				}
 				_disposedValue = true;
 			}
@@ -179,6 +190,7 @@ namespace Dapplo.Addons.Bootstrapper
 
 		/// <summary>
 		///     The dispose interface, which calls Dispose(true) to signal that dispose is called.
+		///     Do not call this from a different thread as the one creating the lock.
 		/// </summary>
 		public void Dispose()
 		{

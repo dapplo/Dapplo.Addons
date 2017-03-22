@@ -30,7 +30,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper;
-using Dapplo.Addons.ExportProviders;
 using Dapplo.Ini;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
@@ -138,7 +137,6 @@ namespace Dapplo.Addons.Tests
 				await iniConfig.LoadIfNeededAsync();
 				// Make sure the IniConfig is disposed
 				bootstrapper.RegisterForDisposal(iniConfig);
-				bootstrapper.ExportProviders.Add(new ServiceProviderExportProvider(iniConfig, bootstrapper));
 
 				// Add test project, without having a direct reference
 #if DEBUG
@@ -153,6 +151,8 @@ namespace Dapplo.Addons.Tests
 
 				// Initialize, so we can export
 				Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");
+
+				bootstrapper.Export<IServiceProvider>(iniConfig);
 
 				// test Export, this should work before Run as some of the addons might need some stuff.
 

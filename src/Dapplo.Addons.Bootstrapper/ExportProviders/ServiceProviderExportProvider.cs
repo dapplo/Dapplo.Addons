@@ -31,41 +31,37 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.ComponentModel.Composition.Primitives;
+using System.Linq;
 using Dapplo.Log;
 using Dapplo.Utils.Resolving;
 
 #endregion
 
-namespace Dapplo.Addons.ExportProviders
+namespace Dapplo.Addons.Bootstrapper.ExportProviders
 {
 	/// <summary>
-	///     The ServiceProviderExportProvider is an ExportProvider which can solve special cases by using
-	///     an IServiceLocator implementation to resolve type requests. Meaning it can do last minute dynamic lookups.
-	///     The IServiceLocator will create the type derrived classes, and this ExportProvider will create the export so it can be injected
+	///     The ServiceProviderExportProvider is an ExportProvider which can solve special cases by using IServiceLocator implementations to resolve type requests.
+	///     Meaning it can do last minute dynamic lookups. The IServiceLocator will create the type derrived classes, and this ExportProvider will create the export so it can be injected.
 	/// </summary>
-	public class ServiceProviderExportProvider : ExportProvider
+	internal sealed class ServiceProviderExportProvider : ExportProvider
 	{
 		private static readonly LogSource Log = new LogSource();
 
 		/// <summary>
 		/// Type-Cache for all the ServiceExportProvider 
 		/// </summary>
-		protected static readonly IDictionary<string, Type> TypeLookupDictionary = new ConcurrentDictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+		private readonly IDictionary<string, Type> _typeLookupDictionary = new ConcurrentDictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
 
-		// ReSharper disable once StaticMemberInGenericType
 		private readonly IBootstrapper _bootstrapper;
-		private readonly IServiceProvider _serviceProvider;
 		private readonly IDictionary<string, Export> _lookup = new Dictionary<string, Export>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
 		///     Create a ServiceExportProvider which is for the specified application, IConfigProvider and works with the supplied
 		///     assemblies
 		/// </summary>
-		/// <param name="serviceProvider">provider needed for the registering</param>
 		/// <param name="bootstrapper">IBootstrapper</param>
-		public ServiceProviderExportProvider(IServiceProvider serviceProvider, IBootstrapper bootstrapper)
+		public ServiceProviderExportProvider(IBootstrapper bootstrapper)
 		{
-			_serviceProvider = serviceProvider;
 			_bootstrapper = bootstrapper;
 		}
 
@@ -93,8 +89,8 @@ namespace Dapplo.Addons.ExportProviders
 				return export;
 			}
 
-			// Create / get instance
-			var instance = _serviceProvider.GetService(contractType);
+			// Create / get instance from the first provider which responds
+			var instance = _bootstrapper.GetExports<IServiceProvider>().Select(lazy => lazy.Value).Where(provider => !(provider is IBootstrapper)).Select(provider => provider.GetService(contractType)).FirstOrDefault(o => o != null);
 			if (instance == null)
 			{
 				// So we couldn't get an instance, add null so we don't try again.
@@ -119,7 +115,7 @@ namespace Dapplo.Addons.ExportProviders
 			{
 				_lookup[specifiedContractName] = export;
 			}
-			TypeLookupDictionary[contractName] = contractType;
+			_typeLookupDictionary[contractName] = contractType;
 			return export;
 		}
 
@@ -131,7 +127,7 @@ namespace Dapplo.Addons.ExportProviders
 		/// <returns>true if found</returns>
 		private bool TryToResolveType(ImportDefinition definition, out Type contractType)
 		{
-			if (!TypeLookupDictionary.TryGetValue(definition.ContractName, out contractType))
+			if (!_typeLookupDictionary.TryGetValue(definition.ContractName, out contractType))
 			{
 				Log.Verbose().WriteLine("Searching for an export {0}", definition.ContractName);
 				// Loop over all the supplied assemblies, these should come from the bootstrapper
@@ -158,13 +154,13 @@ namespace Dapplo.Addons.ExportProviders
 					Log.Verbose().WriteLine("Found Type {0} in {1}", definition.ContractName, assembly.FullName);
 
 					// Store the Type to the contract name, so we can find the type quicker the next time a request was made to a different ServiceExportProvider
-					TypeLookupDictionary[definition.ContractName] = contractType;
+					_typeLookupDictionary[definition.ContractName] = contractType;
 					break;
 				}
 				// Check if type is not found, so we store this in the dictionary
 				if (contractType == null)
 				{
-					TypeLookupDictionary[definition.ContractName] = null;
+					_typeLookupDictionary[definition.ContractName] = null;
 				}
 			}
 

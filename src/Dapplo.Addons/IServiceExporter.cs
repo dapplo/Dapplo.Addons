@@ -87,7 +87,7 @@ namespace Dapplo.Addons
 		void Release(ComposablePart part);
 
 		/// <summary>
-		/// The list of export providers used when an export cannot be found
+		/// The list of export providers used when an export cannot be found, these need to be added before the bootstrapper is started
 		/// </summary>
 		IList<ExportProvider> ExportProviders { get; }
 	}
