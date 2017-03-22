@@ -87,7 +87,8 @@ namespace Dapplo.Addons.Bootstrapper
 		{
 			Log.Verbose().WriteLine("Trying to initialize application {0}", ApplicationName);
 			await base.InitializeAsync(cancellationToken).ConfigureAwait(false);
-			return IsInitialized;
+			// Export this bootstrapper as IApplicationBootstrapper
+			Export<IApplicationBootstrapper>(this); return IsInitialized;
 		}
 
 		/// <summary>

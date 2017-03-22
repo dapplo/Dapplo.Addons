@@ -84,13 +84,13 @@ namespace Dapplo.Addons.Tests
 		[Fact]
 		public void TestMutex_LockTwice()
 		{
-			using (var resourceMutex = ResourceMutex.Create(MutexId, "Call1"))
+			using (var resourceMutex = ResourceMutex.Create(MutexId, "FirstCall"))
 			{
 				Assert.NotNull(resourceMutex);
 				Assert.True(resourceMutex.IsLocked);
 				Task.Factory.StartNew(() =>
 				{
-					using (var resourceMutex2 = ResourceMutex.Create(MutexId, "Call2"))
+					using (var resourceMutex2 = ResourceMutex.Create(MutexId, "SecondCall"))
 					{
 						Assert.NotNull(resourceMutex2);
 						Assert.False(resourceMutex2.IsLocked);

@@ -30,7 +30,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper;
-using Dapplo.Addons.Bootstrapper.ExportProviders;
+using Dapplo.Addons.ExportProviders;
 using Dapplo.Ini;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;

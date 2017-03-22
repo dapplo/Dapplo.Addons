@@ -36,7 +36,7 @@ using Dapplo.Utils.Resolving;
 
 #endregion
 
-namespace Dapplo.Addons.Bootstrapper.ExportProviders
+namespace Dapplo.Addons.ExportProviders
 {
 	/// <summary>
 	///     The ServiceProviderExportProvider is an ExportProvider which can solve special cases by using
