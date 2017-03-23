@@ -32,6 +32,7 @@ using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.ComponentModel.Composition.Primitives;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Dapplo.Log;
 using Dapplo.Utils.Resolving;
 
@@ -46,6 +47,18 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 	internal sealed class ServiceProviderExportProvider : ExportProvider
 	{
 		private static readonly LogSource Log = new LogSource();
+		private static readonly IDictionary<string, Regex> IgnoreContractRegexes = new Dictionary<string, Regex>
+		{
+			{"System", new Regex(@"^System\..+", RegexOptions.Compiled)},
+			{"Dapplo.Addons interface", new Regex(@"^Dapplo\.Addons\.I[^\.]+$", RegexOptions.Compiled)},
+			{"No FQ-type", new Regex(@"^[a-z]+$", RegexOptions.Compiled)}
+		};
+		private static readonly IList<Regex> IgnoreAssemblyRegexes = new List<Regex> {
+			new Regex(@"^System\..+", RegexOptions.Compiled),
+			new Regex(@"^Dapplo\.(Addons|InterfaceImpl|Utils)$", RegexOptions.Compiled),
+			new Regex(@"^Dapplo\.Addons.\Bootstrapper$", RegexOptions.Compiled),
+			new Regex(@"^Dapplo\.Log\.\w+$", RegexOptions.Compiled)
+		};
 
 		/// <summary>
 		/// Type-Cache for all the ServiceExportProvider 
@@ -89,8 +102,8 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 				return export;
 			}
 
-			// Create / get instance from the first provider which responds
-			var instance = _bootstrapper.GetExports<IServiceProvider>().Select(lazy => lazy.Value).Where(provider => !(provider is IBootstrapper)).Select(provider => provider.GetService(contractType)).FirstOrDefault(o => o != null);
+			// Create / get instance from the first provider which responds, ignore the bootstrapper itself
+			var instance = _bootstrapper.GetExports<IServiceProvider>().Select(lazy => lazy.Value).Where(provider => !ReferenceEquals(_bootstrapper, provider)).Select(provider => provider.GetService(contractType)).FirstOrDefault(o => o != null);
 			if (instance == null)
 			{
 				// So we couldn't get an instance, add null so we don't try again.
@@ -133,6 +146,13 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 				// Loop over all the supplied assemblies, these should come from the bootstrapper
 				foreach (var assembly in AssemblyResolver.AssemblyCache)
 				{
+					var currentAssemblyName = assembly.GetName().Name;
+					// Skip assemblies which do not concern us
+					if (IgnoreAssemblyRegexes.Any(regex => regex.IsMatch(currentAssemblyName)))
+					{
+						Log.Verbose().WriteLine("Skipping assembly {0}", currentAssemblyName);
+						continue;
+					}
 					// Try to get it, don't throw an exception if not found
 					try
 					{
@@ -180,9 +200,13 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
 		/// <returns>Export</returns>
 		protected override IEnumerable<Export> GetExportsCore(ImportDefinition definition, AtomicComposition atomicComposition)
 		{
-			if (definition.ContractName.StartsWith("System."))
+			foreach (var ignoreRegex in IgnoreContractRegexes)
 			{
-				Log.Verbose().WriteLine("skipping contract {0} as it is from the system namespace.", definition.ContractName);
+				if (!ignoreRegex.Value.IsMatch(definition.ContractName))
+				{
+					continue;
+				}
+				Log.Verbose().WriteLine("Not resolving contract {0}, it was excluded due to rule: {1}.", definition.ContractName, ignoreRegex.Key);
 				yield break;
 			}
 			Export export;
