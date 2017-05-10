@@ -13,6 +13,7 @@ var configuration = Argument("configuration", "release");
 var nugetApiKey = Argument("nugetApiKey", EnvironmentVariable("NuGetApiKey"));
 var solutionFilePath = GetFiles("./**/*.sln").First();
 var solutionName = solutionFilePath.GetDirectory().GetDirectoryName();
+var coveralsRepoToken = Argument("coveralsRepoToken", EnvironmentVariable("CoverallsRepoToken"));
 
 // Used to store the version, which is needed during the build and the packaging
 var version = EnvironmentVariable("APPVEYOR_BUILD_VERSION") ?? "1.0.0";
@@ -21,7 +22,7 @@ var version = EnvironmentVariable("APPVEYOR_BUILD_VERSION") ?? "1.0.0";
 var isPullRequest = !string.IsNullOrEmpty(EnvironmentVariable("APPVEYOR_PULL_REQUEST_NUMBER"));
 
 // Check if the commit is marked as release
-var isRelease = (EnvironmentVariable("APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED")?? "").Contains("[release]");
+var isRelease = Argument<bool>("isRelease", string.Compare("[release]", EnvironmentVariable("appveyor_repo_commit_message_extended"), true) == 0);
 
 Task("Default")
     .IsDependentOn("Publish");
