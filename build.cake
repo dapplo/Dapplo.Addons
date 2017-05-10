@@ -1,6 +1,7 @@
 #tool "xunit.runner.console"
 #tool "OpenCover"
 #tool "docfx.console"
+#tool "coveralls.io"
 #addin "SharpZipLib"
 #addin "MagicChunks"
 #addin "Cake.FileHelpers"
@@ -29,8 +30,8 @@ Task("Default")
 
 // Publish the Artifact of the Package Task to the Nexus Pro
 Task("Publish")
-    .IsDependentOn("PublishPackages")
 	.IsDependentOn("UploadCoverageReport")
+    .IsDependentOn("PublishPackages")
     .WithCriteria(() => !BuildSystem.IsLocalBuild)
     .WithCriteria(() => !string.IsNullOrEmpty(nugetApiKey))
     .WithCriteria(() => !isPullRequest)
