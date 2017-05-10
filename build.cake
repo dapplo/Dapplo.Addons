@@ -6,6 +6,7 @@
 #addin "Cake.FileHelpers"
 #addin "Cake.DocFx"
 #addin "Cake.Compression"
+#addin "Cake.Coveralls"
 
 var target = Argument("target", "Build");
 var configuration = Argument("configuration", "release");
@@ -27,6 +28,17 @@ Task("Default")
 
 // Publish the Artifact of the Package Task to the Nexus Pro
 Task("Publish")
+    .IsDependentOn("PublishPackages")
+	.IsDependentOn("UploadCoverageReport")
+    .WithCriteria(() => !BuildSystem.IsLocalBuild)
+    .WithCriteria(() => !string.IsNullOrEmpty(nugetApiKey))
+    .WithCriteria(() => !isPullRequest)
+    .WithCriteria(() => isRelease)
+    .Does(()=>
+{
+});
+
+Task("PublishPackages")
     .IsDependentOn("Package")
     .WithCriteria(() => !BuildSystem.IsLocalBuild)
     .WithCriteria(() => !string.IsNullOrEmpty(nugetApiKey))
@@ -63,7 +75,7 @@ Task("Package")
         }
     };
 
-    var projectFilePaths = GetFiles("./**/*.csproj").Where(p => !p.FullPath.Contains("Test") && !p.FullPath.Contains("Demo") && !p.FullPath.Contains("Diagnostics") &&!p.FullPath.Contains("packages") &&!p.FullPath.Contains("tools"));
+    var projectFilePaths = GetFiles("./**/*.csproj").Where(p => !p.FullPath.Contains("Test") && !p.FullPath.Contains("NuGet") && !p.FullPath.Contains("Diagnostics") &&!p.FullPath.Contains("packages") &&!p.FullPath.Contains("tools"));
     foreach(var projectFilePath in projectFilePaths)
     {
         Information("Packaging: " + projectFilePath.FullPath);
@@ -81,6 +93,17 @@ Task("Documentation")
     CreateDirectory("artifacts");
     // Archive the generated site
     ZipCompress("./doc/_site", "./artifacts/site.zip");
+});
+
+Task("UploadCoverageReport")
+	.IsDependentOn("Coverage")
+	.WithCriteria(() => !string.IsNullOrEmpty(coveralsRepoToken))
+    .Does(() =>
+{
+    CoverallsIo("./artifacts/coverage.xml", new CoverallsIoSettings()
+    {
+        RepoToken = coveralsRepoToken
+    });
 });
 
 // Run the XUnit tests via OpenCover, so be get an coverage.xml report
