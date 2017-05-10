@@ -27,26 +27,40 @@
 
 using System;
 using System.ComponentModel.Composition;
+using System.Threading;
+using System.Threading.Tasks;
 
 #endregion
 
 namespace Dapplo.Addons.TestAddon
 {
-	[StartupAction(AwaitStart = true, StartupOrder = 1)]
-	public class StartupExceptionThrowingAddon : IStartupAction
-	{
-		/// <summary>
-		///     This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
-		/// </summary>
-		[Import(AllowDefault = true)]
-		private bool ThrowStartupException { get; set; }
+    [StartupAction(AwaitStart = false, StartupOrder = 1)]
+    [ShutdownAction]
+    public class AnotherAddon : IAsyncStartupAction, IAsyncShutdownAction
+    {
 
-		public void Start()
-		{
-			if (ThrowStartupException)
-			{
-				throw new StartupException("I was ordered to!!!", new NotSupportedException());
-			}
-		}
-	}
+        [ImportingConstructor]
+        public AnotherAddon(IThisIsSubConfiguration mysubConfig)
+        {
+            if (!string.Equals("Dapplo", mysubConfig.Company))
+            {
+                throw new NotSupportedException();
+            }
+        }
+        /// <summary>
+        ///     This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
+        /// </summary>
+        [Import(AllowDefault = true)]
+        private bool ThrowStartupException { get; set; }
+
+        public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
+        {
+            await Task.Delay(100, token).ConfigureAwait(false);
+        }
+
+        public async Task StartAsync(CancellationToken token = new CancellationToken())
+        {
+            await Task.Delay(100, token).ConfigureAwait(false);
+        }
+    }
 }

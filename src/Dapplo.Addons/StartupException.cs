@@ -26,32 +26,44 @@
 #region Usings
 
 using System;
+using System.Runtime.Serialization;
 
 #endregion
 
 namespace Dapplo.Addons
 {
-	/// <summary>
-	///     If this exception is thrown by an startup action, the startup of your application will be terminated.
-	///     A prerequisite is that your class has the StartupActionAttribute where AwaitStart is true (this is default)
-	/// </summary>
-	public class StartupException : Exception
-	{
-		/// <summary>
-		///     Create a StartupException with a message
-		/// </summary>
-		/// <param name="message">string</param>
-		public StartupException(string message) : base(message)
-		{
-		}
+    /// <summary>
+    ///     If this exception is thrown by an startup action, the startup of your application will be terminated.
+    ///     A prerequisite is that your class has the StartupActionAttribute where AwaitStart is true (this is default)
+    /// </summary>
+    [Serializable]
+    public class StartupException : Exception
+    {
+        /// <summary>
+        /// Make serializazion possible
+        /// </summary>
+        /// <param name="info"></param>
+        /// <param name="context"></param>
+        protected StartupException(SerializationInfo info, StreamingContext context) 
+            : base(info, context)
+        {
+        }
 
-		/// <summary>
-		///     Create a StartupException with a message and a cause
-		/// </summary>
-		/// <param name="message">string</param>
-		/// <param name="innerException">Exception which caused the StartupException</param>
-		public StartupException(string message, Exception innerException) : base(message, innerException)
-		{
-		}
-	}
+        /// <summary>
+        ///     Create a StartupException with a message
+        /// </summary>
+        /// <param name="message">string</param>
+        public StartupException(string message) : base(message)
+        {
+        }
+
+        /// <summary>
+        ///     Create a StartupException with a message and a cause
+        /// </summary>
+        /// <param name="message">string</param>
+        /// <param name="innerException">Exception which caused the StartupException</param>
+        public StartupException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+    }
 }

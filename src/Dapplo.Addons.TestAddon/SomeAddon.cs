@@ -37,49 +37,49 @@ using Dapplo.Log;
 
 namespace Dapplo.Addons.TestAddon
 {
-	[StartupAction(AwaitStart = false, StartupOrder = 1)]
-	[ShutdownAction]
-	public class SomeAddon : IAsyncStartupAction, IAsyncShutdownAction
-	{
-		private static readonly LogSource Log = new LogSource();
+    [StartupAction(AwaitStart = false, StartupOrder = 1)]
+    [ShutdownAction("ImproveCoverage")]
+    public class SomeAddon : IAsyncStartupAction, IAsyncShutdownAction
+    {
+        private static readonly LogSource Log = new LogSource();
 
-		[Import]
-		public IThisIsConfiguration MyConfig { get; set; }
+        [Import]
+        public IThisIsConfiguration MyConfig { get; set; }
 
-		[Import]
-		public IThisIsSubConfiguration MysubConfig { get; set; }
+        [Import]
+        public IThisIsSubConfiguration MysubConfig { get; set; }
 
-		[ImportMany]
-		public IEnumerable<IIniSection> MyConfigs { get; set; }
+        [ImportMany]
+        public IEnumerable<IIniSection> MyConfigs { get; set; }
 
-		/// <summary>
-		///     This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
-		/// </summary>
-		[Import(AllowDefault = true)]
-		private bool ThrowStartupException { get; set; }
+        /// <summary>
+        ///     This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
+        /// </summary>
+        [Import(AllowDefault = true)]
+        private bool ThrowStartupException { get; set; }
 
-		public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
-		{
-			await Task.Delay(100, token).ConfigureAwait(false);
-			Log.Debug().WriteLine("ShutdownAsync called!");
-			throw new Exception("This should be logged!");
-		}
+        public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
+        {
+            await Task.Delay(100, token).ConfigureAwait(false);
+            Log.Debug().WriteLine("ShutdownAsync called!");
+            throw new NotSupportedException("This should be logged!");
+        }
 
-		public async Task StartAsync(CancellationToken token = new CancellationToken())
-		{
-			if (ThrowStartupException)
-			{
-				throw new StartupException("I was ordered to!!!");
-			}
-			foreach (var iniSection in MyConfigs)
-			{
-				var name = iniSection.GetSectionName();
-				Log.Debug().WriteLine("Section {0}", name);
-			}
-			Log.Debug().WriteLine("This shoud not give an exception!");
-			await Task.Delay(100, token).ConfigureAwait(false);
-			Log.Debug().WriteLine("StartAsync called!");
-			Log.Debug().WriteLine("Value: {0}", MyConfig.Name);
-		}
-	}
+        public async Task StartAsync(CancellationToken token = new CancellationToken())
+        {
+            if (ThrowStartupException)
+            {
+                throw new StartupException("I was ordered to!!!", new NotSupportedException());
+            }
+            foreach (var iniSection in MyConfigs)
+            {
+                var name = iniSection.GetSectionName();
+                Log.Debug().WriteLine("Section {0}", name);
+            }
+            Log.Debug().WriteLine("This shoud not give an exception!");
+            await Task.Delay(100, token).ConfigureAwait(false);
+            Log.Debug().WriteLine("StartAsync called!");
+            Log.Debug().WriteLine("Value: {0}", MyConfig.Name);
+        }
+    }
 }

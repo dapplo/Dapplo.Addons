@@ -64,6 +64,7 @@
   <ItemGroup>
     <Compile Include="IThisIsSubConfiguration.cs" />
     <Compile Include="IThisIsConfiguration.cs" />
+    <Compile Include="AnotherAddon.cs" />
     <Compile Include="StartupExceptionThrowingAddon.cs" />
     <Compile Include="SomeAddon.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

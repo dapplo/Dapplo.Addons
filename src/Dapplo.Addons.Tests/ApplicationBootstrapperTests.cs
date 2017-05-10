@@ -26,6 +26,7 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -35,147 +36,171 @@ using Dapplo.Log;
 using Dapplo.Log.XUnit;
 using Xunit;
 using Xunit.Abstractions;
+using Dapplo.Addons.TestAddon;
+using Dapplo.Utils;
 
 #endregion
 
 namespace Dapplo.Addons.Tests
 {
-	public class ApplicationBootstrapperTests
-	{
-		public ApplicationBootstrapperTests(ITestOutputHelper testOutputHelper)
-		{
-			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
-		}
+    [Collection("IniConfig")]
+    public sealed class ApplicationBootstrapperTests : IDisposable
+    {
+        private const string ApplicationName = "Dapplo";
+        private readonly IniConfig _iniConfig = new IniConfig(ApplicationName, ApplicationName);
+        public ApplicationBootstrapperTests(ITestOutputHelper testOutputHelper)
+        {
+            LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
+        }
 
-		private const string ApplicationName = "Dapplo";
+        public void Dispose()
+        {
+            _iniConfig.Dispose();
+            IniConfig.Delete(ApplicationName, ApplicationName);
+        }
 
-		/// <summary>
-		///     Allows setting the Entry Assembly when needed.
-		///     Use SetEntryAssembly() only for tests
-		/// </summary>
-		/// <param name="assembly">Assembly to set as entry assembly</param>
-		private static void SetEntryAssembly(Assembly assembly)
-		{
-			if (Assembly.GetEntryAssembly() != null)
-			{
-				return;
-			}
-			var manager = new AppDomainManager();
-			var entryAssemblyfield = manager.GetType().GetField("m_entryAssembly", BindingFlags.Instance | BindingFlags.NonPublic);
-			if (entryAssemblyfield != null)
-			{
-				entryAssemblyfield.SetValue(manager, assembly);
-			}
+        /// <summary>
+        ///     Allows setting the Entry Assembly when needed.
+        ///     Use SetEntryAssembly() only for tests
+        /// </summary>
+        /// <param name="assembly">Assembly to set as entry assembly</param>
+        private static void SetEntryAssembly(Assembly assembly)
+        {
+            if (Assembly.GetEntryAssembly() != null)
+            {
+                return;
+            }
+            var manager = new AppDomainManager();
+            var entryAssemblyfield = manager.GetType().GetField("m_entryAssembly", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (entryAssemblyfield != null)
+            {
+                entryAssemblyfield.SetValue(manager, assembly);
+            }
 
-			var domain = AppDomain.CurrentDomain;
-			var domainManagerField = domain.GetType().GetField("_domainManager", BindingFlags.Instance | BindingFlags.NonPublic);
-			if (domainManagerField != null)
-			{
-				domainManagerField.SetValue(domain, manager);
-			}
-		}
+            var domain = AppDomain.CurrentDomain;
+            var domainManagerField = domain.GetType().GetField("_domainManager", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (domainManagerField != null)
+            {
+                domainManagerField.SetValue(domain, manager);
+            }
+        }
 
-		[Fact]
-		public async Task Test_StartupException()
-		{
-			using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
-			{
-				// Add all file starting with Dapplo and ending on .dll or .dll.gz
-				bootstrapper.FindAndLoadAssemblies("Dapplo*");
-				// Add test project, without having a direct reference
+        [Fact]
+        public async Task Test_StartupException()
+        {
+            bool isDisposed = false;
+            SetEntryAssembly(GetType().Assembly);
+            // Fix startup issues due to unloaded configuration
+            await _iniConfig.LoadIfNeededAsync();
+            _iniConfig.Get<IThisIsConfiguration>();
+            using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
+            {
+                // Add test project, without having a direct reference
 #if DEBUG
-				bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");
+                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");
 #else
-				bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release");
+                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release");
 #endif
-				bootstrapper.FindAndLoadAssembly("Dapplo.Addons.TestAddon");
+                bootstrapper.RegisterForDisposal(SimpleDisposable.Create(() => isDisposed = true));
+                // Add all file starting with Dapplo and ending on .dll or .dll.gz
+                bootstrapper.FindAndLoadAssemblies("Dapplo*");
 
-				// Initialize, so we can export
-				Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");
+                // Initialize, so we can export
+                Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");
 
-				bootstrapper.Export(true);
-				// Start the composition, and IStartupActions
-				await Assert.ThrowsAsync<StartupException>(async () => await bootstrapper.RunAsync().ConfigureAwait(false));
-			}
-			// Dispose automatically calls IShutdownActions
-		}
+                bootstrapper.Export<IServiceProvider>(_iniConfig);
 
-		[Fact]
-		public void TestConstructorAndCleanup()
-		{
-			var bootstrapper = new ApplicationBootstrapper("Test");
-			bootstrapper.Dispose();
-		}
 
-		[Fact]
-		public void TestConstructorWithMutexAndCleanup()
-		{
-			using (var bootstrapper = new ApplicationBootstrapper("Test", Guid.NewGuid().ToString()))
-			{
-				Assert.True(bootstrapper.IsMutexLocked);
-			}
-		}
+                // Only for improved Code coverage
+                bootstrapper.Export(typeof(IniConfig), _iniConfig, new Dictionary<string, object>());
 
-		[Fact]
-		public void TestNewNullApplicationName()
-		{
-			Assert.Throws<ArgumentNullException>(() => new ApplicationBootstrapper(null));
-		}
+                bootstrapper.Export(true);
+                // Start the composition, and IStartupActions
+                await Assert.ThrowsAsync<StartupException>(async () => await bootstrapper.RunAsync().ConfigureAwait(false));
 
-		[Fact]
-		public async Task TestStartupShutdown()
-		{
-			// Especially for testing
-			SetEntryAssembly(GetType().Assembly);
-			using (IApplicationBootstrapper bootstrapper = new ApplicationBootstrapper(ApplicationName))
-			{
-				// Add all file starting with Dapplo and ending on .dll or .dll.gz
-				bootstrapper.FindAndLoadAssemblies("Dapplo*");
+                // Only for improved Code coverage
+                Assert.NotNull(bootstrapper.GetExport<IniConfig, IStartupMetadata>().Value);
 
-				var iniConfig = new IniConfig(ApplicationName, ApplicationName);
-				// Fix startup issues due to unloaded configuration
-				await iniConfig.LoadIfNeededAsync();
-				// Make sure the IniConfig is disposed
-				bootstrapper.RegisterForDisposal(iniConfig);
+            }
+            Assert.True(isDisposed);
+            // Dispose automatically calls IShutdownActions
+        }
 
-				// Add test project, without having a direct reference
+        [Fact]
+        public void TestConstructorAndCleanup()
+        {
+            var bootstrapper = new ApplicationBootstrapper("Test");
+            bootstrapper.Dispose();
+        }
+
+        [Fact]
+        public void TestConstructorWithMutexAndCleanup()
+        {
+            using (var bootstrapper = new ApplicationBootstrapper("Test", Guid.NewGuid().ToString()))
+            {
+                Assert.True(bootstrapper.IsMutexLocked);
+            }
+        }
+
+        [Fact]
+        public void TestNewNullApplicationName()
+        {
+            Assert.Throws<ArgumentNullException>(() => new ApplicationBootstrapper(null));
+        }
+
+        [Fact]
+        public async Task TestStartupShutdown()
+        {
+            // Fix startup issues due to unloaded configuration
+            await _iniConfig.LoadIfNeededAsync();
+            _iniConfig.Get<IThisIsConfiguration>();
+
+            using (IApplicationBootstrapper bootstrapper = new ApplicationBootstrapper(ApplicationName))
+            {
+                // Add all file starting with Dapplo and ending on .dll or .dll.gz
+                bootstrapper.FindAndLoadAssemblies("Dapplo*");
+
+                // Add test project, without having a direct reference
 #if DEBUG
-				bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");
+                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");
 #else
-				bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release");
+                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release");
 #endif
-				bootstrapper.FindAndLoadAssembly("Dapplo.Addons.TestAddon");
+                bootstrapper.FindAndLoadAssembly("Dapplo.Addons.TestAddon");
 
-				// Test if our test addon was loaded
-				Assert.True(bootstrapper.KnownFiles.Any(addon => addon.EndsWith("TestAddon.dll")));
+                // Test if our test addon was loaded
+                Assert.True(bootstrapper.KnownFiles.Any(addon => addon.EndsWith("TestAddon.dll")));
 
-				// Initialize, so we can export
-				Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");
+                // Initialize, so we can export
+                Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");
 
-				bootstrapper.Export<IServiceProvider>(iniConfig);
+                bootstrapper.Export<IServiceProvider>(_iniConfig);
 
-				// test Export, this should work before Run as some of the addons might need some stuff.
+                // test Export, this should work before Run as some of the addons might need some stuff.
 
-				var part = bootstrapper.Export(this);
+                var part = bootstrapper.Export(this);
 
-				// Start the composition, and IStartupActions
-				Assert.True(await bootstrapper.RunAsync().ConfigureAwait(false), "Couldn't run");
+                // Start the composition, and IStartupActions
+                Assert.True(await bootstrapper.RunAsync().ConfigureAwait(false), "Couldn't run");
 
-				// test import
-				Assert.NotNull(bootstrapper.GetExport<ApplicationBootstrapperTests>().Value);
+                // test import
+                Assert.NotNull(bootstrapper.GetExport<ApplicationBootstrapperTests>().Value);
 
-				// test release
-				bootstrapper.Release(part);
-				Assert.False(bootstrapper.GetExports<ApplicationBootstrapperTests>().Any());
+                // test release
+                bootstrapper.Release(part);
+                Assert.False(bootstrapper.GetExports<ApplicationBootstrapperTests>().Any());
 
-				// Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
-				Assert.True(bootstrapper.GetExports<IStartupModule>().Count() == 2);
+                // Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
+                Assert.Equal(3, bootstrapper.GetExports<IStartupModule>().Count());
 
-				// Test localization of a IStartupAction with meta-data, which is exported via [StartupAction(DoNotAwait = true)]
-				var hasAwaitStartFalse = bootstrapper.GetExports<IStartupModule, IStartupMetadata>().Any(x => x.Metadata.AwaitStart == false);
-				Assert.True(hasAwaitStartFalse);
-			}
-			// Dispose automatically calls IShutdownActions
-		}
-	}
+                // Test localization of a IStartupAction with meta-data, which is exported via [StartupAction(DoNotAwait = true)]
+                var hasAwaitStartFalse = bootstrapper.GetExports<IStartupModule, IStartupMetadata>().Any(x => x.Metadata.AwaitStart == false);
+                Assert.True(hasAwaitStartFalse);
+
+                Assert.True(bootstrapper.GetExports(typeof(IStartupModule)).Any());
+
+            }
+            // Dispose automatically calls IShutdownActions
+        }
+    }
 }

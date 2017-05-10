@@ -45,8 +45,7 @@ using Xunit;
 [assembly: AssemblyCulture("")]
 
 // Disable parallel xunit testing
-
-[assembly: CollectionBehavior(DisableTestParallelization = true, MaxParallelThreads = 1)]
+[assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
