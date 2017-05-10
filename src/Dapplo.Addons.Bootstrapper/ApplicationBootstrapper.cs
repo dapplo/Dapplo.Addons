@@ -94,14 +94,14 @@ namespace Dapplo.Addons.Bootstrapper
         /// <summary>
         ///     Override the run to prevent starting when the mutex isn't locked
         /// </summary>
-        public override async Task<bool> RunAsync(CancellationToken cancellationToken = new CancellationToken())
+        public override Task<bool> RunAsync(CancellationToken cancellationToken = new CancellationToken())
         {
             if (_resourceMutex == null || _resourceMutex.IsLocked)
             {
-                return await base.RunAsync(cancellationToken);
+                return base.RunAsync(cancellationToken);
             }
             Log.Error().WriteLine("Can't Run {0} due to missing mutex lock", ApplicationName);
-            return false;
+            return Task.FromResult(false);
         }
 
         #region IDisposable Support
