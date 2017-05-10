@@ -1,7 +1,7 @@
-﻿#region Dapplo 2016 - GNU Lesser General Public License
+﻿#region Dapplo 2016-2017 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016 Dapplo
+// Copyright (C) 2016-2017 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -147,7 +147,7 @@ namespace Dapplo.Addons.Tests
 				bootstrapper.FindAndLoadAssembly("Dapplo.Addons.TestAddon");
 
 				// Test if our test addon was loaded
-				Assert.True(bootstrapper.KnownFiles.Count(addon => addon.EndsWith("TestAddon.dll")) > 0);
+				Assert.True(bootstrapper.KnownFiles.Any(addon => addon.EndsWith("TestAddon.dll")));
 
 				// Initialize, so we can export
 				Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");

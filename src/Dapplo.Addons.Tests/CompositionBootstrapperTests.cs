@@ -1,7 +1,7 @@
-﻿#region Dapplo 2016 - GNU Lesser General Public License
+﻿#region Dapplo 2016-2017 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016 Dapplo
+// Copyright (C) 2016-2017 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -58,7 +58,7 @@ namespace Dapplo.Addons.Tests
 			await compositionBootstrapper.InitializeAsync().ConfigureAwait(false);
 			Assert.Throws<ArgumentNullException>(() => compositionBootstrapper.Export<string>(null));
 			Assert.Throws<ArgumentNullException>(() => compositionBootstrapper.Release(null));
-			Assert.Throws<ArgumentNullException>(() => compositionBootstrapper.FillImports(null));
+			Assert.Throws<ArgumentNullException>(() => compositionBootstrapper.ProvideDependencies(null));
 			compositionBootstrapper.Dispose();
 		}
 
@@ -75,7 +75,7 @@ namespace Dapplo.Addons.Tests
 			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExports<string>());
 			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.GetExports<string, IStartupMetadata>());
 			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.Release(null));
-			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.FillImports(null));
+			Assert.Throws<InvalidOperationException>(() => compositionBootstrapper.ProvideDependencies(null));
 			compositionBootstrapper.Dispose();
 		}
 

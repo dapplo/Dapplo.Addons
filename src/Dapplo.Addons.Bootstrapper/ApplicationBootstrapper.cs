@@ -1,7 +1,7 @@
-﻿#region Dapplo 2016 - GNU Lesser General Public License
+﻿#region Dapplo 2016-2017 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016 Dapplo
+// Copyright (C) 2016-2017 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -34,102 +34,102 @@ using Dapplo.Log;
 
 namespace Dapplo.Addons.Bootstrapper
 {
-	/// <summary>
-	///     This bootstrapper is made especially to host dapplo "apps".
-	///     It initializes the IniConfig and LanguageLoader, and makes Importing possible.
-	///     You can protect your application from starting multiple instances by specifying a Mutex-ID
-	/// </summary>
-	public class ApplicationBootstrapper : StartupShutdownBootstrapper, IApplicationBootstrapper
-	{
-		private static readonly LogSource Log = new LogSource();
-		private readonly ResourceMutex _resourceMutex;
+    /// <summary>
+    ///     This bootstrapper is made especially to host dapplo "apps".
+    ///     It initializes the IniConfig and LanguageLoader, and makes Importing possible.
+    ///     You can protect your application from starting multiple instances by specifying a Mutex-ID
+    /// </summary>
+    public class ApplicationBootstrapper : StartupShutdownBootstrapper, IApplicationBootstrapper
+    {
+        private static readonly LogSource Log = new LogSource();
+        private readonly ResourceMutex _resourceMutex;
 
-		/// <summary>
-		/// Returns the application name for this bootstrapper
-		/// </summary>
-		public string ApplicationName { get; }
+        /// <summary>
+        /// Returns the application name for this bootstrapper
+        /// </summary>
+        public string ApplicationName { get; }
 
-		/// <summary>
-		///     Create the application bootstrapper, for the specified application name
-		///     The mutex is created and locked in the contructor, and some of your application logic might depend on this.
-		/// </summary>
-		/// <param name="applicationName">Name of your application</param>
-		/// <param name="mutexId">
-		///     string with an ID for your mutex, preferably a Guid. If the mutex can't be locked, the
-		///     bootstapper will not  be able to "bootstrap".
-		/// </param>
-		/// <param name="global">Is the mutex a global or local block (false means only in this Windows session)</param>
-		public ApplicationBootstrapper(string applicationName, string mutexId = null, bool global = false)
-		{
-			if (applicationName == null)
-			{
-				throw new ArgumentNullException(nameof(applicationName));
-			}
-			ApplicationName = applicationName;
-			if (mutexId != null)
-			{
-				_resourceMutex = ResourceMutex.Create(mutexId, applicationName, global);
-			}
-		}
+        /// <summary>
+        ///     Create the application bootstrapper, for the specified application name
+        ///     The mutex is created and locked in the contructor, and some of your application logic might depend on this.
+        /// </summary>
+        /// <param name="applicationName">Name of your application</param>
+        /// <param name="mutexId">
+        ///     string with an ID for your mutex, preferably a Guid. If the mutex can't be locked, the
+        ///     bootstapper will not  be able to "bootstrap".
+        /// </param>
+        /// <param name="global">Is the mutex a global or local block (false means only in this Windows session)</param>
+        public ApplicationBootstrapper(string applicationName, string mutexId = null, bool global = false)
+        {
+            if (applicationName == null)
+            {
+                throw new ArgumentNullException(nameof(applicationName));
+            }
+            ApplicationName = applicationName;
+            if (mutexId != null)
+            {
+                _resourceMutex = ResourceMutex.Create(mutexId, applicationName, global);
+            }
+        }
 
-		/// <summary>
-		///     Returns if the Mutex is locked, in other words if this ApplicationBootstrapper can continue
-		///     This also returns true if no mutex is used
-		/// </summary>
-		public bool IsMutexLocked => _resourceMutex == null || _resourceMutex.IsLocked;
+        /// <summary>
+        ///     Returns if the Mutex is locked, in other words if this ApplicationBootstrapper can continue
+        ///     This also returns true if no mutex is used
+        /// </summary>
+        public bool IsMutexLocked => _resourceMutex == null || _resourceMutex.IsLocked;
 
 
-		/// <summary>
-		///     Initialize the application bootstrapper, this makes sure the configuration and languages can be loaded
-		/// </summary>
-		/// <returns>bool with value of IsInitialized</returns>
-		public override async Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
-		{
-			Log.Verbose().WriteLine("Trying to initialize application {0}", ApplicationName);
-			await base.InitializeAsync(cancellationToken).ConfigureAwait(false);
-			// Export this bootstrapper as IApplicationBootstrapper
-			Export<IApplicationBootstrapper>(this); return IsInitialized;
-		}
+        /// <summary>
+        ///     Initialize the application bootstrapper, this makes sure the configuration and languages can be loaded
+        /// </summary>
+        /// <returns>bool with value of IsInitialized</returns>
+        public override async Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            Log.Verbose().WriteLine("Trying to initialize application {0}", ApplicationName);
+            await base.InitializeAsync(cancellationToken).ConfigureAwait(false);
+            // Export this bootstrapper as IApplicationBootstrapper
+            Export<IApplicationBootstrapper>(this); return IsInitialized;
+        }
 
-		/// <summary>
-		///     Override the run to prevent starting when the mutex isn't locked
-		/// </summary>
-		public override async Task<bool> RunAsync(CancellationToken cancellationToken = new CancellationToken())
-		{
-			if (_resourceMutex == null || _resourceMutex.IsLocked)
-			{
-				return await base.RunAsync(cancellationToken);
-			}
-			Log.Error().WriteLine("Can't Run {0} due to missing mutex lock", ApplicationName);
-			return false;
-		}
+        /// <summary>
+        ///     Override the run to prevent starting when the mutex isn't locked
+        /// </summary>
+        public override async Task<bool> RunAsync(CancellationToken cancellationToken = new CancellationToken())
+        {
+            if (_resourceMutex == null || _resourceMutex.IsLocked)
+            {
+                return await base.RunAsync(cancellationToken);
+            }
+            Log.Error().WriteLine("Can't Run {0} due to missing mutex lock", ApplicationName);
+            return false;
+        }
 
-		#region IDisposable Support
+        #region IDisposable Support
 
-		// To detect redundant calls
-		private readonly bool _disposedValue = false;
+        // To detect redundant calls
+        private bool _disposedValue;
 
-		/// <summary>
-		///     Implementation of the dispose pattern
-		/// </summary>
-		/// <param name="disposing">bool</param>
-		protected override void Dispose(bool disposing)
-		{
-			// Call other stuff first, the mutex should protect untill everything is shutdown
-			base.Dispose(disposing);
+        /// <summary>
+        ///     Implementation of the dispose pattern
+        /// </summary>
+        /// <param name="disposing">bool</param>
+        protected override void Dispose(bool disposing)
+        {
+            // Call other stuff first, the mutex should protect untill everything is shutdown
+            base.Dispose(disposing);
 
-			// Handle our own stuff, currently only the mutex (if any)
-			if (!_disposedValue)
-			{
-				if (disposing)
-				{
-					// dispose managed state (managed objects) here.
-				}
-
-				_resourceMutex?.Dispose();
-			}
-		}
-
-		#endregion
-	}
+            // Handle our own stuff, currently only the mutex (if any)
+            if (_disposedValue)
+            {
+                return;
+            }
+            if (disposing)
+            {
+                // dispose managed state (managed objects) here.
+            }
+            _disposedValue = true;
+            _resourceMutex?.Dispose();
+        }
+        #endregion
+    }
 }

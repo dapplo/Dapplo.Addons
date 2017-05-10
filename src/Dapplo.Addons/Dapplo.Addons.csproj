@@ -35,8 +35,12 @@
     <DocumentationFile>bin\Release\Dapplo.Addons.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Dapplo.Log, Version=1.0.23.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Log.1.0.23\lib\net45\Dapplo.Log.dll</HintPath>
+    <Reference Include="Dapplo.Log, Version=1.0.29.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapplo.Log.1.0.29\lib\net45\Dapplo.Log.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Practices.ServiceLocation, Version=1.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\CommonServiceLocator.1.3\lib\portable-net4+sl5+netcore45+wpa81+wp8\Microsoft.Practices.ServiceLocation.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.VisualBasic" />
@@ -50,11 +54,12 @@
   <ItemGroup>
     <Compile Include="IAction.cs" />
     <Compile Include="IApplicationBootstrapper.cs" />
+    <Compile Include="IDependencyProvider.cs" />
     <Compile Include="IServiceExporter.cs" />
     <Compile Include="IServiceRepository.cs" />
     <Compile Include="IModule.cs" />
     <Compile Include="IBootstrapper.cs" />
-    <Compile Include="IServiceLocator.cs" />
+    <Compile Include="IMefServiceLocator.cs" />
     <Compile Include="IAsyncShutdownAction.cs" />
     <Compile Include="IStartupModule.cs" />
     <Compile Include="IShutdownModule.cs" />

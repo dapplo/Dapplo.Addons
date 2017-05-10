@@ -1,7 +1,7 @@
-﻿#region Dapplo 2016 - GNU Lesser General Public License
+﻿#region Dapplo 2016-2017 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016 Dapplo
+// Copyright (C) 2016-2017 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -28,6 +28,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Practices.ServiceLocation;
 
 #endregion
 
@@ -36,7 +37,7 @@ namespace Dapplo.Addons
 	/// <summary>
 	///     This is the interface for all bootstrappers
 	/// </summary>
-	public interface IBootstrapper : IServiceLocator, IServiceExporter, IServiceRepository, IDisposable
+	public interface IBootstrapper : IServiceLocator, IMefServiceLocator, IServiceExporter, IServiceRepository, IDisposable
 	{
 		/// <summary>
 		/// Register a disposable, to dispose when the IBootstrapper is disposed

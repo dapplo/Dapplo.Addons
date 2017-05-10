@@ -1,7 +1,7 @@
-﻿#region Dapplo 2016 - GNU Lesser General Public License
+﻿#region Dapplo 2016-2017 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016 Dapplo
+// Copyright (C) 2016-2017 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -70,7 +70,7 @@ namespace Dapplo.Addons.Bootstrapper
 			Log.Debug().WriteLine("Starting");
 			var result = await base.RunAsync(cancellationToken).ConfigureAwait(false);
 
-			FillImports(this);
+			ProvideDependencies(this);
 			if (AutoStartup)
 			{
 				await StartupAsync(cancellationToken).ConfigureAwait(false);
@@ -177,6 +177,7 @@ namespace Dapplo.Addons.Bootstrapper
 				Log.Debug().WriteLine("No startup actions set...");
 				return;
 			}
+
 			var orderedStartupModules = from export in _startupModules orderby export.Metadata.StartupOrder ascending select export;
 
 			var tasks = new List<KeyValuePair<Type, Task>>();
