@@ -674,6 +674,8 @@ namespace Dapplo.Addons.Bootstrapper
             Export<IServiceRepository>(this);
             // Export this bootstrapper as System.IServiceProvider
             Export<IServiceProvider>(this);
+            // Export this bootstrapper as IMefServiceLocator
+            Export<IMefServiceLocator>(this);
             // Export this bootstrapper as IDependencyProvider
             Export<IDependencyProvider>(this);
             // Export this bootstrapper as IBootstrapper
