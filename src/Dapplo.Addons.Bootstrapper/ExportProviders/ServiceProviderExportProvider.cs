@@ -34,8 +34,8 @@ using System.ComponentModel.Composition.Primitives;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Log;
-using Dapplo.Utils.Resolving;
 
 #endregion
 

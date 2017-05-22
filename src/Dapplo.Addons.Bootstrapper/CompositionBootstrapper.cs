@@ -36,10 +36,9 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper.ExportProviders;
+using Dapplo.Addons.Bootstrapper.Internal;
+using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Log;
-using Dapplo.Utils;
-using Dapplo.Utils.Embedded;
-using Dapplo.Utils.Resolving;
 using Microsoft.Practices.ServiceLocation;
 
 #endregion
@@ -306,19 +305,28 @@ namespace Dapplo.Addons.Bootstrapper
                     Log.Error().WriteLine("Problem loading assembly from {0}", file);
                 }
             }
-            if (loadEmbedded)
+            var costuraHelper = new CosturaHelper();
+            if (costuraHelper.IsCosturaActive)
             {
-                foreach (var resourceTuple in AssemblyResolver.AssemblyCache.FindEmbeddedResources(pattern))
+                foreach (var assembly in costuraHelper.LoadCosturaEmbeddedAssemblies(pattern))
                 {
-                    try
-                    {
-                        var assembly = resourceTuple.Item1.LoadEmbeddedAssembly(resourceTuple.Item2);
-                        Add(assembly);
-                    }
-                    catch
-                    {
-                        Log.Error().WriteLine("Problem loading assembly from embedded resource {0} in assembly {1}", resourceTuple.Item2, resourceTuple.Item1.GetName().Name);
-                    }
+                    Add(assembly);
+                }
+            }
+            if (!loadEmbedded)
+            {
+                return;
+            }
+            foreach (var resourceTuple in AssemblyResolver.AssemblyCache.FindEmbeddedResources(pattern))
+            {
+                try
+                {
+                    var assembly = resourceTuple.Item1.LoadEmbeddedAssembly(resourceTuple.Item2);
+                    Add(assembly);
+                }
+                catch
+                {
+                    Log.Error().WriteLine("Problem loading assembly from embedded resource {0} in assembly {1}", resourceTuple.Item2, resourceTuple.Item1.GetName().Name);
                 }
             }
         }

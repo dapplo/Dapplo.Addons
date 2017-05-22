@@ -64,8 +64,10 @@
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="WindowsBase" />
     <Reference Include="xunit.abstractions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
       <HintPath>..\packages\xunit.abstractions.2.0.1\lib\net35\xunit.abstractions.dll</HintPath>
       <Private>True</Private>
@@ -84,13 +86,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyResolveTests.cs" />
     <Compile Include="CompositionBootstrapperTests.cs" />
     <Compile Include="ApplicationBootstrapperTests.cs" />
+    <Compile Include="EmbeddedResourcesTests.cs" />
     <Compile Include="Entities\DependencyTaker.cs" />
     <Compile Include="Entities\TestAsyncStartupAction.cs" />
+    <Compile Include="FileLocationsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceMutexTests.cs" />
     <Compile Include="StartupTests.cs" />
+    <Compile Include="Utils\AssemblyUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapplo.Addons.Bootstrapper\Dapplo.Addons.Bootstrapper.csproj">
@@ -101,6 +107,10 @@
       <Project>{450BA0DC-F37C-45F5-B250-0B20F4B1D594}</Project>
       <Name>Dapplo.Addons.TestAddon</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Dapplo.Addons.Tests.TestAssembly\Dapplo.Addons.Tests.TestAssembly.csproj">
+      <Project>{1d0dd792-a80d-4d12-9bc5-b7f7d6ad1b5f}</Project>
+      <Name>Dapplo.Addons.Tests.TestAssembly</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dapplo.Addons\Dapplo.Addons.csproj">
       <Project>{66106beb-d338-4887-af47-125abb31555f}</Project>
       <Name>Dapplo.Addons</Name>
@@ -108,9 +118,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <EmbeddedResource Include="TestFiles\embedded-dapplo.png.gz" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TestFiles\dapplo.png" />
+    <EmbeddedResource Include="TestFiles\embedded-dapplo.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
