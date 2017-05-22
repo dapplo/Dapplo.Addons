@@ -92,11 +92,7 @@ namespace Dapplo.Addons.Bootstrapper
 
         #region IServiceProvider
 
-        /// <summary>
-        ///     Implement IServiceProdiver
-        /// </summary>
-        /// <param name="serviceType">Type</param>
-        /// <returns>Instance of the serviceType</returns>
+        /// <inheritdoc />
         public object GetService(Type serviceType)
         {
             if (!IsInitialized)
@@ -108,9 +104,7 @@ namespace Dapplo.Addons.Bootstrapper
 
         #endregion
 
-        /// <summary>
-        ///     Configure the AggregateCatalog, by adding the default assemblies
-        /// </summary>
+        /// <inheritdoc />
         protected virtual void Configure()
         {
             if (IsAggregateCatalogConfigured)
@@ -145,32 +139,30 @@ namespace Dapplo.Addons.Bootstrapper
 
         #region IServiceRepository
 
-        /// <summary>
-        ///     List of all known assemblies.
-        ///     This might be needed in e.g. a Caliburn Micro bootstrapper, so it can locate a view for a view model.
-        /// </summary>
+        /// <inheritdoc />
         public ISet<string> KnownAssemblies { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>
-        ///     Get a list of all known file locations.
-        ///     This is internally needed to resolved dependencies.
-        /// </summary>
+        /// <inheritdoc />
+
         public IList<string> KnownFiles { get; } = new List<string>();
 
-        /// <summary>
-        ///     Add the specified directory to have the bootstrapper look for assemblies
-        /// </summary>
-        /// <param name="directory">string with the directory</param>
+        /// <inheritdoc />
+
         public void AddScanDirectory(string directory)
         {
             AssemblyResolver.AddDirectory(directory);
         }
 
-        /// <summary>
-        ///     Add an assembly to the AggregateCatalog.Catalogs
-        ///     In english: make the items in the assembly discoverable
-        /// </summary>
-        /// <param name="assembly">Assembly to add</param>
+        /// <inheritdoc />
+        public void AddScanDirectories(IEnumerable<string> directories)
+        {
+            foreach (var directory in directories)
+            {
+                AssemblyResolver.AddDirectory(directory);
+            }
+        }
+
+        /// <inheritdoc />
         public void Add(Assembly assembly)
         {
             if (assembly == null)
@@ -187,11 +179,7 @@ namespace Dapplo.Addons.Bootstrapper
             Add(assemblyCatalog);
         }
 
-        /// <summary>
-        ///     Add an AssemblyCatalog AggregateCatalog.Catalogs
-        ///     But only if the AssemblyCatalog has parts
-        /// </summary>
-        /// <param name="assemblyCatalog">AssemblyCatalog to add</param>
+        /// <inheritdoc />
         public void Add(AssemblyCatalog assemblyCatalog)
         {
             if (assemblyCatalog == null)
@@ -234,12 +222,7 @@ namespace Dapplo.Addons.Bootstrapper
             }
         }
 
-        /// <summary>
-        ///     Find the the assembly with the specified name, and load it.
-        ///     The assembly will be searched in the directories added by AddScanDirectory, and also in the embedded resources.
-        /// </summary>
-        /// <param name="assemblyName">string with the assembly name</param>
-        /// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
+        /// <inheritdoc />
         public void FindAndLoadAssembly(string assemblyName, IEnumerable<string> extensions = null)
         {
             if (string.IsNullOrEmpty(assemblyName))
@@ -265,13 +248,7 @@ namespace Dapplo.Addons.Bootstrapper
             }
         }
 
-        /// <summary>
-        ///     Find the assemblies (with parts) found in default directories, or manifest resources, matching the specified
-        ///     filepattern.
-        /// </summary>
-        /// <param name="pattern">File-Pattern to use for the scan, default all dlls will be found</param>
-        /// <param name="loadEmbedded">bool specifying if embedded resources should be used. default is true</param>
-        /// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
+        /// <inheritdoc />
         public void FindAndLoadAssemblies(string pattern = "*", bool loadEmbedded = true, IEnumerable<string> extensions = null)
         {
             if (string.IsNullOrEmpty(pattern))
@@ -282,14 +259,7 @@ namespace Dapplo.Addons.Bootstrapper
             FindAndLoadAssemblies(AssemblyResolver.Directories, regex, loadEmbedded);
         }
 
-        /// <summary>
-        ///     Find the assemblies (with parts) found in the specified directory, or manifest resources, matching the specified
-        ///     filepattern.
-        /// </summary>
-        /// <param name="directory">Directory to scan</param>
-        /// <param name="pattern">File-Pattern to use for the scan, default all dlls will be found</param>
-        /// <param name="loadEmbedded">bool specifying if embedded resources should be used. default is true</param>
-        /// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
+        /// <inheritdoc />
         public void FindAndLoadAssembliesFromDirectory(string directory, string pattern = "*", bool loadEmbedded = true, IEnumerable<string> extensions = null)
         {
             if (string.IsNullOrEmpty(pattern))
@@ -300,13 +270,7 @@ namespace Dapplo.Addons.Bootstrapper
             FindAndLoadAssembliesFromDirectory(directory, regex, loadEmbedded);
         }
 
-        /// <summary>
-        ///     Find the assemblies (with parts) found in the specified directory, or manifest resources, matching the specified
-        ///     regex.
-        /// </summary>
-        /// <param name="directory">Directory to scan</param>
-        /// <param name="pattern">Regex to use for the scan, when null all dlls will be found</param>
-        /// <param name="loadEmbedded">bool specifying if embedded resources should be used. default is true</param>
+        /// <inheritdoc />
         public void FindAndLoadAssembliesFromDirectory(string directory, Regex pattern = null, bool loadEmbedded = true)
         {
             if (directory == null)
@@ -319,13 +283,7 @@ namespace Dapplo.Addons.Bootstrapper
             FindAndLoadAssemblies(directoriesToScan, pattern, loadEmbedded);
         }
 
-        /// <summary>
-        ///     Find the assemblies (with parts) found in the specified directories, or manifest resources, matching the specified
-        ///     regex.
-        /// </summary>
-        /// <param name="directories">Directory to scan</param>
-        /// <param name="pattern">Regex to use for the scan, when null all files ending on .dll (and .dll.gz) will be loaded</param>
-        /// <param name="loadEmbedded">bool specifying if embedded resources should be used. default is true</param>
+        /// <inheritdoc />
         public void FindAndLoadAssemblies(IEnumerable<string> directories, Regex pattern, bool loadEmbedded = true)
         {
             if (directories == null)
@@ -365,10 +323,7 @@ namespace Dapplo.Addons.Bootstrapper
             }
         }
 
-        /// <summary>
-        ///     Add the assembly for the specified type
-        /// </summary>
-        /// <param name="type">The assembly for the type is retrieved add added via the Add(Assembly) method</param>
+        /// <inheritdoc />
         public void Add(Type type)
         {
             if (type == null)
@@ -379,10 +334,7 @@ namespace Dapplo.Addons.Bootstrapper
             Add(typeAssembly);
         }
 
-        /// <summary>
-        ///     Add the ExportProvider to the export providers which are used in the CompositionContainer
-        /// </summary>
-        /// <param name="exportProvider">ExportProvider</param>
+        /// <inheritdoc />
         public void Add(ExportProvider exportProvider)
         {
             if (IsInitialized)
