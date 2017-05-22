@@ -30,6 +30,7 @@ using System.ComponentModel.Composition.Hosting;
 using System.Reflection;
 using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper;
+using Dapplo.Addons.Tests.Entities;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
 using Xunit;
@@ -104,6 +105,26 @@ namespace Dapplo.Addons.Tests
                 compositionBootstrapper.Export("World");
                 // Make sure it's there
                 Assert.Equal("World", compositionBootstrapper.GetExport(typeof(string)));
+            }
+        }
+
+        [Fact]
+        public async Task TestDependencyProvider()
+        {
+            using (var compositionBootstrapper = new CompositionBootstrapper())
+            {
+                await compositionBootstrapper.InitializeAsync().ConfigureAwait(false);
+
+                // Create a string export with "Hello"
+                compositionBootstrapper.Export("Hello");
+
+                var dependencyProvider = compositionBootstrapper.GetExport<IDependencyProvider>().Value;
+
+
+                var dependencyTaker = new DependencyTaker();
+                dependencyProvider.ProvideDependencies(dependencyTaker);
+                // Make sure it's there
+                Assert.Equal("Hello", dependencyTaker.Take);
             }
         }
     }

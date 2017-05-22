@@ -34,36 +34,36 @@ using Microsoft.Practices.ServiceLocation;
 
 namespace Dapplo.Addons
 {
-	/// <summary>
-	///     This is the interface for all bootstrappers
-	/// </summary>
-	public interface IBootstrapper : IServiceLocator, IMefServiceLocator, IServiceExporter, IServiceRepository, IDisposable
-	{
-		/// <summary>
-		/// Register a disposable, to dispose when the IBootstrapper is disposed
-		/// </summary>
-		/// <param name="disposable">IDisposable to dispose together with the bootstapper</param>
-		void RegisterForDisposal(IDisposable disposable);
+    /// <summary>
+    ///     This is the interface for all bootstrappers
+    /// </summary>
+    public interface IBootstrapper : IServiceLocator, IMefServiceLocator, IServiceExporter, IServiceRepository, IDependencyProvider, IDisposable
+    {
+        /// <summary>
+        /// Register a disposable, to dispose when the IBootstrapper is disposed
+        /// </summary>
+        /// <param name="disposable">IDisposable to dispose together with the bootstapper</param>
+        void RegisterForDisposal(IDisposable disposable);
 
-		/// <summary>
-		///     Is this IBootstrapper initialized?
-		/// </summary>
-		bool IsInitialized { get; }
+        /// <summary>
+        ///     Is this IBootstrapper initialized?
+        /// </summary>
+        bool IsInitialized { get; }
 
-		/// <summary>
-		///     Initialize the bootstrapper
-		/// </summary>
-		Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken));
+        /// <summary>
+        ///     Initialize the bootstrapper
+        /// </summary>
+        Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken));
 
-		/// <summary>
-		///     Start the bootstrapper, initialize is automatically called when needed
-		/// </summary>
-		Task<bool> RunAsync(CancellationToken cancellationToken = default(CancellationToken));
+        /// <summary>
+        ///     Start the bootstrapper, initialize is automatically called when needed
+        /// </summary>
+        Task<bool> RunAsync(CancellationToken cancellationToken = default(CancellationToken));
 
-		/// <summary>
-		///     Stop the bootstrapper, this cleans up resources and makes it possible to hook into it.
-		///     Is also called when being disposed, but as Dispose in not Async this could cause some issues.
-		/// </summary>
-		Task<bool> StopAsync(CancellationToken cancellationToken = default(CancellationToken));
-	}
+        /// <summary>
+        ///     Stop the bootstrapper, this cleans up resources and makes it possible to hook into it.
+        ///     Is also called when being disposed, but as Dispose in not Async this could cause some issues.
+        /// </summary>
+        Task<bool> StopAsync(CancellationToken cancellationToken = default(CancellationToken));
+    }
 }
