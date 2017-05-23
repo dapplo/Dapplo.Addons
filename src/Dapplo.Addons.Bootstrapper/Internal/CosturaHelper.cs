@@ -38,13 +38,18 @@ namespace Dapplo.Addons.Bootstrapper.Internal
     internal class CosturaHelper
     {
         private static readonly LogSource Log = new LogSource();
+        private const string CosturaPrefix = "costura.";
+        private const string AssemblyLoaderTypeName = "Costura.AssemblyLoader";
         private readonly MethodInfo _readFromEmbeddedResourcesMethodInfo;
         private readonly IDictionary<string, string> _assembliesAsResources;
         private readonly IDictionary<string, string> _symbolsAsResources;
 
+        /// <summary>
+        /// Construct a CosturaHelper
+        /// </summary>
         public CosturaHelper()
         {
-            var assemblyLoaderType = Type.GetType("Costura.AssemblyLoader");
+            var assemblyLoaderType = Assembly.GetEntryAssembly()?.GetType(AssemblyLoaderTypeName);
             var assembliesAsResourcesFieldInfo = assemblyLoaderType?.GetField("assemblyNames", BindingFlags.Static | BindingFlags.NonPublic);
             if (assembliesAsResourcesFieldInfo == null)
             {
@@ -59,23 +64,24 @@ namespace Dapplo.Addons.Bootstrapper.Internal
             _readFromEmbeddedResourcesMethodInfo = assemblyLoaderType.GetMethod("ReadFromEmbeddedResources", BindingFlags.Static | BindingFlags.NonPublic);
             if (_readFromEmbeddedResourcesMethodInfo != null && _symbolsAsResources != null)
             {
-                IsCosturaActive = true;
+                IsActive = true;
             }
         }
 
         /// <summary>
         /// Tells if Costura is active
         /// </summary>
-        public bool IsCosturaActive { get;  }
+        public bool IsActive { get;  }
 
         /// <summary>
-        /// Load all the, by costura, embedded assemblies
+        /// Load the, by costura, embedded assemblies which match the pattern
         /// </summary>
         /// <param name="pattern">Regex to match the embedded assemblies against</param>
         /// <returns>IEnumerable with assemblies</returns>
-        public IEnumerable<Assembly> LoadCosturaEmbeddedAssemblies(Regex pattern)
+        public IEnumerable<Assembly> LoadEmbeddedAssemblies(Regex pattern)
         {
-            return _assembliesAsResources.Where(pair => pattern.IsMatch(pair.Key)).Select(assemblyKeyValuePair =>
+            // Skip the prefix in the pattern matching
+            return _assembliesAsResources.Where(pair => pattern.IsMatch(pair.Value.Substring(CosturaPrefix.Length))).Select(assemblyKeyValuePair =>
             {
                 var loadedAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly => assembly.FullName.ToLowerInvariant().Contains($"{assemblyKeyValuePair.Key},"));
                 if (loadedAssembly != null)

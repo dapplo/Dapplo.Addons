@@ -54,6 +54,7 @@ namespace Dapplo.Addons.Bootstrapper
         private const string NotInitialized = "Bootstrapper is not initialized";
         private static readonly LogSource Log = new LogSource();
         private readonly IList<IDisposable> _disposables = new List<IDisposable>();
+        private static readonly CosturaHelper Costura = new CosturaHelper();
 
         /// <summary>
         ///     The AggregateCatalog contains all the catalogs with the assemblies in it.
@@ -305,11 +306,11 @@ namespace Dapplo.Addons.Bootstrapper
                     Log.Error().WriteLine("Problem loading assembly from {0}", file);
                 }
             }
-            var costuraHelper = new CosturaHelper();
-            if (costuraHelper.IsCosturaActive)
+            if (Costura.IsActive)
             {
-                foreach (var assembly in costuraHelper.LoadCosturaEmbeddedAssemblies(pattern))
+                foreach (var assembly in Costura.LoadEmbeddedAssemblies(pattern))
                 {
+                    assembly?.Register();
                     Add(assembly);
                 }
             }

@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplicationBootstrapper.cs" />
+    <Compile Include="Internal\CompressionTypes.cs" />
     <Compile Include="Internal\CosturaHelper.cs" />
     <Compile Include="Internal\SimpleDisposable.cs" />
     <Compile Include="Internal\StreamExtensions.cs" />
