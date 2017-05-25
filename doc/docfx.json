@@ -11,6 +11,8 @@
 			"**/bin/**",
 			"**/obj/**",
 			"**Tests/*.csproj",
+			"**NuGet/*.csproj",
+			"**TestAddon/*.csproj",
 			"**Example/*.csproj",
 			"**Demo**/*.csproj",
           ]
