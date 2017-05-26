@@ -1,6 +1,6 @@
 - name: Introduction
   href: intro.md
-- name: Conding standards
+- name: Coding standards
   href: csharp_coding_standards.md
 - name: Composition
   href: composition.md

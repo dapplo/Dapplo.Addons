@@ -162,6 +162,31 @@ namespace Dapplo.Addons.Bootstrapper
             }
         }
 
+        /// <summary>
+        /// Helper method to test if we already know an assembly
+        /// </summary>
+        /// <param name="assembly">Assembly to test for</param>
+        /// <returns>true if it's know, false if not</returns>
+        private bool HasAssembly(Assembly assembly)
+        {
+            var name = assembly.GetName().Name;
+            var found = KnownAssemblies.Contains(name);
+            if (found)
+            {
+                Log.Verbose().WriteLine("Skipping assembly {0}, as we already know of it.", name);
+            }
+            return found;
+        }
+
+        /// <summary>
+        /// Helper method to add a known assembly to the KnownAssemblies
+        /// </summary>
+        /// <param name="assembly">Assembly</param>
+        private void AddKnownAssembly(Assembly assembly)
+        {
+            KnownAssemblies.Add(assembly.GetName().Name);
+        }
+
         /// <inheritdoc />
         public void Add(Assembly assembly)
         {
@@ -170,9 +195,8 @@ namespace Dapplo.Addons.Bootstrapper
                 throw new ArgumentNullException(nameof(assembly));
             }
 
-            if (KnownAssemblies.Contains(assembly.FullName))
+            if (HasAssembly(assembly))
             {
-                Log.Verbose().WriteLine("Skipping assembly {0}, we already added it", assembly.FullName);
                 return;
             }
             var assemblyCatalog = new AssemblyCatalog(assembly);
@@ -186,9 +210,9 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 throw new ArgumentNullException(nameof(assemblyCatalog));
             }
-            if (KnownAssemblies.Contains(assemblyCatalog.Assembly.FullName))
+
+            if (HasAssembly(assemblyCatalog.Assembly))
             {
-                Log.Verbose().WriteLine("Skipping assembly {0}, we already added it", assemblyCatalog.Assembly.FullName);
                 return;
             }
             try
@@ -204,7 +228,7 @@ namespace Dapplo.Addons.Bootstrapper
                     }
                 }
                 // Always add the assembly, even if there are no parts, so we can resolve certain "non" parts in ExportProviders.
-                KnownAssemblies.Add(assemblyCatalog.Assembly.FullName);
+                AddKnownAssembly(assemblyCatalog.Assembly);
             }
             catch (ReflectionTypeLoadException rtlEx)
             {

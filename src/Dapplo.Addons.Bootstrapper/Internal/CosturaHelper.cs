@@ -83,10 +83,10 @@ namespace Dapplo.Addons.Bootstrapper.Internal
             // Skip the prefix in the pattern matching
             return _assembliesAsResources.Where(pair => pattern.IsMatch(pair.Value.Substring(CosturaPrefix.Length))).Select(assemblyKeyValuePair =>
             {
-                var loadedAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly => assembly.FullName.ToLowerInvariant().Contains($"{assemblyKeyValuePair.Key},"));
+                var loadedAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly => string.Equals(assembly.GetName().Name, assemblyKeyValuePair.Key, StringComparison.InvariantCultureIgnoreCase));
                 if (loadedAssembly != null)
                 {
-                    Log.Verbose().WriteLine("Returning already loaded assembly '{0}'", assemblyKeyValuePair.Key);
+                    Log.Verbose().WriteLine("Returning already loaded assembly '{0}'", loadedAssembly.FullName);
                     return loadedAssembly;
                 }
                 Log.Verbose().WriteLine("Forcing load from Costura packed assembly '{0}'", assemblyKeyValuePair.Key);
