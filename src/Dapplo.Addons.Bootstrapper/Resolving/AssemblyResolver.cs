@@ -28,6 +28,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -316,6 +317,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// </summary>
         /// <param name="filepath">string with the path to the file</param>
         /// <returns>Assembly</returns>
+        [SuppressMessage("Sonar Code Smell", "S3885:Assembly.Load should be used", Justification = "Assembly.Load doesn't work on paths outside of the AppDomain.CurrentDomain.BaseDirectory")]
         public static Assembly LoadAssemblyFromFile(string filepath)
         {
             if (string.IsNullOrEmpty(filepath))
@@ -334,7 +336,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             assembly = FindCachedAssemblyByAssemblyName(assemblyNameFromPath);
             if (assembly != null)
             {
-                Log.Verbose().WriteLine("Skipping loading assembly from {0}, as {1} was already loaded.", filepath, assembly.FullName);
+                Log.Verbose().WriteLine("Skipping loading assembly-file from {0}, as {1} was already loaded.", filepath, assembly.FullName);
                 return assembly;
             }
 
@@ -349,8 +351,19 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             }
             else
             {
-                // Use Assembly.LoadFrom, as Assembly.LoadFile ignores the fact that an assembly was already loaded (and just loads it double).
-                assembly = Assembly.LoadFrom(filepath);
+                // Use Assembly.LoadFrom or Assembly.Load, as Assembly.LoadFile ignores the fact that an assembly was already loaded (and just loads it double).
+                var assemblyName = Path.GetFileName(filepath);
+
+                if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, assemblyName)))
+                {
+                    assembly = Assembly.Load(filepath);
+                }
+                else
+                {
+                    // The file is outside of the AppDomain.CurrentDomain.BaseDirectory, so we need to use LoadFrom
+                    assembly = Assembly.LoadFrom(filepath);
+                }
+
                 // Register the assembly in the cache, by name and by path
                 assembly.Register(filepath);
             }
