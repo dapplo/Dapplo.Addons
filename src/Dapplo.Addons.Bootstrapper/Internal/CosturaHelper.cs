@@ -86,6 +86,7 @@ namespace Dapplo.Addons.Bootstrapper.Internal
                 var loadedAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly => assembly.FullName.ToLowerInvariant().Contains($"{assemblyKeyValuePair.Key},"));
                 if (loadedAssembly != null)
                 {
+                    Log.Verbose().WriteLine("Returning already loaded assembly '{0}'", assemblyKeyValuePair.Key);
                     return loadedAssembly;
                 }
                 Log.Verbose().WriteLine("Forcing load from Costura packed assembly '{0}'", assemblyKeyValuePair.Key);

@@ -157,8 +157,6 @@ namespace Dapplo.Addons.Tests
 
             using (IApplicationBootstrapper bootstrapper = new ApplicationBootstrapper(ApplicationName))
             {
-                // Add all file starting with Dapplo and ending on .dll or .dll.gz
-                bootstrapper.FindAndLoadAssemblies("Dapplo*");
 
                 // Add test project, without having a direct reference
 #if DEBUG
@@ -166,7 +164,8 @@ namespace Dapplo.Addons.Tests
 #else
                 bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release");
 #endif
-                bootstrapper.FindAndLoadAssembly("Dapplo.Addons.TestAddon");
+                // Add all file starting with Dapplo and ending on .dll or .dll.gz
+                bootstrapper.FindAndLoadAssemblies("Dapplo*");
 
                 // Test if our test addon was loaded
                 Assert.True(bootstrapper.KnownFiles.Any(addon => addon.EndsWith("TestAddon.dll")));

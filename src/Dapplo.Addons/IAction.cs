@@ -34,6 +34,7 @@ namespace Dapplo.Addons
 {
 	/// <summary>
 	///     The IAction describes modules that execute
+	/// (Currently unused.)
 	/// </summary>
 	public interface IAction : IModule
 	{

@@ -36,7 +36,6 @@ namespace Dapplo.Addons.Bootstrapper
 {
     /// <summary>
     ///     This bootstrapper is made especially to host dapplo "apps".
-    ///     It initializes the IniConfig and LanguageLoader, and makes Importing possible.
     ///     You can protect your application from starting multiple instances by specifying a Mutex-ID
     /// </summary>
     public class ApplicationBootstrapper : StartupShutdownBootstrapper, IApplicationBootstrapper
@@ -88,7 +87,9 @@ namespace Dapplo.Addons.Bootstrapper
             Log.Verbose().WriteLine("Trying to initialize application {0}", ApplicationName);
             await base.InitializeAsync(cancellationToken).ConfigureAwait(false);
             // Export this bootstrapper as IApplicationBootstrapper
-            Export<IApplicationBootstrapper>(this); return IsInitialized;
+            Export<IApplicationBootstrapper>(this);
+
+            return IsInitialized;
         }
 
         /// <summary>

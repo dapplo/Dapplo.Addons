@@ -293,6 +293,26 @@ namespace Dapplo.Addons.Bootstrapper
             // check if there is a pattern, use the all assemblies in the directory if none is given
             pattern = pattern ?? FileTools.FilenameToRegex("*", AssemblyResolver.Extensions);
 
+            // Decide on the loading order
+            if (AssemblyResolver.ResolveEmbeddedBeforeFiles)
+            {
+                FindEmbeddedAssemblies(pattern, loadEmbedded);
+                FindAssembliesFromFilesystem(directories, pattern);
+            }
+            else
+            {
+                FindAssembliesFromFilesystem(directories, pattern);
+                FindEmbeddedAssemblies(pattern, loadEmbedded);
+            }
+        }
+
+        /// <summary>
+        /// Helper method triggers the loading of the assemblies on the file system
+        /// </summary>
+        /// <param name="directories">IEnumerable of string with directories to scan</param>
+        /// <param name="pattern">Regex</param>
+        private void FindAssembliesFromFilesystem(IEnumerable<string> directories, Regex pattern)
+        {
             foreach (var file in FileLocations.Scan(directories.ToList(), pattern).Select(x => x.Item1))
             {
                 try
@@ -306,6 +326,19 @@ namespace Dapplo.Addons.Bootstrapper
                     Log.Error().WriteLine("Problem loading assembly from {0}", file);
                 }
             }
+        }
+
+        /// <summary>
+        /// Helper method which triggers the loading of embedded assemblies
+        /// </summary>
+        /// <param name="pattern"></param>
+        /// <param name="loadEmbedded"></param>
+        private void FindEmbeddedAssemblies(Regex pattern, bool loadEmbedded = true)
+        {
+            if (!loadEmbedded)
+            {
+                return;
+            }
             if (Costura.IsActive)
             {
                 foreach (var assembly in Costura.LoadEmbeddedAssemblies(pattern))
@@ -313,10 +346,6 @@ namespace Dapplo.Addons.Bootstrapper
                     assembly?.Register();
                     Add(assembly);
                 }
-            }
-            if (!loadEmbedded)
-            {
-                return;
             }
             foreach (var resourceTuple in AssemblyResolver.AssemblyCache.FindEmbeddedResources(pattern))
             {
