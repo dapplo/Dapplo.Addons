@@ -51,8 +51,6 @@ namespace Dapplo.Addons.Tests
             LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
         }
 
-        private static readonly LogSource Log = new LogSource();
-
         private void ThisForcesDelayedLoadingOfAssembly()
         {
             var helloWorld = ExternalClass.HelloWord();

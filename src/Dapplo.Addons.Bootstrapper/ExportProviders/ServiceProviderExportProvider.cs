@@ -108,10 +108,15 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
                 .GetExports<IServiceProvider>()
                 .Select(lazy => lazy.Value)
                 .Where(provider => !ReferenceEquals(_bootstrapper, provider))
-                .Select(provider => provider.GetService(contractType))
+                .Select(provider =>
+                {
+                    Log.Verbose().WriteLine("Trying to get service {0} from service provider {1}", contractType, provider.GetType());
+                    return provider.GetService(contractType);
+                })
                 .FirstOrDefault(o => o != null);
             if (instance == null)
             {
+                Log.Verbose().WriteLine("No provider for {0} found", contractType);
                 // So we couldn't get an instance, add null so we don't try again.
                 _lookup[specifiedContractName] = null;
                 return null;
@@ -143,15 +148,15 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
         /// </summary>
         /// <param name="assembly"></param>
         /// <returns></returns>
-        private static bool DontIgnoreAssembly(Assembly assembly)
+        private static bool IsAssemblyAllowed(Assembly assembly)
         {
             var currentAssemblyName = assembly.GetName().Name;
-            if (IgnoreAssemblyRegexes.Any(regex => regex.IsMatch(currentAssemblyName)))
+            if (!IgnoreAssemblyRegexes.Any(regex => regex.IsMatch(currentAssemblyName)))
             {
-                Log.Verbose().WriteLine("Skipping assembly {0}", currentAssemblyName);
-                return false;
+                return true;
             }
-            return true;
+            Log.Verbose().WriteLine("Skipping assembly {0}", currentAssemblyName);
+            return false;
         }
 
         /// <summary>
@@ -170,7 +175,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
                 try
                 {
                     contractType = AssemblyResolver.AssemblyCache
-                        .Where(DontIgnoreAssembly)
+                        .Where(IsAssemblyAllowed)
                         .Select(assembly => assembly.GetType(definition.ContractName, false, true))
                         .FirstOrDefault(type => type != null);
                 }

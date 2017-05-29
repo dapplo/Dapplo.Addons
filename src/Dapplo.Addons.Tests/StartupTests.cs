@@ -11,7 +11,7 @@ namespace Dapplo.Addons.Tests
     public class StartupTests
     {
         [Fact]
-        public async Task Test_Startup_Grouping()
+        public void Test_Startup_Grouping()
         {
             IList<Lazy<IStartupModule, IStartupMetadata>> startupModules = new List<Lazy<IStartupModule, IStartupMetadata>>();
 
