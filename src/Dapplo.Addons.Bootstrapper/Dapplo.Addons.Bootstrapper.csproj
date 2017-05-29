@@ -53,10 +53,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplicationBootstrapper.cs" />
+    <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Internal\CompressionTypes.cs" />
     <Compile Include="Internal\CosturaHelper.cs" />
     <Compile Include="Internal\SimpleDisposable.cs" />
-    <Compile Include="Internal\StreamExtensions.cs" />
+    <Compile Include="Extensions\StreamExtensions.cs" />
     <Compile Include="Resolving\AssemblyResolver.cs" />
     <Compile Include="CompositionBootstrapper.cs" />
     <Compile Include="Internal\NoSynchronizationContextScope.cs" />

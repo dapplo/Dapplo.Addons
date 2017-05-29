@@ -25,11 +25,10 @@
 
 #region Usings
 
+using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Addons.Tests.TestAssembly;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
-using Dapplo.Utils;
-using Dapplo.Utils.Resolving;
 using Xunit;
 using Xunit.Abstractions;
 

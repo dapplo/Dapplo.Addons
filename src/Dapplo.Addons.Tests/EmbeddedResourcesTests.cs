@@ -29,9 +29,9 @@ using System;
 using System.Drawing;
 using System.IO.Packaging;
 using System.Linq;
+using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
-using Dapplo.Utils.Embedded;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -92,9 +92,11 @@ namespace Dapplo.Addons.Tests
 
             using (var stream = GetType().Assembly.GetEmbeddedResourceAsStream(@"TestFiles\embedded-dapplo.png.gz"))
             {
-                var bitmap = Image.FromStream(stream);
-                Assert.NotNull(bitmap.Width);
-                Assert.True(bitmap.Width > 0);
+                using (var bitmap = Image.FromStream(stream))
+                {
+                    Assert.NotNull(bitmap.Width);
+                    Assert.True(bitmap.Width > 0);
+                }
             }
         }
 
@@ -110,9 +112,11 @@ namespace Dapplo.Addons.Tests
 
             using (var stream = packUri.GetEmbeddedResourceAsStream())
             {
-                var bitmap = Image.FromStream(stream);
-                Assert.NotNull(bitmap.Width);
-                Assert.True(bitmap.Width > 0);
+                using (var bitmap = Image.FromStream(stream))
+                {
+                    Assert.NotNull(bitmap.Width);
+                    Assert.True(bitmap.Width > 0);
+                }
             }
         }
     }

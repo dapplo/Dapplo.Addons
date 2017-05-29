@@ -34,7 +34,7 @@ namespace Dapplo.Addons.Bootstrapper.Internal
     /// <summary>
     ///     A simple way to return something, which calls an action on Dispose.
     /// </summary>
-    internal class SimpleDisposable : IDisposable
+    public sealed class SimpleDisposable : IDisposable
     {
         private readonly Action _action;
         // To detect redundant calls, we store a flag

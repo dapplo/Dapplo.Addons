@@ -25,12 +25,14 @@
 
 #region Usings
 
+using Dapplo.Addons.Bootstrapper.Internal;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Dapplo.Addons.Bootstrapper.Extensions;
 
 #endregion
 
@@ -112,8 +114,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 			{
 				try
 				{
-					var normalizedDirectory = Path.GetFullPath(new Uri(directory, UriKind.Absolute).LocalPath)
-						.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+					var normalizedDirectory = Path.GetFullPath(new Uri(directory, UriKind.Absolute).LocalPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 					if (Directory.Exists(normalizedDirectory))
 					{
 						directories.Add(normalizedDirectory);
@@ -134,14 +135,13 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 				// Relative to the assembly location
 				try
 				{
-					var assemblyLocation = Assembly.GetExecutingAssembly().Location;
+					var assemblyLocation = Assembly.GetExecutingAssembly().GetLocation();
 					if (!string.IsNullOrEmpty(assemblyLocation) && File.Exists(assemblyLocation))
 					{
 						var exeDirectory = Path.GetDirectoryName(assemblyLocation);
 						if (!string.IsNullOrEmpty(exeDirectory) && (exeDirectory != Environment.CurrentDirectory))
 						{
-							var relativeToExe = Path.GetFullPath(Path.Combine(exeDirectory, directory))
-								.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+							var relativeToExe = Path.GetFullPath(Path.Combine(exeDirectory, directory)).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 							if (Directory.Exists(relativeToExe))
 							{
 								directories.Add(relativeToExe);
@@ -159,8 +159,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 				{
 					if (allowCurrentDirectory)
 					{
-						var relativetoCurrent = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, directory))
-							.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+						var relativetoCurrent = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, directory)).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
 						if (Directory.Exists(relativetoCurrent))
 						{

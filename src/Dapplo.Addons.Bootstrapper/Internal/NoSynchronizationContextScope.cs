@@ -37,25 +37,25 @@ namespace Dapplo.Addons.Bootstrapper.Internal
     ///     From answer to StackOverflow question:
     ///     http://stackoverflow.com/questions/28305968/use-task-run-in-synchronous-method-to-avoid-deadlock-waiting-on-async-method/28307965#28307965
     /// </summary>
-	internal class NoSynchronizationContextScope : IDisposable
-	{
-		private readonly SynchronizationContext _synchronizationContext;
+    public sealed class NoSynchronizationContextScope : IDisposable
+    {
+        private readonly SynchronizationContext _synchronizationContext;
 
-		/// <summary>
-		///     Create a scope in which code doesn't have a SynchronizationContext, dispose this to leave the scope
-		/// </summary>
-		public NoSynchronizationContextScope()
-		{
-			_synchronizationContext = SynchronizationContext.Current;
-			SynchronizationContext.SetSynchronizationContext(null);
-		}
+        /// <summary>
+        ///     Create a scope in which code doesn't have a SynchronizationContext, dispose this to leave the scope
+        /// </summary>
+        public NoSynchronizationContextScope()
+        {
+            _synchronizationContext = SynchronizationContext.Current;
+            SynchronizationContext.SetSynchronizationContext(null);
+        }
 
-		/// <summary>
-		/// Set the SynchronizationContext back, this "leaves" the "no synchronization context scope"
-		/// </summary>
-		void IDisposable.Dispose()
-		{
-			SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
-		}
-	}
+        /// <summary>
+        /// Set the SynchronizationContext back, this "leaves" the "no synchronization context scope"
+        /// </summary>
+        public void Dispose()
+        {
+            SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
+        }
+    }
 }

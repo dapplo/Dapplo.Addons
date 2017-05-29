@@ -26,6 +26,7 @@
 #region Usings
 
 using System.Text.RegularExpressions;
+using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
 using Dapplo.Utils;

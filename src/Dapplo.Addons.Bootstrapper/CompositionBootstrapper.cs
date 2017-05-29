@@ -36,6 +36,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper.ExportProviders;
+using Dapplo.Addons.Bootstrapper.Extensions;
 using Dapplo.Addons.Bootstrapper.Internal;
 using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Log;
@@ -217,15 +218,21 @@ namespace Dapplo.Addons.Bootstrapper
             }
             try
             {
-                Log.Verbose().WriteLine("Adding assembly {0}", assemblyCatalog.Assembly.FullName);
+                var location = assemblyCatalog.Assembly.GetLocation(false);
+                Log.Verbose().WriteLine("Adding assembly {0} from {1}", assemblyCatalog.Assembly.FullName, location);
                 if (assemblyCatalog.Parts.ToList().Count > 0)
                 {
                     AggregateCatalog.Catalogs.Add(assemblyCatalog);
-                    if (!string.IsNullOrEmpty(assemblyCatalog.Assembly.Location))
+                    // Use the location, but not the CodeBase to see which file was loaded
+                    if (!string.IsNullOrEmpty(location))
                     {
-                        Log.Verbose().WriteLine("Adding file {0}", assemblyCatalog.Assembly.Location);
-                        KnownFiles.Add(assemblyCatalog.Assembly.Location);
+                        Log.Verbose().WriteLine("Adding file {0}", location);
+                        KnownFiles.Add(location);
                     }
+                }
+                else
+                {
+                    Log.Verbose().WriteLine("Assembly {0} from {1} doesn't have any parts exported.", assemblyCatalog.Assembly.FullName, location);
                 }
                 // Always add the assembly, even if there are no parts, so we can resolve certain "non" parts in ExportProviders.
                 AddKnownAssembly(assemblyCatalog.Assembly);

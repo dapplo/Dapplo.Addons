@@ -33,6 +33,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using Dapplo.Addons.Bootstrapper.Extensions;
 using Dapplo.Addons.Bootstrapper.Internal;
 using Dapplo.Log;
 
@@ -128,23 +129,21 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     AssembliesByName[assembly.GetName().Name] = assembly;
                 }
             }
-            // Dynamic assemblies don't have a location, it would cause a NotSupportedException
-            if (!assembly.IsDynamic)
+            filepath = filepath ?? assembly.GetLocation();
+            if (string.IsNullOrEmpty(filepath))
             {
-                filepath = filepath ?? assembly.Location;
+                return;
             }
-            if (!string.IsNullOrEmpty(filepath))
+            lock (AssembliesByPath)
             {
-                lock (AssembliesByPath)
+                // Make sure the name is always the same.
+                filepath = FileTools.RemoveExtensions(Path.GetFullPath(filepath), Extensions) + ".dll";
+                if (AssembliesByPath.ContainsKey(filepath))
                 {
-                    // Make sure the name is always the same.
-                    filepath = FileTools.RemoveExtensions(Path.GetFullPath(filepath), Extensions) + ".dll";
-                    if (!AssembliesByPath.ContainsKey(filepath))
-                    {
-                        AssembliesByPath[filepath] = assembly;
-                        Log.Verbose().WriteLine("Registering Assembly {0} to file {1}", assemblyName, filepath);
-                    }
+                    return;
                 }
+                AssembliesByPath[filepath] = assembly;
+                Log.Verbose().WriteLine("Registering Assembly {0} to file {1}", assemblyName, filepath);
             }
         }
 
@@ -278,7 +277,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             lock (AssembliesByName)
             {
                 // Dynamic assemblies don't have a location, skip them, it would cause a NotSupportedException
-                assembly = AssembliesByName.Values.Where(x => !x.IsDynamic).FirstOrDefault(x => string.Equals(x.Location, filepath, StringComparison.InvariantCultureIgnoreCase));
+                assembly = AssembliesByName.Values.FirstOrDefault(x => string.Equals(x.GetLocation(), filepath, StringComparison.InvariantCultureIgnoreCase));
             }
 
             // Check for assemblies by path
@@ -302,7 +301,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             }
             // The assembly wasn't found in our internal cache, now we go through the AppDomain
             // Dynamic assemblies don't have a location, skip them, it would cause a NotSupportedException
-            assembly = AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).FirstOrDefault(x => string.Equals(x.Location, filepath, StringComparison.InvariantCultureIgnoreCase));
+            assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => string.Equals(x.GetLocation(), filepath, StringComparison.InvariantCultureIgnoreCase));
             if (assembly != null)
             {
                 // found something, cache it for later usage
