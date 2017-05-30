@@ -95,6 +95,7 @@ namespace Dapplo.Addons.Tests
             _iniConfig.Get<IThisIsConfiguration>();
             using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
             {
+                Assert.Equal(bootstrapper, BootstrapperLocator.CurrentBootstrapper);
                 // Add test project, without having a direct reference
 #if DEBUG
                 bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");
@@ -157,7 +158,7 @@ namespace Dapplo.Addons.Tests
 
             using (IApplicationBootstrapper bootstrapper = new ApplicationBootstrapper(ApplicationName))
             {
-
+                Assert.Equal(bootstrapper, BootstrapperLocator.CurrentBootstrapper);
                 // Add test project, without having a direct reference
 #if DEBUG
                 bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");

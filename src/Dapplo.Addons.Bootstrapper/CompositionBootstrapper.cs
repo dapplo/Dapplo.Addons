@@ -88,9 +88,12 @@ namespace Dapplo.Addons.Bootstrapper
         /// </summary>
         public CompositionBootstrapper()
         {
+            // Register this bootstrapper with the BootstrapperLocator
+            BootstrapperLocator.Register(this);
             AssemblyResolver.RegisterAssemblyResolve();
         }
 
+        
         #region IServiceProvider
 
         /// <inheritdoc />
@@ -807,6 +810,9 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 return;
             }
+            // Remove this bootstrapper from the BootstrapperLocator
+            BootstrapperLocator.Unregister(this);
+
             if (disposing && IsInitialized)
             {
                 Log.Debug().WriteLine("Disposing...");
