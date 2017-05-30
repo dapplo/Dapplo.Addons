@@ -351,11 +351,9 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             else
             {
                 // Use Assembly.LoadFrom or Assembly.Load, as Assembly.LoadFile ignores the fact that an assembly was already loaded (and just loads it double).
-                var assemblyName = Path.GetFileName(filepath);
-
-                if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, assemblyName)))
+                if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Path.GetFileName(filepath))))
                 {
-                    assembly = Assembly.Load(filepath);
+                    assembly = Assembly.Load(Path.GetFileNameWithoutExtension(filepath));
                 }
                 else
                 {

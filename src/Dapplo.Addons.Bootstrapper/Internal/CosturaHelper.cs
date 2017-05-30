@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Dapplo.Addons.Bootstrapper.Extensions;
 using Dapplo.Log;
 
 namespace Dapplo.Addons.Bootstrapper.Internal
@@ -86,7 +87,7 @@ namespace Dapplo.Addons.Bootstrapper.Internal
                 var loadedAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly => string.Equals(assembly.GetName().Name, assemblyKeyValuePair.Key, StringComparison.InvariantCultureIgnoreCase));
                 if (loadedAssembly != null)
                 {
-                    Log.Verbose().WriteLine("Returning already loaded assembly '{0}'", loadedAssembly.FullName);
+                    Log.Verbose().WriteLine("Returning assembly '{0}' which was already loaded from: {1}", loadedAssembly.FullName, loadedAssembly.GetLocation() ?? "N.A.");
                     return loadedAssembly;
                 }
                 Log.Verbose().WriteLine("Forcing load from Costura packed assembly '{0}'", assemblyKeyValuePair.Key);
