@@ -85,15 +85,7 @@ namespace Dapplo.Addons
         void AddScanDirectories(IEnumerable<string> directories);
 
         /// <summary>
-        ///     Find the the assembly with the specified name, and load it.
-        ///     The assembly will be searched in the directories added by AddScanDirectory, and also in the embedded resources.
-        /// </summary>
-        /// <param name="assemblyName">string with the assembly name</param>
-        /// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
-        void FindAndLoadAssembly(string assemblyName, IEnumerable<string> extensions = null);
-
-        /// <summary>
-        ///     Find the assemblies (with parts) found in default directories, or manifest resources, matching the specified
+        ///     Find the assembly / assemblies (with parts) found in default directories, or embedded resources, matching the specified
         ///     filepattern.
         /// </summary>
         /// <param name="pattern">File-Pattern to use for the scan, default all dlls will be found</param>

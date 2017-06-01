@@ -257,32 +257,6 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <inheritdoc />
-        public void FindAndLoadAssembly(string assemblyName, IEnumerable<string> extensions = null)
-        {
-            if (string.IsNullOrEmpty(assemblyName))
-            {
-                throw new ArgumentNullException(nameof(assemblyName));
-            }
-            try
-            {
-                Log.Verbose().WriteLine("Trying to load {0}", assemblyName);
-                var assembly = AssemblyResolver.FindAssembly(assemblyName, extensions);
-                if (assembly != null)
-                {
-                    Add(assembly);
-                }
-                else
-                {
-                    Log.Warn().WriteLine("Couldn't load {0}", assemblyName);
-                }
-            }
-            catch
-            {
-                Log.Error().WriteLine("Problem loading assembly {0}", assemblyName);
-            }
-        }
-
-        /// <inheritdoc />
         public void FindAndLoadAssemblies(string pattern = "*", bool loadEmbedded = true, IEnumerable<string> extensions = null)
         {
             if (string.IsNullOrEmpty(pattern))
