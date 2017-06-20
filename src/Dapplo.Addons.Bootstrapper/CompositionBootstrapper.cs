@@ -30,6 +30,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.ComponentModel.Composition.Primitives;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -154,6 +155,10 @@ namespace Dapplo.Addons.Bootstrapper
 
         public void AddScanDirectory(string directory)
         {
+            if (AllowAssemblyCleanup)
+            {
+                RemoveEmbeddedAssembliesFromDirectory(directory);
+            }
             AssemblyResolver.AddDirectory(directory);
         }
 
@@ -298,6 +303,17 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 throw new ArgumentNullException(nameof(directories));
             }
+            directories = directories.ToList();
+
+            // Pre-cleanup
+            if (AllowAssemblyCleanup && Costura.IsActive)
+            {
+                foreach (var directory in directories)
+                {
+                    RemoveEmbeddedAssembliesFromDirectory(directory);
+                }
+            }
+
             // check if there is a pattern, use the all assemblies in the directory if none is given
             pattern = pattern ?? FileTools.FilenameToRegex("*", AssemblyResolver.Extensions);
 
@@ -321,7 +337,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <param name="pattern">Regex</param>
         private void FindAssembliesFromFilesystem(IEnumerable<string> directories, Regex pattern)
         {
-            foreach (var file in FileLocations.Scan(directories.ToList(), pattern).Select(x => x.Item1))
+            foreach (var file in FileLocations.Scan(directories, pattern).Select(x => x.Item1))
             {
                 try
                 {
@@ -333,6 +349,29 @@ namespace Dapplo.Addons.Bootstrapper
                 {
                     Log.Error().WriteLine("Problem loading assembly from {0}", file);
                 }
+            }
+        }
+
+        /// <summary>
+        /// A helper method which will delete the assemblies, which are already embedded by costura, from the directory.
+        /// This prevents double loading and should make the application stable.
+        /// </summary>
+        /// <param name="directory">string with the </param>
+        private void RemoveEmbeddedAssembliesFromDirectory(string directory)
+        {
+            if (!Costura.IsActive)
+            {
+                return;
+            }
+
+            foreach (var filePath in FileLocations.Scan(directory, "*.dll"))
+            {
+                if (!Costura.HasResource(Path.GetFileName(filePath)))
+                {
+                    continue;
+                }
+                Log.Debug().WriteLine("Deleting {0} to prevent .NET from automatically loading it and having doubles.", filePath);
+                File.Delete(filePath);
             }
         }
 
@@ -692,14 +731,14 @@ namespace Dapplo.Addons.Bootstrapper
 
         #region IBootstrapper
 
-        /// <summary>
-        ///     Is this initialized?
-        /// </summary>
+        /// <inheritdoc />
+        public bool AllowAssemblyCleanup { get; set; }
+
+
+        /// <inheritdoc />
         public bool IsInitialized { get; set; }
 
-        /// <summary>
-        ///     Initialize the bootstrapper
-        /// </summary>
+        /// <inheritdoc />
         public virtual Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             Log.Debug().WriteLine("Initializing");
@@ -730,9 +769,7 @@ namespace Dapplo.Addons.Bootstrapper
             return Task.FromResult(IsInitialized);
         }
 
-        /// <summary>
-        ///     Start the bootstrapper, initialize if needed
-        /// </summary>
+        /// <inheritdoc />
         public virtual async Task<bool> RunAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             Log.Debug().WriteLine("Starting");
@@ -748,9 +785,7 @@ namespace Dapplo.Addons.Bootstrapper
             return IsInitialized;
         }
 
-        /// <summary>
-        ///     Stop the bootstrapper
-        /// </summary>
+        /// <inheritdoc />
         public virtual Task<bool> StopAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             if (IsInitialized)

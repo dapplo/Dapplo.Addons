@@ -40,10 +40,19 @@ namespace Dapplo.Addons.Bootstrapper.Internal
     {
         private static readonly LogSource Log = new LogSource();
         private const string CosturaPrefix = "costura.";
+        private const string CosturaPostfix = ".compressed";
         private const string AssemblyLoaderTypeName = "Costura.AssemblyLoader";
         private readonly MethodInfo _readFromEmbeddedResourcesMethodInfo;
-        private readonly IDictionary<string, string> _assembliesAsResources;
-        private readonly IDictionary<string, string> _symbolsAsResources;
+
+        /// <summary>
+        /// all the assemblies which Costura has available
+        /// </summary>
+        public IDictionary<string, string> AssembliesAsResources { get; }
+
+        /// <summary>
+        /// All the symbols which Costura has available 
+        /// </summary>
+        public IDictionary<string, string> SymbolsAsResources { get; }
 
         /// <summary>
         /// Construct a CosturaHelper
@@ -57,16 +66,27 @@ namespace Dapplo.Addons.Bootstrapper.Internal
                 return;
             }
 
-            _assembliesAsResources = (IDictionary<string, string>)assembliesAsResourcesFieldInfo.GetValue(null);
+            AssembliesAsResources = (IDictionary<string, string>)assembliesAsResourcesFieldInfo.GetValue(null);
 
             var symbolsAsResourcesFieldInfo = assemblyLoaderType.GetField("symbolNames", BindingFlags.Static | BindingFlags.NonPublic);
-            _symbolsAsResources = (IDictionary<string, string>)symbolsAsResourcesFieldInfo?.GetValue(null);
+            SymbolsAsResources = (IDictionary<string, string>)symbolsAsResourcesFieldInfo?.GetValue(null);
 
             _readFromEmbeddedResourcesMethodInfo = assemblyLoaderType.GetMethod("ReadFromEmbeddedResources", BindingFlags.Static | BindingFlags.NonPublic);
-            if (_readFromEmbeddedResourcesMethodInfo != null && _symbolsAsResources != null)
+            if (_readFromEmbeddedResourcesMethodInfo != null)
             {
                 IsActive = true;
             }
+        }
+
+        /// <summary>
+        /// Checks if the specified resource is embedded by Costura
+        /// </summary>
+        /// <param name="resourceName">For instance an assembly name like: Dapplo.Addons.dll</param>
+        /// <returns>true if it was found</returns>
+        public bool HasResource(string resourceName)
+        {
+            return AssembliesAsResources.Any(pair => string.Equals(pair.Value, $"{CosturaPrefix}{resourceName}{CosturaPostfix}", StringComparison.InvariantCultureIgnoreCase) ||
+                                                     string.Equals(pair.Value, $"{CosturaPrefix}{resourceName}", StringComparison.InvariantCultureIgnoreCase));
         }
 
         /// <summary>
@@ -82,7 +102,7 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         public IEnumerable<Assembly> LoadEmbeddedAssemblies(Regex pattern)
         {
             // Skip the prefix in the pattern matching
-            return _assembliesAsResources.Where(pair => pattern.IsMatch(pair.Value.Substring(CosturaPrefix.Length))).Select(assemblyKeyValuePair =>
+            return AssembliesAsResources.Where(pair => pattern.IsMatch(pair.Value.Substring(CosturaPrefix.Length))).Select(assemblyKeyValuePair =>
             {
                 var loadedAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly => string.Equals(assembly.GetName().Name, assemblyKeyValuePair.Key, StringComparison.InvariantCultureIgnoreCase));
                 if (loadedAssembly != null)
@@ -92,7 +112,7 @@ namespace Dapplo.Addons.Bootstrapper.Internal
                 }
                 Log.Verbose().WriteLine("Forcing load from Costura packed assembly '{0}'", assemblyKeyValuePair.Key);
 
-                return _readFromEmbeddedResourcesMethodInfo.Invoke(null, new object[] { _assembliesAsResources, _symbolsAsResources, new AssemblyName(assemblyKeyValuePair.Key) }) as Assembly;
+                return _readFromEmbeddedResourcesMethodInfo.Invoke(null, new object[] { AssembliesAsResources, SymbolsAsResources, new AssemblyName(assemblyKeyValuePair.Key) }) as Assembly;
             }).Where(assembly => assembly != null);
         }
     }

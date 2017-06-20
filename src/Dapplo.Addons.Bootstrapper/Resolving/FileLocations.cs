@@ -81,7 +81,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <summary>
         ///     Scan the supplied directories for files which match the passed file pattern
         /// </summary>
-        /// <param name="directories"></param>
+        /// <param name="directories">IEnumerable of string with the directories to scan</param>
         /// <param name="simplePattern"></param>
         /// <param name="searchOption">
         ///     Makes it possible to specify if the search is recursive, SearchOption.AllDirectories is
@@ -93,8 +93,23 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             return from directory in directories
                 from path in DirectoriesFor(directory)
                 where Directory.Exists(path)
-                from file in Directory.EnumerateFiles(path, simplePattern, searchOption)
+                from file in Scan(path, simplePattern, searchOption)
                 select file;
+        }
+
+        /// <summary>
+        ///     Scan the supplied directories for files which match the passed file pattern
+        /// </summary>
+        /// <param name="directory">string with the directory to scan</param>
+        /// <param name="simplePattern">pattern</param>
+        /// <param name="searchOption">
+        ///     Makes it possible to specify if the search is recursive, SearchOption.AllDirectories is
+        ///     default, use SearchOption.TopDirectoryOnly for non recursive
+        /// </param>
+        /// <returns>IEnumerable with file paths</returns>
+        public static IEnumerable<string> Scan(string directory, string simplePattern, SearchOption searchOption = SearchOption.AllDirectories)
+        {
+            return Directory.EnumerateFiles(directory, simplePattern, searchOption);
         }
 
         /// <summary>

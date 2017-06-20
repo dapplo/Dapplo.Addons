@@ -40,6 +40,13 @@ namespace Dapplo.Addons
     public interface IBootstrapper : IServiceLocator, IMefServiceLocator, IServiceExporter, IServiceRepository, IDependencyProvider, IDisposable
     {
         /// <summary>
+        /// Specifies if the bootstrapper is allowed to remove assemblies which are already embedded from the file system.
+        /// This normally prevents issues with double loading of assemblies, like casts which do not work.
+        /// This is turned off by default.
+        /// </summary>
+        bool AllowAssemblyCleanup { get; set; }
+
+        /// <summary>
         /// Register a disposable, to dispose when the IBootstrapper is disposed
         /// </summary>
         /// <param name="disposable">IDisposable to dispose together with the bootstapper</param>
