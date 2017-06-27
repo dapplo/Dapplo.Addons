@@ -89,6 +89,11 @@ namespace Dapplo.Addons.Bootstrapper
         /// </summary>
         public CompositionBootstrapper()
         {
+            // Only set a locator provider if there isn't one set yet.
+            if (!ServiceLocator.IsLocationProviderSet)
+            {
+                ServiceLocator.SetLocatorProvider(() => this);
+            }
             // Register this bootstrapper with the BootstrapperLocator
             BootstrapperLocator.Register(this);
             AssemblyResolver.RegisterAssemblyResolve();
@@ -819,6 +824,13 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 return;
             }
+
+            // Remove this from the ServiceLocator
+            if (ServiceLocator.IsLocationProviderSet && ServiceLocator.Current == this)
+            {
+                ServiceLocator.SetLocatorProvider(null);
+            }
+
             // Remove this bootstrapper from the BootstrapperLocator
             BootstrapperLocator.Unregister(this);
 
