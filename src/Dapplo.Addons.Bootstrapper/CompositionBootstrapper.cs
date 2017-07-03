@@ -304,7 +304,11 @@ namespace Dapplo.Addons.Bootstrapper
         /// <inheritdoc />
         public void FindAndLoadAssemblies(IEnumerable<string> directories, Regex pattern, bool loadEmbedded = true)
         {
-            directories = directories?.ToList() ?? throw new ArgumentNullException(nameof(directories));
+            if (directories == null)
+            {
+                throw new ArgumentNullException(nameof(directories));
+            }
+            directories = directories.ToList();
 
             // Pre-cleanup
             if (AllowAssemblyCleanup && Costura.IsActive)
