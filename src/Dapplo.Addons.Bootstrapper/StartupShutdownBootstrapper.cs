@@ -43,6 +43,7 @@ namespace Dapplo.Addons.Bootstrapper
 	public class StartupShutdownBootstrapper : CompositionBootstrapper
 	{
 		private static readonly LogSource Log = new LogSource();
+	    private bool _isRunning;
 
 		[ImportMany]
 		// ReSharper disable once FieldCanBeMadeReadOnly.Local
@@ -70,7 +71,9 @@ namespace Dapplo.Addons.Bootstrapper
 			Log.Debug().WriteLine("Starting");
 			var result = await base.RunAsync(cancellationToken).ConfigureAwait(false);
 
-			ProvideDependencies(this);
+		    _isRunning = true;
+
+            ProvideDependencies(this);
 			if (AutoStartup)
 			{
 				await StartupAsync(cancellationToken).ConfigureAwait(false);
@@ -188,6 +191,11 @@ namespace Dapplo.Addons.Bootstrapper
 
 			foreach (var lazyStartupModule in orderedStartupModules)
 			{
+                // Fail fast for when the stop is called during startup
+			    if (!_isRunning)
+			    {
+			        break;
+			    }
 				try
 				{
 					// Check if we have all the startup actions belonging to a group
@@ -304,6 +312,9 @@ namespace Dapplo.Addons.Bootstrapper
 		/// <returns>Task</returns>
 		public override async Task<bool> StopAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
+            // Fail fast, this should halt the startup when the stop is called
+		    _isRunning = false;
+
 			Log.Debug().WriteLine("Stopping bootstrapper");
 			if (AutoShutdown)
 			{

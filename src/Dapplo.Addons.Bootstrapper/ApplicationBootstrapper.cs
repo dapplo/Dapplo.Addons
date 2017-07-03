@@ -60,11 +60,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <param name="global">Is the mutex a global or local block (false means only in this Windows session)</param>
         public ApplicationBootstrapper(string applicationName, string mutexId = null, bool global = false)
         {
-            if (applicationName == null)
-            {
-                throw new ArgumentNullException(nameof(applicationName));
-            }
-            ApplicationName = applicationName;
+            ApplicationName = applicationName ?? throw new ArgumentNullException(nameof(applicationName));
             if (mutexId != null)
             {
                 _resourceMutex = ResourceMutex.Create(mutexId, applicationName, global);
