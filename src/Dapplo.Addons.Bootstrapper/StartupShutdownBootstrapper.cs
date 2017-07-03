@@ -103,6 +103,10 @@ namespace Dapplo.Addons.Bootstrapper
 
 			foreach (var lazyShutdownModule in orderedShutdownModules)
 			{
+			    if (cancellationToken.IsCancellationRequested)
+			    {
+			        break;
+			    }
 				// Check if we have all the startup actions belonging to a group
 				if (tasks.Count > 0 && groupingOrder != lazyShutdownModule.Metadata.ShutdownOrder)
 				{
@@ -192,7 +196,7 @@ namespace Dapplo.Addons.Bootstrapper
 			foreach (var lazyStartupModule in orderedStartupModules)
 			{
                 // Fail fast for when the stop is called during startup
-			    if (!_isRunning)
+			    if (!_isRunning || cancellationToken.IsCancellationRequested)
 			    {
 			        break;
 			    }
@@ -233,6 +237,7 @@ namespace Dapplo.Addons.Bootstrapper
 					IStartupAction startupAction = startupModule as IStartupAction;
 					if (startupAction != null)
 					{
+                        Log.Verbose().WriteLine("Trying to start {0}", startupAction.GetType());
 						// Wrap sync call as async task
 						startupTask = Task.Run(() => startupAction.Start(), cancellationToken);
 					}
@@ -241,8 +246,9 @@ namespace Dapplo.Addons.Bootstrapper
 						IAsyncStartupAction asyncStartupAction = startupModule as IAsyncStartupAction;
 						if (asyncStartupAction != null)
 						{
-							// Create a task (it will start running, but we don't await it yet)
-							startupTask = asyncStartupAction.StartAsync(cancellationToken);
+						    Log.Verbose().WriteLine("Trying to start {0}", asyncStartupAction.GetType());
+                            // Create a task (it will start running, but we don't await it yet)
+                            startupTask = asyncStartupAction.StartAsync(cancellationToken);
 						}
 					}
 

@@ -106,7 +106,7 @@ namespace Dapplo.Addons.Bootstrapper
                 // 2) if the mutex wasn't created new get the right to it, this returns false if it's already locked
                 if (!createdNew)
                 {
-                    IsLocked = _applicationMutex.WaitOne(1000, false);
+                    IsLocked = _applicationMutex.WaitOne(2000, false);
                     if (!IsLocked)
                     {
                         _log.Warn().WriteLine("Mutex {0} is already in use and couldn't be locked for the caller {1}", _mutexId, _resourceName);

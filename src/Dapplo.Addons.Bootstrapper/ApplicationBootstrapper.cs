@@ -92,6 +92,16 @@ namespace Dapplo.Addons.Bootstrapper
             return IsInitialized;
         }
 
+        /// <inheritdoc />
+        public override async Task<bool> StopAsync(CancellationToken cancellationToken = new CancellationToken())
+        {
+            var result = await base.StopAsync(cancellationToken);
+
+            // As soon as we stopped, the mutex can be released.
+            _resourceMutex?.Dispose();
+            return result;
+        }
+
         /// <summary>
         ///     Override the run to prevent starting when the mutex isn't locked
         /// </summary>
