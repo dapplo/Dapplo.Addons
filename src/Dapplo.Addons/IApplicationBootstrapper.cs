@@ -28,7 +28,7 @@ namespace Dapplo.Addons
     /// <summary>
     ///     Interface for the ApplicationBootstrapper
     /// </summary>
-    public interface IApplicationBootstrapper : IBootstrapper
+    public interface IApplicationBootstrapper : IStartupShutdownBootstrapper
     {
         /// <summary>
         ///     Name of the application for this bootstrapper

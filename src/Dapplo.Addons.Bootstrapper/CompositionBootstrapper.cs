@@ -746,7 +746,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <inheritdoc />
         public virtual Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            Log.Debug().WriteLine("Initializing");
+            Log.Verbose().WriteLine("Initializing CompositionBootstrapper");
             IsInitialized = true;
 
             // Configure first, this can be overloaded

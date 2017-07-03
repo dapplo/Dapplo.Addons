@@ -80,6 +80,18 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <inheritdoc />
+        public override async Task<bool> InitializeAsync(CancellationToken cancellationToken = new CancellationToken())
+        {
+            await base.InitializeAsync(cancellationToken).ConfigureAwait(false);
+
+            Log.Verbose().WriteLine("Initialize StartupShutdownBootstrapper");
+            // Export this bootstrapper as IStartupShutdownBootstrapper
+            Export<IStartupShutdownBootstrapper>(this);
+
+            return IsInitialized;
+        }
+
+        /// <inheritdoc />
         public async Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             Log.Debug().WriteLine("Shutdown of the shutdown actions, if any");
