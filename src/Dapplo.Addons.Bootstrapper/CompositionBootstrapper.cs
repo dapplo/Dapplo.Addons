@@ -834,7 +834,7 @@ namespace Dapplo.Addons.Bootstrapper
             // Remove this bootstrapper from the BootstrapperLocator
             BootstrapperLocator.Unregister(this);
 
-            if (disposing && IsInitialized)
+            if (disposing)
             {
                 Log.Debug().WriteLine("Disposing...");
                 if (IsInitialized)

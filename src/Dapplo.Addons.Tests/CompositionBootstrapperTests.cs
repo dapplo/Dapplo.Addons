@@ -30,6 +30,7 @@ using System.ComponentModel.Composition.Hosting;
 using System.Reflection;
 using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper;
+using Dapplo.Addons.Bootstrapper.Internal;
 using Dapplo.Addons.Tests.Entities;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
@@ -45,6 +46,20 @@ namespace Dapplo.Addons.Tests
         public CompositionBootstrapperTests(ITestOutputHelper testOutputHelper)
         {
             LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
+        }
+
+        [Fact]
+        public async Task TestDisposing()
+        {
+            bool isDisposed = false;
+            using (var compositionBootstrapper = new CompositionBootstrapper())
+            {
+                compositionBootstrapper.RegisterForDisposal(SimpleDisposable.Create(() => isDisposed = true));
+                await compositionBootstrapper.InitializeAsync();
+                await compositionBootstrapper.StopAsync();
+                Assert.False(isDisposed);
+            }
+            Assert.True(isDisposed);
         }
 
         [Fact]
