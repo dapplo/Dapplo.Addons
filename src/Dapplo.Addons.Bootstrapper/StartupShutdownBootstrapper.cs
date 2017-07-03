@@ -107,17 +107,11 @@ namespace Dapplo.Addons.Bootstrapper
             // Variable used for grouping the shutdowns
             var groupingOrder = int.MaxValue;
 
-            // Map the supplied cancellationToken to the _startupCancellationTokenSource, if the first cancells, _startupCancellationTokenSource also does
-            CancellationTokenRegistration registration = default(CancellationTokenRegistration);
-            if (cancellationToken.CanBeCanceled)
-            {
-                registration = cancellationToken.Register(() => _startupCancellationTokenSource.Cancel());
-            }
-
             foreach (var lazyShutdownModule in orderedShutdownModules)
             {
-                if (_startupCancellationTokenSource.IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                 {
+                    Log.Debug().WriteLine("Shutdown cancelled.");
                     break;
                 }
                 // Check if we have all the startup actions belonging to a group
@@ -181,10 +175,6 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 await WhenAll(tasks).ConfigureAwait(false);
             }
-            if (cancellationToken.CanBeCanceled)
-            {
-                registration.Dispose();
-            }
         }
 
         /// <inheritdoc />
@@ -205,11 +195,20 @@ namespace Dapplo.Addons.Bootstrapper
             // Variable used for grouping the startups
             var groupingOrder = int.MaxValue;
 
+
+            // Map the supplied cancellationToken to the _startupCancellationTokenSource, if the first cancells, _startupCancellationTokenSource also does
+            var cancellationTokenRegistration = default(CancellationTokenRegistration);
+            if (cancellationToken.CanBeCanceled)
+            {
+                cancellationTokenRegistration = cancellationToken.Register(() => _startupCancellationTokenSource.Cancel());
+            }
+
             foreach (var lazyStartupModule in orderedStartupModules)
             {
                 // Fail fast for when the stop is called during startup
-                if (_startupCancellationTokenSource.IsCancellationRequested || cancellationToken.IsCancellationRequested)
+                if (_startupCancellationTokenSource.IsCancellationRequested)
                 {
+                    Log.Debug().WriteLine("Startup cancelled.");
                     break;
                 }
                 try
@@ -289,6 +288,10 @@ namespace Dapplo.Addons.Bootstrapper
                 {
                     Log.Error().WriteLine(ex, "Exception executing IStartupAction {0}: ", lazyStartupModule.Value.GetType());
                 }
+                if (cancellationToken.CanBeCanceled)
+                {
+                    cancellationTokenRegistration.Dispose();
+                }
             }
 
             // Await all remaining tasks
@@ -330,10 +333,13 @@ namespace Dapplo.Addons.Bootstrapper
         /// <returns>Task</returns>
         public override async Task<bool> StopAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            Log.Debug().WriteLine("Stopping bootstrapper");
+            Log.Debug().WriteLine("Stopping bootstrapper.");
 
-            // Fail fast, this should halt the startup when the stop is called
-            _startupCancellationTokenSource.Cancel();
+            // This should halt the startup, if it was running, when the stop is called
+            if (!_startupCancellationTokenSource.IsCancellationRequested)
+            {
+                _startupCancellationTokenSource.Cancel();
+            }
 
             if (AutoShutdown)
             {
@@ -345,6 +351,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <inheritdoc />
         public void CancelStartup()
         {
+            Log.Debug().WriteLine("Trying to cancel the startup.");
             if (!_startupCancellationTokenSource.IsCancellationRequested)
             {
                 _startupCancellationTokenSource.Cancel();
