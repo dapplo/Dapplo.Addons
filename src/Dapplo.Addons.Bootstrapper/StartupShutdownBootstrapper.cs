@@ -44,6 +44,7 @@ namespace Dapplo.Addons.Bootstrapper
     {
         private static readonly LogSource Log = new LogSource();
         private readonly CancellationTokenSource _startupCancellationTokenSource = new CancellationTokenSource();
+        private Task _awaitingUnfinishedStartupTask;
 
         [ImportMany]
         // ReSharper disable once FieldCanBeMadeReadOnly.Local
@@ -175,11 +176,27 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 await WhenAll(tasks).ConfigureAwait(false);
             }
+            // Await all in the background running startup tasks, to allow them to cleanup if needed
+            if (_awaitingUnfinishedStartupTask != null)
+            {
+                try
+                {
+                    await Task.WhenAny(_awaitingUnfinishedStartupTask, Task.Delay(1000, cancellationToken)).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn().WriteLine(ex, "Uncritical error occured while awaiting startup tasks.");
+                }
+            }
         }
 
         /// <inheritdoc />
         public async Task StartupAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
+            if (!IsRunning)
+            {
+                throw new NotSupportedException("Can't startup if the bootstrapper is not running.");
+            }
             Log.Debug().WriteLine("Starting the startup actions, if any");
             if (_startupModules == null)
             {
@@ -205,12 +222,6 @@ namespace Dapplo.Addons.Bootstrapper
 
             foreach (var lazyStartupModule in orderedStartupModules)
             {
-                // Fail fast for when the stop is called during startup
-                if (_startupCancellationTokenSource.IsCancellationRequested)
-                {
-                    Log.Debug().WriteLine("Startup cancelled.");
-                    break;
-                }
                 try
                 {
                     // Check if we have all the startup actions belonging to a group
@@ -222,6 +233,13 @@ namespace Dapplo.Addons.Bootstrapper
                         // Clean the tasks, we are finished.
                         tasks.Clear();
                     }
+                    // Fail fast for when the stop is called during startup
+                    if (_startupCancellationTokenSource.IsCancellationRequested)
+                    {
+                        Log.Debug().WriteLine("Startup cancelled.");
+                        break;
+                    }
+
                     IStartupModule startupModule;
                     try
                     {
@@ -311,7 +329,7 @@ namespace Dapplo.Addons.Bootstrapper
             if (nonAwaitables.Count > 0 && Log.IsErrorEnabled())
             {
                 // ReSharper disable once UnusedVariable
-                var ignoreTask = Task.Run(async () =>
+                _awaitingUnfinishedStartupTask = Task.Run(async () =>
                 {
                     try
                     {
@@ -365,7 +383,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <param name="tasksToAwait"></param>
         /// <param name="ignoreExceptions">if true (default) the exceptions will be logged but ignored.</param>
         /// <returns>Task</returns>
-        private async Task WhenAll(IEnumerable<KeyValuePair<Type, Task>> tasksToAwait, bool ignoreExceptions = true)
+        private static async Task WhenAll(IEnumerable<KeyValuePair<Type, Task>> tasksToAwait, bool ignoreExceptions = true)
         {
             foreach (var taskInfo in tasksToAwait)
             {

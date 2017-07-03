@@ -741,7 +741,10 @@ namespace Dapplo.Addons.Bootstrapper
 
 
         /// <inheritdoc />
-        public bool IsInitialized { get; set; }
+        public bool IsInitialized { get; private set; }
+
+        /// <inheritdoc />
+        public bool IsRunning { get; private set; }
 
         /// <inheritdoc />
         public virtual Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -784,8 +787,9 @@ namespace Dapplo.Addons.Bootstrapper
             }
             if (!IsInitialized)
             {
-                throw new NotSupportedException("Can't run if IsInitialized is false!");
+                throw new NotSupportedException("Can't run if the bootstrapper is not initialized.");
             }
+            IsRunning = true;
             Container.ComposeParts();
             return IsInitialized;
         }
@@ -795,6 +799,7 @@ namespace Dapplo.Addons.Bootstrapper
         {
             if (IsInitialized)
             {
+                IsRunning = false;
                 // Unconfigure can be overloaded
                 Unconfigure();
                 // Now dispose the container

@@ -190,7 +190,7 @@ namespace Dapplo.Addons.Tests
                 Assert.False(bootstrapper.GetExports<ApplicationBootstrapperTests>().Any());
 
                 // Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
-                Assert.Equal(3, bootstrapper.GetExports<IStartupModule>().Count());
+                Assert.Equal(5, bootstrapper.GetExports<IStartupModule>().Count());
 
                 // Test localization of a IStartupAction with meta-data, which is exported via [StartupAction(DoNotAwait = true)]
                 var hasAwaitStartFalse = bootstrapper.GetExports<IStartupModule, IStartupMetadata>().Any(x => x.Metadata.AwaitStart == false);

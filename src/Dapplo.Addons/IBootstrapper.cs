@@ -58,6 +58,11 @@ namespace Dapplo.Addons
         bool IsInitialized { get; }
 
         /// <summary>
+        ///     Is this IBootstrapper running?
+        /// </summary>
+        bool IsRunning { get; }
+
+        /// <summary>
         ///     Initialize the bootstrapper
         /// </summary>
         Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken));

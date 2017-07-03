@@ -96,6 +96,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceMutexTests.cs" />
     <Compile Include="StartupTests.cs" />
+    <Compile Include="TestModules\SecondStartupAction.cs" />
+    <Compile Include="TestModules\FirstStartupAction.cs" />
     <Compile Include="Utils\AssemblyUtils.cs" />
   </ItemGroup>
   <ItemGroup>
