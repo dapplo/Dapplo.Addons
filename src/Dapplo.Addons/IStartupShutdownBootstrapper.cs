@@ -23,21 +23,34 @@
 
 #endregion
 
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace Dapplo.Addons
 {
     /// <summary>
-    ///     Interface for the ApplicationBootstrapper
+    ///     Interface for the StartupShutdownBootstrapper
     /// </summary>
-    public interface IApplicationBootstrapper : IBootstrapper
+    public interface IStartupShutdownBootstrapper : IBootstrapper
     {
         /// <summary>
-        ///     Name of the application for this bootstrapper
+        ///     Startup all "Startup actions"
+        ///     Call this after run, it will find all IStartupAction's and start them in the specified order
         /// </summary>
-        string ApplicationName { get; }
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>Task</returns>
+        Task StartupAsync(CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// Is the mutex for the application locked=
+        ///     Initiate Shutdown on all "Shutdown actions"
         /// </summary>
-        bool IsMutexLocked { get; }
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>Task</returns>
+        Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// This cancels the startup
+        /// </summary>
+        void CancelStartup();
     }
 }

@@ -77,7 +77,6 @@ namespace Dapplo.Addons.Bootstrapper
         /// </summary>
         public bool IsMutexLocked => _resourceMutex == null || _resourceMutex.IsLocked;
 
-
         /// <summary>
         ///     Initialize the application bootstrapper, this makes sure the configuration and languages can be loaded
         /// </summary>

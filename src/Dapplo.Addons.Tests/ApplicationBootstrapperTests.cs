@@ -111,7 +111,6 @@ namespace Dapplo.Addons.Tests
 
                 bootstrapper.Export<IServiceProvider>(_iniConfig);
 
-
                 // Only for improved Code coverage
                 bootstrapper.Export(typeof(IniConfig), _iniConfig, new Dictionary<string, object>());
 
