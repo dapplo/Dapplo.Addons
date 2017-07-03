@@ -837,10 +837,13 @@ namespace Dapplo.Addons.Bootstrapper
             if (disposing && IsInitialized)
             {
                 Log.Debug().WriteLine("Disposing...");
-                // dispose managed state (managed objects) here.
-                using (new NoSynchronizationContextScope())
+                if (IsInitialized)
                 {
-                    StopAsync().Wait();
+                    // dispose managed state (managed objects) here.
+                    using (new NoSynchronizationContextScope())
+                    {
+                        StopAsync().Wait();
+                    }
                 }
                 // dispose all registered disposables, in reversed order
                 foreach (var disposable in _disposables.Reverse())
