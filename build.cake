@@ -3,7 +3,6 @@
 #tool "docfx.console"
 #tool "coveralls.io"
 #addin "SharpZipLib"
-#addin "MagicChunks"
 #addin "Cake.FileHelpers"
 #addin "Cake.DocFx"
 #addin "Cake.Compression"
