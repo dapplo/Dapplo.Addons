@@ -13,7 +13,7 @@ var configuration = Argument("configuration", "release");
 var nugetApiKey = Argument("nugetApiKey", EnvironmentVariable("NuGetApiKey"));
 var solutionFilePath = GetFiles("./**/*.sln").First();
 var solutionName = solutionFilePath.GetDirectory().GetDirectoryName();
-var coveralsRepoToken = Argument("coveralsRepoToken", EnvironmentVariable("CoverallsRepoToken"));
+var coveralsRepoToken = string.Empty; //Argument("coveralsRepoToken", EnvironmentVariable("CoverallsRepoToken"));
 
 // Used to store the version, which is needed during the build and the packaging
 var version = EnvironmentVariable("APPVEYOR_BUILD_VERSION") ?? "1.0.0";
