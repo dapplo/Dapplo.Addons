@@ -143,7 +143,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         }
 
         /// <summary>
-        /// A simple helper to normalize a directory name
+        ///     A simple helper to normalize a directory name
         /// </summary>
         /// <param name="directory"></param>
         /// <returns>normalized directory name</returns>
@@ -161,7 +161,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         }
 
         /// <summary>
-        /// Helper method which returns the directory relative to the current directory
+        ///     Helper method which returns the directory relative to the current directory
         /// </summary>
         /// <param name="directory">directory name</param>
         /// <returns>string directory</returns>
@@ -179,7 +179,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         }
 
         /// <summary>
-        /// Helper method which returns the directory relative to the exe
+        ///     Helper method which returns the directory relative to the exe
         /// </summary>
         /// <param name="directory">directory name</param>
         /// <returns>string directory</returns>

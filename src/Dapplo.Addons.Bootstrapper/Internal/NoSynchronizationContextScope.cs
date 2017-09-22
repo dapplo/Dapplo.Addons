@@ -51,7 +51,7 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         }
 
         /// <summary>
-        /// Set the SynchronizationContext back, this "leaves" the "no synchronization context scope"
+        ///     Set the SynchronizationContext back, this "leaves" the "no synchronization context scope"
         /// </summary>
         public void Dispose()
         {

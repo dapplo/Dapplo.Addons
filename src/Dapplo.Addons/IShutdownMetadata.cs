@@ -32,14 +32,15 @@ using System.ComponentModel;
 namespace Dapplo.Addons
 {
 	/// <summary>
-	///     Meta-data belonging to the AsyncShutdownActionAttribute or ShutdownActionAttribute, which makes it possible to specify type-safe meta-data.
+	///     Meta-data belonging to the AsyncShutdownActionAttribute or ShutdownActionAttribute, which makes it possible to
+	///     specify type-safe meta-data.
 	/// </summary>
 	public interface IShutdownMetadata
-	{
-		/// <summary>
-		///     Order in which IShutdownAction.Shutdown / IAsyncShutdownAction.ShutdownAsync is called
-		/// </summary>
-		[DefaultValue(1)]
-		int ShutdownOrder { get; }
-	}
+    {
+        /// <summary>
+        ///     Order in which IShutdownAction.Shutdown / IAsyncShutdownAction.ShutdownAsync is called
+        /// </summary>
+        [DefaultValue(1)]
+        int ShutdownOrder { get; }
+    }
 }

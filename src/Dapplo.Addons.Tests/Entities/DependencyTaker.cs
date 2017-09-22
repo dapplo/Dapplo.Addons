@@ -23,7 +23,11 @@
 
 #endregion
 
+#region Usings
+
 using System.ComponentModel.Composition;
+
+#endregion
 
 namespace Dapplo.Addons.Tests.Entities
 {

@@ -26,12 +26,12 @@
 namespace Dapplo.Addons.Tests.TestAssembly
 {
     /// <summary>
-    /// A class external to the Dapplo.Utils.Tests DLL
+    ///     A class external to the Dapplo.Utils.Tests DLL
     /// </summary>
     public static class ExternalClass
     {
         /// <summary>
-        /// A method returning HelloWord
+        ///     A method returning HelloWord
         /// </summary>
         /// <returns></returns>
         public static string HelloWord()

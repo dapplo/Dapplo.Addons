@@ -25,23 +25,21 @@
 
 #region Usings
 
-
-
 #endregion
 
 namespace Dapplo.Addons
 {
-	/// <summary>
-	///     The IStartupAction is an interface for modules that can be started when the application starts
-	///     Extend you module with this interface, and use the StartupActionAttribute to annotate the module
-	/// </summary>
-	public interface IStartupAction : IStartupModule
-	{
-		/// <summary>
-		///     Perform a start of whatever needs to be started.
-		///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
-		///     throw a StartupException if something went terribly wrong and the application should NOT continue
-		/// </summary>
-		void Start();
-	}
+    /// <summary>
+    ///     The IStartupAction is an interface for modules that can be started when the application starts
+    ///     Extend you module with this interface, and use the StartupActionAttribute to annotate the module
+    /// </summary>
+    public interface IStartupAction : IStartupModule
+    {
+        /// <summary>
+        ///     Perform a start of whatever needs to be started.
+        ///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
+        ///     throw a StartupException if something went terribly wrong and the application should NOT continue
+        /// </summary>
+        void Start();
+    }
 }

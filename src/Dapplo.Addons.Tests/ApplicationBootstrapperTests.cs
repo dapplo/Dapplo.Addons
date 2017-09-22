@@ -31,13 +31,13 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper;
+using Dapplo.Addons.TestAddon;
 using Dapplo.Ini;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
+using Dapplo.Utils;
 using Xunit;
 using Xunit.Abstractions;
-using Dapplo.Addons.TestAddon;
-using Dapplo.Utils;
 
 #endregion
 
@@ -48,6 +48,7 @@ namespace Dapplo.Addons.Tests
     {
         private const string ApplicationName = "Dapplo";
         private readonly IniConfig _iniConfig = new IniConfig(ApplicationName, ApplicationName);
+
         public ApplicationBootstrapperTests(ITestOutputHelper testOutputHelper)
         {
             LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
@@ -120,7 +121,6 @@ namespace Dapplo.Addons.Tests
 
                 // Only for improved Code coverage
                 Assert.NotNull(bootstrapper.GetExport<IniConfig, IStartupMetadata>().Value);
-
             }
             Assert.True(isDisposed);
             // Dispose automatically calls IShutdownActions
@@ -197,7 +197,6 @@ namespace Dapplo.Addons.Tests
                 Assert.True(hasAwaitStartFalse);
 
                 Assert.True(bootstrapper.GetExports(typeof(IStartupModule)).Any());
-
             }
             // Dispose automatically calls IShutdownActions
         }

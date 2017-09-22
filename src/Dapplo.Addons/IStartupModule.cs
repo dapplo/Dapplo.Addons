@@ -25,16 +25,14 @@
 
 #region Usings
 
-
-
 #endregion
 
 namespace Dapplo.Addons
 {
-	/// <summary>
-	///     The IStartupModule is a marker interface for modules that are called on startup
-	/// </summary>
-	public interface IStartupModule : IModule
-	{
-	}
+    /// <summary>
+    ///     The IStartupModule is a marker interface for modules that are called on startup
+    /// </summary>
+    public interface IStartupModule : IModule
+    {
+    }
 }

@@ -37,6 +37,7 @@ namespace Dapplo.Addons.Bootstrapper.Internal
     public sealed class SimpleDisposable : IDisposable
     {
         private readonly Action _action;
+
         // To detect redundant calls, we store a flag
         private bool _disposed;
 

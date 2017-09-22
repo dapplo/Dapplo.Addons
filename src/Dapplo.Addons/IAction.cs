@@ -34,15 +34,15 @@ namespace Dapplo.Addons
 {
 	/// <summary>
 	///     The IAction describes modules that execute
-	/// (Currently unused.)
+	///     (Currently unused.)
 	/// </summary>
 	public interface IAction : IModule
-	{
-		/// <summary>
-		///     Execute the action
-		/// </summary>
-		/// <param name="token"></param>
-		/// <returns>task with boolean</returns>
-		Task<bool> ExecuteAsync(CancellationToken token = default(CancellationToken));
-	}
+    {
+        /// <summary>
+        ///     Execute the action
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns>task with boolean</returns>
+        Task<bool> ExecuteAsync(CancellationToken token = default(CancellationToken));
+    }
 }

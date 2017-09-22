@@ -40,11 +40,11 @@ namespace Dapplo.Addons
     public class StartupException : Exception
     {
         /// <summary>
-        /// Make serializazion possible
+        ///     Make serializazion possible
         /// </summary>
         /// <param name="info"></param>
         /// <param name="context"></param>
-        protected StartupException(SerializationInfo info, StreamingContext context) 
+        protected StartupException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }

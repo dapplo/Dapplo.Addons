@@ -32,21 +32,21 @@ using System.ComponentModel.Composition;
 
 namespace Dapplo.Addons.TestAddon
 {
-	[StartupAction(AwaitStart = true, StartupOrder = 1)]
-	public class StartupExceptionThrowingAddon : IStartupAction
-	{
-		/// <summary>
-		///     This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
-		/// </summary>
-		[Import(AllowDefault = true)]
-		private bool ThrowStartupException { get; set; }
+    [StartupAction(AwaitStart = true, StartupOrder = 1)]
+    public class StartupExceptionThrowingAddon : IStartupAction
+    {
+        /// <summary>
+        ///     This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
+        /// </summary>
+        [Import(AllowDefault = true)]
+        private bool ThrowStartupException { get; set; }
 
-		public void Start()
-		{
-			if (ThrowStartupException)
-			{
-				throw new StartupException("I was ordered to!!!", new NotSupportedException());
-			}
-		}
-	}
+        public void Start()
+        {
+            if (ThrowStartupException)
+            {
+                throw new StartupException("I was ordered to!!!", new NotSupportedException());
+            }
+        }
+    }
 }

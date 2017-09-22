@@ -26,7 +26,7 @@
 namespace Dapplo.Addons
 {
     /// <summary>
-    /// This describes something which can provide dependencies
+    ///     This describes something which can provide dependencies
     /// </summary>
     public interface IDependencyProvider
     {

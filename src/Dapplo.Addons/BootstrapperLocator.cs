@@ -23,34 +23,39 @@
 
 #endregion
 
+#region Usings
+
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
+#endregion
+
 namespace Dapplo.Addons
 {
     /// <summary>
-    /// A helper class to get to the current IBootstrapper
-    /// Although this is bad practice, from my point of view this is better than having to add Dapplo.Addons.Bootstrapper as a dependency.
+    ///     A helper class to get to the current IBootstrapper
+    ///     Although this is bad practice, from my point of view this is better than having to add Dapplo.Addons.Bootstrapper
+    ///     as a dependency.
     /// </summary>
     public static class BootstrapperLocator
     {
         /// <summary>
-        /// Used to register / deregister the bootstrappers
+        ///     Used to register / deregister the bootstrappers
         /// </summary>
         private static readonly IList<IBootstrapper> BootstrapperRegistry = new List<IBootstrapper>();
 
         /// <summary>
-        /// Register the bootstrapper
+        ///     Register the bootstrapper
         /// </summary>
         /// <param name="bootstrapper">IBootstrapper</param>
         public static void Register(IBootstrapper bootstrapper)
         {
             BootstrapperRegistry.Add(bootstrapper);
         }
-        
+
         /// <summary>
-        /// Unregister the bootstrapper
+        ///     Unregister the bootstrapper
         /// </summary>
         /// <param name="bootstrapper">IBootstrapper</param>
         public static void Unregister(IBootstrapper bootstrapper)
@@ -59,12 +64,12 @@ namespace Dapplo.Addons
         }
 
         /// <summary>
-        /// All available bootstrappers
+        ///     All available bootstrappers
         /// </summary>
         public static IReadOnlyCollection<IBootstrapper> Bootstrappers => new ReadOnlyCollection<IBootstrapper>(BootstrapperRegistry);
 
         /// <summary>
-        /// Get the current IBootstrapper, if there are multiple than this is the latest.
+        ///     Get the current IBootstrapper, if there are multiple than this is the latest.
         /// </summary>
         public static IBootstrapper CurrentBootstrapper => BootstrapperRegistry.Last();
     }

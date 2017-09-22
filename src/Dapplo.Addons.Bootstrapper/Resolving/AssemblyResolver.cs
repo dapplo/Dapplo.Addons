@@ -65,13 +65,13 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         }
 
         /// <summary>
-        /// The extensions used for finding assemblies, you can add your own.
-        /// Extensions can end on .gz when such a file/resource is used it will automatically be decompresed
+        ///     The extensions used for finding assemblies, you can add your own.
+        ///     Extensions can end on .gz when such a file/resource is used it will automatically be decompresed
         /// </summary>
         public static ISet<string> Extensions { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {"dll", "dll.gz", "dll.compressed"};
 
         /// <summary>
-        /// Directories which this AssemblyResolver uses to find assemblies
+        ///     Directories which this AssemblyResolver uses to find assemblies
         /// </summary>
         public static IEnumerable<string> Directories => ResolveDirectories;
 
@@ -87,13 +87,15 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public static bool ResolveEmbeddedBeforeFiles { get; set; } = true;
 
         /// <summary>
-        ///     Defines if before loading an assembly from a resource, the Assembly names from the cache are checked against the resource name.
-        ///     This speeds up the loading, BUT might have a problem that an assembly "x.y.z.dll" is skipped as "y.z.dll" was already loaded.
+        ///     Defines if before loading an assembly from a resource, the Assembly names from the cache are checked against the
+        ///     resource name.
+        ///     This speeds up the loading, BUT might have a problem that an assembly "x.y.z.dll" is skipped as "y.z.dll" was
+        ///     already loaded.
         /// </summary>
         public static bool CheckEmbeddedResourceNameAgainstCache { get; set; } = true;
 
         /// <summary>
-        /// Add the specified directory, by converting it to an absolute directory
+        ///     Add the specified directory, by converting it to an absolute directory
         /// </summary>
         /// <param name="directory">Directory to add for resolving</param>
         public static void AddDirectory(string directory)
@@ -108,7 +110,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         }
 
         /// <summary>
-        /// Extension to register an assembly to the AssemblyResolver, this is used for resolving embedded assemblies
+        ///     Extension to register an assembly to the AssemblyResolver, this is used for resolving embedded assemblies
         /// </summary>
         /// <param name="assembly">Assembly</param>
         /// <param name="filepath">Path to assembly, or null if it isn't loaded from the file system</param>
@@ -122,7 +124,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             var assemblyName = assembly.GetName().Name;
             lock (AssembliesByName)
             {
-
                 if (!AssembliesByName.ContainsKey(assembly.GetName().Name))
                 {
                     Log.Verbose().WriteLine("Registering Assembly {0}", assemblyName);
@@ -222,13 +223,15 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             var assembly = FindAssembly(assemblyName.Name);
             if (assembly != null && assembly.FullName != assemblyName.FullName)
             {
-                Log.Warn().WriteLine("Requested was {0} returned was {1}, this might cause issues but loading the same assembly would be worse.", assemblyName.FullName, assembly.FullName);
+                Log.Warn().WriteLine("Requested was {0} returned was {1}, this might cause issues but loading the same assembly would be worse.", assemblyName.FullName,
+                    assembly.FullName);
             }
             return assembly;
         }
 
         /// <summary>
-        /// This goes over the know assemblies from this AssemblyResolver, but also checks the current AppDomain so assemblies are not loaded double!
+        ///     This goes over the know assemblies from this AssemblyResolver, but also checks the current AppDomain so assemblies
+        ///     are not loaded double!
         /// </summary>
         /// <param name="assemblyName">string with the name (not full name) of the assembly</param>
         /// <returns>Assembly</returns>
@@ -245,10 +248,11 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             {
                 Log.Verbose().WriteLine("Using cached assembly {0}.", assembly.FullName);
             }
-            else 
+            else
             {
                 // The assembly was not found in our own cache, find it in the current AppDomain
-                assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => string.Equals(x.GetName().Name, assemblyName, StringComparison.InvariantCultureIgnoreCase));
+                assembly = AppDomain.CurrentDomain.GetAssemblies()
+                    .FirstOrDefault(x => string.Equals(x.GetName().Name, assemblyName, StringComparison.InvariantCultureIgnoreCase));
                 if (assembly != null)
                 {
                     Log.Verbose().WriteLine("Using already loaded assembly {1} for requested {0}.", assemblyName, assembly.FullName);
@@ -258,14 +262,13 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 else
                 {
                     Log.Verbose().WriteLine("Couldn't find an available assembly called {0}.", assemblyName);
-
                 }
             }
             return assembly;
         }
 
         /// <summary>
-        /// check the caches to see if the assembly was already loaded
+        ///     check the caches to see if the assembly was already loaded
         /// </summary>
         /// <param name="filepath">string with the path where the assembly should be loaded from</param>
         /// <returns>Assembly when it was cached, or null when it was not cached</returns>
@@ -292,7 +295,9 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             {
                 lock (AssembliesByPath)
                 {
-                    assembly = AssembliesByPath.Where(x => string.Equals(Path.GetFileNameWithoutExtension(x.Key), Path.GetFileNameWithoutExtension(filepath), StringComparison.InvariantCultureIgnoreCase)).Select(x => x.Value).FirstOrDefault();
+                    assembly = AssembliesByPath
+                        .Where(x => string.Equals(Path.GetFileNameWithoutExtension(x.Key), Path.GetFileNameWithoutExtension(filepath),
+                            StringComparison.InvariantCultureIgnoreCase)).Select(x => x.Value).FirstOrDefault();
                 }
                 if (assembly != null)
                 {
@@ -316,7 +321,8 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// </summary>
         /// <param name="filepath">string with the path to the file</param>
         /// <returns>Assembly</returns>
-        [SuppressMessage("Sonar Code Smell", "S3885:Assembly.Load should be used", Justification = "Assembly.Load doesn't work on paths outside of the AppDomain.CurrentDomain.BaseDirectory")]
+        [SuppressMessage("Sonar Code Smell", "S3885:Assembly.Load should be used", Justification =
+            "Assembly.Load doesn't work on paths outside of the AppDomain.CurrentDomain.BaseDirectory")]
         public static Assembly LoadAssemblyFromFile(string filepath)
         {
             if (string.IsNullOrEmpty(filepath))
@@ -453,7 +459,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         ///     Find the specified assemblies from a manifest resource or from the file system.
         ///     It is possible to use wildcards but the first match will be loaded!
         /// </summary>
-        /// <param name="assemblyNames">IEnumerable with the assembly names, e.g. from AssemblyName.Name, do not specify an extension</param>
+        /// <param name="assemblyNames">
+        ///     IEnumerable with the assembly names, e.g. from AssemblyName.Name, do not specify an
+        ///     extension
+        /// </param>
         /// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
         /// <returns>IEnumerable with Assembly</returns>
         public static IEnumerable<Assembly> FindAssemblies(IEnumerable<string> assemblyNames, IEnumerable<string> extensions = null)
@@ -538,7 +547,9 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 var cachedAssembly = FindCachedAssemblyByAssemblyName(possibleAssemblyName);
                 if (cachedAssembly != null)
                 {
-                    Log.Warn().WriteLine("Cached assembly {0} found for resource {1}, if this is not correct disable this by setting CheckEmbeddedResourceNameAgainstCache to false", cachedAssembly.FullName, resourceName);
+                    Log.Warn().WriteLine(
+                        "Cached assembly {0} found for resource {1}, if this is not correct disable this by setting CheckEmbeddedResourceNameAgainstCache to false",
+                        cachedAssembly.FullName, resourceName);
                     return cachedAssembly;
                 }
             }

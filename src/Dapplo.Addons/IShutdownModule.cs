@@ -25,16 +25,14 @@
 
 #region Usings
 
-
-
 #endregion
 
 namespace Dapplo.Addons
 {
-	/// <summary>
-	///     The IShutdownModule is a marker interface for modules that are called on shutdown
-	/// </summary>
-	public interface IShutdownModule : IModule
-	{
-	}
+    /// <summary>
+    ///     The IShutdownModule is a marker interface for modules that are called on shutdown
+    /// </summary>
+    public interface IShutdownModule : IModule
+    {
+    }
 }

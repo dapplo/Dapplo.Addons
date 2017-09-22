@@ -31,24 +31,24 @@ using System;
 
 namespace Dapplo.Addons.NuGet
 {
-	public static class AppDomainExtensions
-	{
-		/// <summary>
-		///     Attach a nuget Assembly resolved to the AppDomain
-		///     This could be called multiple times, for multiple package sources
-		/// </summary>
-		/// <param name="currentAppDomain">AppDomain to attach the nuget resolver to</param>
-		/// <param name="localPackageSource">Local path for storing the downloaded packages</param>
-		/// <param name="remotePackageSource">Remote package source, either NuGet.org or your own package source</param>
-		public static void AttachNugetResolver(this AppDomain currentAppDomain, string localPackageSource = @"nuget-repository",
-			string remotePackageSource = "https://packages.nuget.org/api/v2")
-		{
-			var nugetResolver = new NuGetResolver
-			{
-				LocalPackageSource = localPackageSource,
-				RemotePackageSource = remotePackageSource
-			};
-			currentAppDomain.AssemblyResolve += nugetResolver.NugetResolveEventHandler;
-		}
-	}
+    public static class AppDomainExtensions
+    {
+        /// <summary>
+        ///     Attach a nuget Assembly resolved to the AppDomain
+        ///     This could be called multiple times, for multiple package sources
+        /// </summary>
+        /// <param name="currentAppDomain">AppDomain to attach the nuget resolver to</param>
+        /// <param name="localPackageSource">Local path for storing the downloaded packages</param>
+        /// <param name="remotePackageSource">Remote package source, either NuGet.org or your own package source</param>
+        public static void AttachNugetResolver(this AppDomain currentAppDomain, string localPackageSource = @"nuget-repository",
+            string remotePackageSource = "https://packages.nuget.org/api/v2")
+        {
+            var nugetResolver = new NuGetResolver
+            {
+                LocalPackageSource = localPackageSource,
+                RemotePackageSource = remotePackageSource
+            };
+            currentAppDomain.AssemblyResolve += nugetResolver.NugetResolveEventHandler;
+        }
+    }
 }

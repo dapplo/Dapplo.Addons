@@ -1,5 +1,9 @@
-﻿using System;
+﻿#region Usings
+
+using System;
 using System.ComponentModel.Composition;
+
+#endregion
 
 namespace Dapplo.Addons.Tests.TestModules
 {

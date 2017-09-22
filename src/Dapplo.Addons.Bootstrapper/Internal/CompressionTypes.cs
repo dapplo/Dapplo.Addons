@@ -26,20 +26,22 @@
 namespace Dapplo.Addons.Bootstrapper.Internal
 {
     /// <summary>
-    /// Enum to specify the compression type
+    ///     Enum to specify the compression type
     /// </summary>
     public enum CompressionTypes
     {
         /// <summary>
-        /// No compression
+        ///     No compression
         /// </summary>
         None,
+
         /// <summary>
-        /// Used for .gz files
+        ///     Used for .gz files
         /// </summary>
         Gzip,
+
         /// <summary>
-        /// Used for .compressed files
+        ///     Used for .compressed files
         /// </summary>
         Deflate
     }

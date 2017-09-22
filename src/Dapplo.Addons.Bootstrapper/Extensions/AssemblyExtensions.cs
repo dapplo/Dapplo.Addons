@@ -23,18 +23,22 @@
 
 #endregion
 
+#region Usings
+
 using System;
 using System.Reflection;
+
+#endregion
 
 namespace Dapplo.Addons.Bootstrapper.Extensions
 {
     /// <summary>
-    /// Extensions to help using an Assembly
+    ///     Extensions to help using an Assembly
     /// </summary>
     public static class AssemblyExtensions
     {
         /// <summary>
-        /// Get the location of an assembly
+        ///     Get the location of an assembly
         /// </summary>
         /// <param name="assembly">Assembly</param>
         /// <param name="allowCodeBase">specify if it's okay to also consider the codeBase value</param>

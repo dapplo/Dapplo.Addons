@@ -29,7 +29,6 @@ using System.Text.RegularExpressions;
 using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
-using Dapplo.Utils;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -55,7 +54,7 @@ namespace Dapplo.Addons.Tests
         public void TestScan()
         {
             var startupDirectory = FileLocations.StartupDirectory;
-            var files = FileLocations.Scan(new[] { startupDirectory }, "*.xml");
+            var files = FileLocations.Scan(new[] {startupDirectory}, "*.xml");
             Assert.Contains(files, file => file.EndsWith("Dapplo.Utils.xml"));
         }
 
@@ -63,7 +62,7 @@ namespace Dapplo.Addons.Tests
         public void TestScanRegex()
         {
             var startupDirectory = FileLocations.StartupDirectory;
-            var files = FileLocations.Scan(new[] { startupDirectory }, new Regex(@".*\.xml"));
+            var files = FileLocations.Scan(new[] {startupDirectory}, new Regex(@".*\.xml"));
             Assert.Contains(files, file => file.Item1.EndsWith("Dapplo.Utils.xml"));
         }
     }

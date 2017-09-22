@@ -42,7 +42,6 @@ namespace Dapplo.Addons.Tests
     public class AssemblyResolveTests
     {
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="testOutputHelper"></param>
         public AssemblyResolveTests(ITestOutputHelper testOutputHelper)
@@ -57,7 +56,6 @@ namespace Dapplo.Addons.Tests
         }
 
         /// <summary>
-        /// 
         /// </summary>
         [Fact]
         public void Test_AssemblyNameToRegex()

@@ -34,7 +34,8 @@ namespace Dapplo.Addons
 {
     /// <summary>
     ///     This interface is one of many which the Dapplo.Addon CompositionBootstrapper (ApplicationBootstrapper) implements.
-    ///     The Bootstrapper will automatically export itself as IMefServiceLocator, so framework code can use imports to get basic servicelocator support.
+    ///     The Bootstrapper will automatically export itself as IMefServiceLocator, so framework code can use imports to get
+    ///     basic servicelocator support.
     ///     A IMefServiceLocator should only be used for cases where a simple import can't work.
     /// </summary>
     public interface IMefServiceLocator

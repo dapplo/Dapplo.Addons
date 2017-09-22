@@ -34,61 +34,62 @@ using System.ComponentModel.Composition.Primitives;
 
 namespace Dapplo.Addons
 {
-	/// <summary>
-	///     This interface is one of many which the Dapplo.Addon CompositionBootstrapper (ApplicationBootstrapper) implements.
-	///     The Bootstrapper will automatically export itself as IServiceExporter, so framework code can specify what exports
-	///     are available
-	///     A IServiceExporter should only be used for cases where a simple export can't work.
-	/// </summary>
-	public interface IServiceExporter
-	{
-		/// <summary>
-		///     Export an object
-		/// </summary>
-		/// <typeparam name="T">Type to export</typeparam>
-		/// <param name="obj">object to add</param>
-		/// <param name="metadata">Metadata for the export</param>
-		/// <returns>ComposablePart, this can be used to remove the export later</returns>
-		ComposablePart Export<T>(T obj, IDictionary<string, object> metadata = null);
+    /// <summary>
+    ///     This interface is one of many which the Dapplo.Addon CompositionBootstrapper (ApplicationBootstrapper) implements.
+    ///     The Bootstrapper will automatically export itself as IServiceExporter, so framework code can specify what exports
+    ///     are available
+    ///     A IServiceExporter should only be used for cases where a simple export can't work.
+    /// </summary>
+    public interface IServiceExporter
+    {
+        /// <summary>
+        ///     Export an object
+        /// </summary>
+        /// <typeparam name="T">Type to export</typeparam>
+        /// <param name="obj">object to add</param>
+        /// <param name="metadata">Metadata for the export</param>
+        /// <returns>ComposablePart, this can be used to remove the export later</returns>
+        ComposablePart Export<T>(T obj, IDictionary<string, object> metadata = null);
 
-		/// <summary>
-		///     Export an object
-		/// </summary>
-		/// <param name="type">Type to export</param>
-		/// <param name="obj">object to add</param>
-		/// <param name="metadata">Metadata for the export</param>
-		/// <returns>ComposablePart, this can be used to remove the export later</returns>
-		ComposablePart Export(Type type, object obj, IDictionary<string, object> metadata = null);
+        /// <summary>
+        ///     Export an object
+        /// </summary>
+        /// <param name="type">Type to export</param>
+        /// <param name="obj">object to add</param>
+        /// <param name="metadata">Metadata for the export</param>
+        /// <returns>ComposablePart, this can be used to remove the export later</returns>
+        ComposablePart Export(Type type, object obj, IDictionary<string, object> metadata = null);
 
-		/// <summary>
-		///     Export an object
-		/// </summary>
-		/// <typeparam name="T">Type to export</typeparam>
-		/// <param name="contractName">contractName under which the object of Type T is registered</param>
-		/// <param name="obj">object to add</param>
-		/// <param name="metadata">Metadata for the export</param>
-		/// <returns>ComposablePart, this can be used to remove the export later</returns>
-		ComposablePart Export<T>(string contractName, T obj, IDictionary<string, object> metadata = null);
+        /// <summary>
+        ///     Export an object
+        /// </summary>
+        /// <typeparam name="T">Type to export</typeparam>
+        /// <param name="contractName">contractName under which the object of Type T is registered</param>
+        /// <param name="obj">object to add</param>
+        /// <param name="metadata">Metadata for the export</param>
+        /// <returns>ComposablePart, this can be used to remove the export later</returns>
+        ComposablePart Export<T>(string contractName, T obj, IDictionary<string, object> metadata = null);
 
-		/// <summary>
-		///     Export an object
-		/// </summary>
-		/// <param name="type">Type to export</param>
-		/// <param name="contractName">contractName under which the object of Type T is registered</param>
-		/// <param name="obj">object to add</param>
-		/// <param name="metadata">Metadata for the export</param>
-		/// <returns>ComposablePart, this can be used to remove the export later</returns>
-		ComposablePart Export(Type type, string contractName, object obj, IDictionary<string, object> metadata = null);
+        /// <summary>
+        ///     Export an object
+        /// </summary>
+        /// <param name="type">Type to export</param>
+        /// <param name="contractName">contractName under which the object of Type T is registered</param>
+        /// <param name="obj">object to add</param>
+        /// <param name="metadata">Metadata for the export</param>
+        /// <returns>ComposablePart, this can be used to remove the export later</returns>
+        ComposablePart Export(Type type, string contractName, object obj, IDictionary<string, object> metadata = null);
 
-		/// <summary>
-		///     Release an export which was previously added with the Export method
-		/// </summary>
-		/// <param name="part">ComposablePart from Export call</param>
-		void Release(ComposablePart part);
+        /// <summary>
+        ///     Release an export which was previously added with the Export method
+        /// </summary>
+        /// <param name="part">ComposablePart from Export call</param>
+        void Release(ComposablePart part);
 
-		/// <summary>
-		/// The list of export providers used when an export cannot be found, these need to be added before the bootstrapper is started
-		/// </summary>
-		IList<ExportProvider> ExportProviders { get; }
-	}
+	    /// <summary>
+	    ///     The list of export providers used when an export cannot be found, these need to be added before the bootstrapper is
+	    ///     started
+	    /// </summary>
+	    IList<ExportProvider> ExportProviders { get; }
+    }
 }

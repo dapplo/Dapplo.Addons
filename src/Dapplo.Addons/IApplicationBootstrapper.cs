@@ -36,7 +36,7 @@ namespace Dapplo.Addons
         string ApplicationName { get; }
 
         /// <summary>
-        /// Is the mutex for the application locked=
+        ///     Is the mutex for the application locked=
         /// </summary>
         bool IsMutexLocked { get; }
     }

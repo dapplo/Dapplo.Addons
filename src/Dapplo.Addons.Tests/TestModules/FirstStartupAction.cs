@@ -1,5 +1,9 @@
-﻿using System;
+﻿#region Usings
+
+using System;
 using System.ComponentModel.Composition;
+
+#endregion
 
 namespace Dapplo.Addons.Tests.TestModules
 {
@@ -8,6 +12,7 @@ namespace Dapplo.Addons.Tests.TestModules
     {
         [Import("FirstAction", AllowDefault = true)]
         private Action MyStartAction { get; set; }
+
         public void Start()
         {
             MyStartAction?.Invoke();

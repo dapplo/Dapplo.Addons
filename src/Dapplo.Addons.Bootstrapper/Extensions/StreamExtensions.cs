@@ -29,15 +29,15 @@ using System.IO;
 
 #endregion
 
-namespace Dapplo.Addons.Bootstrapper.Internal
+namespace Dapplo.Addons.Bootstrapper.Extensions
 {
     /// <summary>
-    /// Extensions for Stream
+    ///     Extensions for Stream
     /// </summary>
     public static class StreamExtensions
     {
         /// <summary>
-        /// Create a byte array for the stream
+        ///     Create a byte array for the stream
         /// </summary>
         /// <param name="stream">Stream</param>
         /// <returns>byte array</returns>

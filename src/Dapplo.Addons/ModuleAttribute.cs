@@ -32,30 +32,30 @@ using System.ComponentModel.Composition;
 
 namespace Dapplo.Addons
 {
-	/// <summary>
-	///     This is the Module attribute which can be used to specify type-safe meta-data
-	///     Currently there are none in here, but it was made available so it's possible to add them at a later time
-	///     In general it is bad to import via a specific type, always try to use contract interfaces.
-	///     As the IModule is pretty much only a marker interface, it is not very usefull and this is why the attribute is
-	///     abstract
-	/// </summary>
-	[MetadataAttribute]
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-	public abstract class ModuleAttribute : InheritedExportAttribute
-	{
-		/// <summary>
-		///     Constructor with a contractname, and a type
-		/// </summary>
-		protected ModuleAttribute(string contractname, Type type) : base(contractname, type)
-		{
-		}
+    /// <summary>
+    ///     This is the Module attribute which can be used to specify type-safe meta-data
+    ///     Currently there are none in here, but it was made available so it's possible to add them at a later time
+    ///     In general it is bad to import via a specific type, always try to use contract interfaces.
+    ///     As the IModule is pretty much only a marker interface, it is not very usefull and this is why the attribute is
+    ///     abstract
+    /// </summary>
+    [MetadataAttribute]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    public abstract class ModuleAttribute : InheritedExportAttribute
+    {
+        /// <summary>
+        ///     Constructor with a contractname, and a type
+        /// </summary>
+        protected ModuleAttribute(string contractname, Type type) : base(contractname, type)
+        {
+        }
 
-		/// <summary>
-		///     Constructor with the type
-		/// </summary>
-		/// <param name="type"></param>
-		protected ModuleAttribute(Type type) : base(type)
-		{
-		}
-	}
+        /// <summary>
+        ///     Constructor with the type
+        /// </summary>
+        /// <param name="type"></param>
+        protected ModuleAttribute(Type type) : base(type)
+        {
+        }
+    }
 }

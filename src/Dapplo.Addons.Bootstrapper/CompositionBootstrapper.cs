@@ -61,12 +61,13 @@ namespace Dapplo.Addons.Bootstrapper
         /// <summary>
         ///     The AggregateCatalog contains all the catalogs with the assemblies in it.
         /// </summary>
-        protected AggregateCatalog AggregateCatalog { get; set; } = new AggregateCatalog();
+        protected AggregateCatalog AggregateCatalog { get; private set; } = new AggregateCatalog();
 
         /// <summary>
         ///     Specify how the composition is made, is used in the Run()
         /// </summary>
-        protected CompositionOptions CompositionOptionFlags { get; set; } = CompositionOptions.DisableSilentRejection | CompositionOptions.ExportCompositionService | CompositionOptions.IsThreadSafe;
+        protected CompositionOptions CompositionOptionFlags { get; set; } =
+            CompositionOptions.DisableSilentRejection | CompositionOptions.ExportCompositionService | CompositionOptions.IsThreadSafe;
 
         /// <summary>
         ///     The CompositionContainer
@@ -84,8 +85,8 @@ namespace Dapplo.Addons.Bootstrapper
         protected bool IsAggregateCatalogConfigured { get; set; }
 
         /// <summary>
-        /// Make sure the assembly resolver is active as soon as the Bootstrapper is initialized.
-        ///Tthis makes sure assemblies which are embedded or in a subdirectory can be found.
+        ///     Make sure the assembly resolver is active as soon as the Bootstrapper is initialized.
+        ///     Tthis makes sure assemblies which are embedded or in a subdirectory can be found.
         /// </summary>
         public CompositionBootstrapper()
         {
@@ -99,7 +100,7 @@ namespace Dapplo.Addons.Bootstrapper
             AssemblyResolver.RegisterAssemblyResolve();
         }
 
-        
+
         #region IServiceProvider
 
         /// <inheritdoc />
@@ -114,13 +115,16 @@ namespace Dapplo.Addons.Bootstrapper
 
         #endregion
 
-        /// <inheritdoc />
+        /// <summary>
+        ///     The Configure of the bootstrapper initializes the
+        /// </summary>
         protected virtual void Configure()
         {
             if (IsAggregateCatalogConfigured)
             {
                 return;
             }
+            IsAggregateCatalogConfigured = true;
 
             // Add the entry assembly, which should be the application, but not the calling or executing (as this is Dapplo.Addons)
             var applicationAssembly = Assembly.GetEntryAssembly();
@@ -157,7 +161,6 @@ namespace Dapplo.Addons.Bootstrapper
         public IList<string> KnownFiles { get; } = new List<string>();
 
         /// <inheritdoc />
-
         public void AddScanDirectory(string directory)
         {
             if (AllowAssemblyCleanup)
@@ -177,7 +180,7 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
-        /// Helper method to test if we already know an assembly
+        ///     Helper method to test if we already know an assembly
         /// </summary>
         /// <param name="assembly">Assembly to test for</param>
         /// <returns>true if it's know, false if not</returns>
@@ -193,7 +196,7 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
-        /// Helper method to add a known assembly to the KnownAssemblies
+        ///     Helper method to add a known assembly to the KnownAssemblies
         /// </summary>
         /// <param name="assembly">Assembly</param>
         private void AddKnownAssembly(Assembly assembly)
@@ -224,11 +227,11 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 throw new ArgumentNullException(nameof(assemblyCatalog));
             }
-
             if (HasAssembly(assemblyCatalog.Assembly))
             {
                 return;
             }
+
             try
             {
                 var location = assemblyCatalog.Assembly.GetLocation(false);
@@ -336,7 +339,7 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
-        /// Helper method triggers the loading of the assemblies on the file system
+        ///     Helper method triggers the loading of the assemblies on the file system
         /// </summary>
         /// <param name="directories">IEnumerable of string with directories to scan</param>
         /// <param name="pattern">Regex</param>
@@ -358,8 +361,8 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
-        /// A helper method which will delete the assemblies, which are already embedded by costura, from the directory.
-        /// This prevents double loading and should make the application stable.
+        ///     A helper method which will delete the assemblies, which are already embedded by costura, from the directory.
+        ///     This prevents double loading and should make the application stable.
         /// </summary>
         /// <param name="directory">string with the </param>
         private void RemoveEmbeddedAssembliesFromDirectory(string directory)
@@ -381,7 +384,7 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
-        /// Helper method which triggers the loading of embedded assemblies
+        ///     Helper method which triggers the loading of embedded assemblies
         /// </summary>
         /// <param name="pattern"></param>
         /// <param name="loadEmbedded"></param>
@@ -424,7 +427,10 @@ namespace Dapplo.Addons.Bootstrapper
             Add(typeAssembly);
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        ///     Add an export provider
+        /// </summary>
+        /// <param name="exportProvider">ExportProvider</param>
         public void Add(ExportProvider exportProvider)
         {
             if (IsInitialized)
@@ -443,6 +449,7 @@ namespace Dapplo.Addons.Bootstrapper
         #endregion
 
         #region IDependencyProvider
+
         /// <inheritdoc />
         public void ProvideDependencies(object objectWithDependencies)
         {
@@ -460,6 +467,7 @@ namespace Dapplo.Addons.Bootstrapper
             }
             Container.SatisfyImportsOnce(objectWithDependencies);
         }
+
         #endregion
 
         #region IMefServiceLocator
@@ -590,7 +598,6 @@ namespace Dapplo.Addons.Bootstrapper
             return GetExports<TService>().Select(lazy => lazy.Value);
         }
 
-        
         #endregion
 
         #region IServiceExporter
@@ -863,9 +870,7 @@ namespace Dapplo.Addons.Bootstrapper
             _disposedValue = true;
         }
 
-        /// <summary>
-        ///     Implement IDisposable
-        /// </summary>
+        /// <inheritdoc />
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.

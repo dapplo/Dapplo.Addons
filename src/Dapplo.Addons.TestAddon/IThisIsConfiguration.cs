@@ -32,11 +32,10 @@ using Dapplo.Ini;
 
 namespace Dapplo.Addons.TestAddon
 {
-	[IniSection("MySectionName")]
-	public interface IThisIsConfiguration : IIniSection, IThisIsSubConfiguration
-	{
-		[DefaultValue("Robin")]
-		string Name { get; set; }
-
-	}
+    [IniSection("MySectionName")]
+    public interface IThisIsConfiguration : IIniSection, IThisIsSubConfiguration
+    {
+        [DefaultValue("Robin")]
+        string Name { get; set; }
+    }
 }

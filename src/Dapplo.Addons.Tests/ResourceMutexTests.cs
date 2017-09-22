@@ -38,69 +38,69 @@ using Xunit.Abstractions;
 
 namespace Dapplo.Addons.Tests
 {
-	public class ResourceMutexTests
-	{
-		private static readonly LogSource Log = new LogSource();
+    public class ResourceMutexTests
+    {
+        private static readonly LogSource Log = new LogSource();
 
-		public ResourceMutexTests(ITestOutputHelper testOutputHelper)
-		{
-			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
-		}
+        public ResourceMutexTests(ITestOutputHelper testOutputHelper)
+        {
+            LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
+        }
 
-		[Fact]
-		public void TestMutex_100()
-		{
-			var mutexId = Guid.NewGuid().ToString();
-			// Test creating and cleanup 100x
-			var i = 0;
-			do
-			{
-				using (var resourceMutex = ResourceMutex.Create(mutexId, "Call" + i))
-				{
-					Assert.NotNull(resourceMutex);
-					Assert.True(resourceMutex.IsLocked);
-				}
-			} while (i++ < 100);
-		}
+        [Fact]
+        public void TestMutex_100()
+        {
+            var mutexId = Guid.NewGuid().ToString();
+            // Test creating and cleanup 100x
+            var i = 0;
+            do
+            {
+                using (var resourceMutex = ResourceMutex.Create(mutexId, "Call" + i))
+                {
+                    Assert.NotNull(resourceMutex);
+                    Assert.True(resourceMutex.IsLocked);
+                }
+            } while (i++ < 100);
+        }
 
-		[Fact]
-		public void TestMutex_Create_Cleanup()
-		{
-			var mutexId = Guid.NewGuid().ToString();
-			using (var resourceMutex = ResourceMutex.Create(mutexId, "TestMutex_Create_Cleanup"))
-			{
-				Assert.NotNull(resourceMutex);
-				Assert.True(resourceMutex.IsLocked);
-			}
-		}
+        [Fact]
+        public void TestMutex_Create_Cleanup()
+        {
+            var mutexId = Guid.NewGuid().ToString();
+            using (var resourceMutex = ResourceMutex.Create(mutexId, "TestMutex_Create_Cleanup"))
+            {
+                Assert.NotNull(resourceMutex);
+                Assert.True(resourceMutex.IsLocked);
+            }
+        }
 
-		[Fact]
-		public void TestMutex_Finalizer()
-		{
-			var mutexId = Guid.NewGuid().ToString();
-			var resourceMutex = ResourceMutex.Create(mutexId, "TestMutex_Finalizer");
-			Assert.NotNull(resourceMutex);
-			Assert.True(resourceMutex.IsLocked);
-		}
+        [Fact]
+        public void TestMutex_Finalizer()
+        {
+            var mutexId = Guid.NewGuid().ToString();
+            var resourceMutex = ResourceMutex.Create(mutexId, "TestMutex_Finalizer");
+            Assert.NotNull(resourceMutex);
+            Assert.True(resourceMutex.IsLocked);
+        }
 
-		[Fact]
-		public void TestMutex_LockTwice()
-		{
-			var mutexId = Guid.NewGuid().ToString();
-			using (var resourceMutex = ResourceMutex.Create(mutexId, "FirstCall"))
-			{
-				Assert.NotNull(resourceMutex);
-				Assert.True(resourceMutex.IsLocked);
-				Task.Factory.StartNew(() =>
-				{
-					using (var resourceMutex2 = ResourceMutex.Create(mutexId, "SecondCall"))
-					{
-						Assert.NotNull(resourceMutex2);
-						Assert.False(resourceMutex2.IsLocked);
-					}
-				}, default(CancellationToken)).Wait();
-				Log.Info().WriteLine("Finished task");
-			}
-		}
-	}
+        [Fact]
+        public void TestMutex_LockTwice()
+        {
+            var mutexId = Guid.NewGuid().ToString();
+            using (var resourceMutex = ResourceMutex.Create(mutexId, "FirstCall"))
+            {
+                Assert.NotNull(resourceMutex);
+                Assert.True(resourceMutex.IsLocked);
+                Task.Factory.StartNew(() =>
+                {
+                    using (var resourceMutex2 = ResourceMutex.Create(mutexId, "SecondCall"))
+                    {
+                        Assert.NotNull(resourceMutex2);
+                        Assert.False(resourceMutex2.IsLocked);
+                    }
+                }, default(CancellationToken)).Wait();
+                Log.Info().WriteLine("Finished task");
+            }
+        }
+    }
 }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿#region Usings
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -6,6 +8,8 @@ using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Tests.Entities;
 using Xunit;
+
+#endregion
 
 namespace Dapplo.Addons.Tests
 {
@@ -20,7 +24,7 @@ namespace Dapplo.Addons.Tests
             startupModules.Add(new Lazy<IStartupModule, IStartupMetadata>(
                 () => new TestAsyncStartupAction(randomCreator.Next(100, 1000)),
                 new StartupActionAttribute {AwaitStart = true, StartupOrder = 10})
-                );
+            );
 
             var cancellationToken = default(CancellationToken);
             var startupGroups = startupModules.GroupBy(lazy => lazy.Metadata.StartupOrder).OrderBy(lazies => lazies.Key);
@@ -28,9 +32,7 @@ namespace Dapplo.Addons.Tests
             {
                 var tasks = startupGroup.Select(lazy =>
                 {
-                    var startupAction = lazy.Value as IStartupAction;
-
-                    return startupAction != null
+                    return lazy.Value is IStartupAction startupAction
                         ? Task.Run(() => startupAction.Start(), cancellationToken)
                         : (lazy.Value as IAsyncStartupAction)?.StartAsync(cancellationToken);
                 });
@@ -46,15 +48,17 @@ namespace Dapplo.Addons.Tests
             {
                 bootstrapper.Add(GetType());
                 await bootstrapper.InitializeAsync();
-                Action firstAction = () =>
+
+                void FirstAction()
                 {
                     didFirstRun = true;
                     bootstrapper.CancelStartup();
-                };
-                Action secondAction = () => didSecondRun = true;
+                }
 
-                bootstrapper.Export("FirstAction", firstAction);
-                bootstrapper.Export("SecondAction", secondAction);
+                void SecondAction() => didSecondRun = true;
+
+                bootstrapper.Export("FirstAction", (Action) FirstAction);
+                bootstrapper.Export("SecondAction", (Action) SecondAction);
 
                 await bootstrapper.RunAsync();
 

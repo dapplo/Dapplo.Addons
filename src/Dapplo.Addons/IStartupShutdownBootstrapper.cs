@@ -23,8 +23,12 @@
 
 #endregion
 
+#region Usings
+
 using System.Threading;
 using System.Threading.Tasks;
+
+#endregion
 
 namespace Dapplo.Addons
 {
@@ -49,7 +53,7 @@ namespace Dapplo.Addons
         Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// This cancels the startup
+        ///     This cancels the startup
         /// </summary>
         void CancelStartup();
     }

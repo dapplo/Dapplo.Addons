@@ -23,6 +23,8 @@
 
 #endregion
 
+#region Usings
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,10 +33,12 @@ using System.Text.RegularExpressions;
 using Dapplo.Addons.Bootstrapper.Extensions;
 using Dapplo.Log;
 
+#endregion
+
 namespace Dapplo.Addons.Bootstrapper.Internal
 {
     /// <summary>
-    /// A helper class for using Costura embedded assemblies
+    ///     A helper class for using Costura embedded assemblies
     /// </summary>
     internal class CosturaHelper
     {
@@ -45,17 +49,17 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         private readonly MethodInfo _readFromEmbeddedResourcesMethodInfo;
 
         /// <summary>
-        /// all the assemblies which Costura has available
+        ///     all the assemblies which Costura has available
         /// </summary>
         public IDictionary<string, string> AssembliesAsResources { get; }
 
         /// <summary>
-        /// All the symbols which Costura has available 
+        ///     All the symbols which Costura has available
         /// </summary>
         public IDictionary<string, string> SymbolsAsResources { get; }
 
         /// <summary>
-        /// Construct a CosturaHelper
+        ///     Construct a CosturaHelper
         /// </summary>
         public CosturaHelper()
         {
@@ -66,10 +70,10 @@ namespace Dapplo.Addons.Bootstrapper.Internal
                 return;
             }
 
-            AssembliesAsResources = (IDictionary<string, string>)assembliesAsResourcesFieldInfo.GetValue(null);
+            AssembliesAsResources = (IDictionary<string, string>) assembliesAsResourcesFieldInfo.GetValue(null);
 
             var symbolsAsResourcesFieldInfo = assemblyLoaderType.GetField("symbolNames", BindingFlags.Static | BindingFlags.NonPublic);
-            SymbolsAsResources = (IDictionary<string, string>)symbolsAsResourcesFieldInfo?.GetValue(null);
+            SymbolsAsResources = (IDictionary<string, string>) symbolsAsResourcesFieldInfo?.GetValue(null);
 
             _readFromEmbeddedResourcesMethodInfo = assemblyLoaderType.GetMethod("ReadFromEmbeddedResources", BindingFlags.Static | BindingFlags.NonPublic);
             if (_readFromEmbeddedResourcesMethodInfo != null)
@@ -79,23 +83,24 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         }
 
         /// <summary>
-        /// Checks if the specified resource is embedded by Costura
+        ///     Checks if the specified resource is embedded by Costura
         /// </summary>
         /// <param name="resourceName">For instance an assembly name like: Dapplo.Addons.dll</param>
         /// <returns>true if it was found</returns>
         public bool HasResource(string resourceName)
         {
-            return AssembliesAsResources.Any(pair => string.Equals(pair.Value, $"{CosturaPrefix}{resourceName}{CosturaPostfix}", StringComparison.InvariantCultureIgnoreCase) ||
-                                                     string.Equals(pair.Value, $"{CosturaPrefix}{resourceName}", StringComparison.InvariantCultureIgnoreCase));
+            return AssembliesAsResources.Any(pair =>
+                string.Equals(pair.Value, $"{CosturaPrefix}{resourceName}{CosturaPostfix}", StringComparison.InvariantCultureIgnoreCase) ||
+                string.Equals(pair.Value, $"{CosturaPrefix}{resourceName}", StringComparison.InvariantCultureIgnoreCase));
         }
 
         /// <summary>
-        /// Tells if Costura is active
+        ///     Tells if Costura is active
         /// </summary>
-        public bool IsActive { get;  }
+        public bool IsActive { get; }
 
         /// <summary>
-        /// Load the, by costura, embedded assemblies which match the pattern
+        ///     Load the, by costura, embedded assemblies which match the pattern
         /// </summary>
         /// <param name="pattern">Regex to match the embedded assemblies against</param>
         /// <returns>IEnumerable with assemblies</returns>
@@ -104,15 +109,18 @@ namespace Dapplo.Addons.Bootstrapper.Internal
             // Skip the prefix in the pattern matching
             return AssembliesAsResources.Where(pair => pattern.IsMatch(pair.Value.Substring(CosturaPrefix.Length))).Select(assemblyKeyValuePair =>
             {
-                var loadedAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly => string.Equals(assembly.GetName().Name, assemblyKeyValuePair.Key, StringComparison.InvariantCultureIgnoreCase));
+                var loadedAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly =>
+                    string.Equals(assembly.GetName().Name, assemblyKeyValuePair.Key, StringComparison.InvariantCultureIgnoreCase));
                 if (loadedAssembly != null)
                 {
-                    Log.Verbose().WriteLine("Returning assembly '{0}' which was already loaded from: {1}", loadedAssembly.FullName, loadedAssembly.GetLocation() ?? "N.A.");
+                    Log.Verbose().WriteLine("Returning assembly '{0}' which was already loaded from: {1}", loadedAssembly.FullName,
+                        loadedAssembly.GetLocation() ?? "N.A.");
                     return loadedAssembly;
                 }
                 Log.Verbose().WriteLine("Forcing load from Costura packed assembly '{0}'", assemblyKeyValuePair.Key);
 
-                return _readFromEmbeddedResourcesMethodInfo.Invoke(null, new object[] { AssembliesAsResources, SymbolsAsResources, new AssemblyName(assemblyKeyValuePair.Key) }) as Assembly;
+                return _readFromEmbeddedResourcesMethodInfo.Invoke(null,
+                    new object[] {AssembliesAsResources, SymbolsAsResources, new AssemblyName(assemblyKeyValuePair.Key)}) as Assembly;
             }).Where(assembly => assembly != null);
         }
     }

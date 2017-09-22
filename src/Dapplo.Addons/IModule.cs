@@ -25,10 +25,10 @@
 
 namespace Dapplo.Addons
 {
-	/// <summary>
-	///     Basic interface which every module should implement
-	/// </summary>
-	public interface IModule
-	{
-	}
+    /// <summary>
+    ///     Basic interface which every module should implement
+    /// </summary>
+    public interface IModule
+    {
+    }
 }

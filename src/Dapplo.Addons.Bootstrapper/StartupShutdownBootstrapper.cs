@@ -101,7 +101,7 @@ namespace Dapplo.Addons.Bootstrapper
                 Log.Debug().WriteLine("No shutdown actions set...");
                 return;
             }
-            var orderedShutdownModules = from export in _shutdownModules orderby export.Metadata.ShutdownOrder ascending select export;
+            var orderedShutdownModules = from export in _shutdownModules orderby export.Metadata.ShutdownOrder select export;
 
             var tasks = new List<KeyValuePair<Type, Task>>();
 
@@ -144,21 +144,16 @@ namespace Dapplo.Addons.Bootstrapper
                 try
                 {
                     Task shutdownTask = null;
-
                     // Test if async / sync shutdown
-                    IShutdownAction shutdownAction = shutdownModule as IShutdownAction;
-                    if (shutdownAction != null)
+                    switch (shutdownModule)
                     {
-                        shutdownTask = Task.Run(() => shutdownAction.Shutdown(), _startupCancellationTokenSource.Token);
-                    }
-                    else
-                    {
-                        IAsyncShutdownAction asyncShutdownAction = shutdownModule as IAsyncShutdownAction;
-                        if (asyncShutdownAction != null)
-                        {
+                        case IShutdownAction shutdownAction:
+                            shutdownTask = Task.Run(() => shutdownAction.Shutdown(), cancellationToken);
+                            break;
+                        case IAsyncShutdownAction asyncShutdownAction:
                             // Create a task (it will start running, but we don't await it yet)
-                            shutdownTask = asyncShutdownAction.ShutdownAsync(_startupCancellationTokenSource.Token);
-                        }
+                            shutdownTask = asyncShutdownAction.ShutdownAsync(cancellationToken);
+                            break;
                     }
                     if (shutdownTask != null)
                     {
@@ -204,7 +199,7 @@ namespace Dapplo.Addons.Bootstrapper
                 return;
             }
 
-            var orderedStartupModules = from export in _startupModules orderby export.Metadata.StartupOrder ascending select export;
+            var orderedStartupModules = from export in _startupModules orderby export.Metadata.StartupOrder select export;
 
             var tasks = new List<KeyValuePair<Type, Task>>();
             var nonAwaitables = new List<KeyValuePair<Type, Task>>();
@@ -263,22 +258,18 @@ namespace Dapplo.Addons.Bootstrapper
                     Task startupTask = null;
 
                     // Test if async / sync startup
-                    IStartupAction startupAction = startupModule as IStartupAction;
-                    if (startupAction != null)
+                    switch (startupModule)
                     {
-                        Log.Verbose().WriteLine("Trying to start {0}", startupAction.GetType());
-                        // Wrap sync call as async task
-                        startupTask = Task.Run(() => startupAction.Start(), cancellationToken);
-                    }
-                    else
-                    {
-                        IAsyncStartupAction asyncStartupAction = startupModule as IAsyncStartupAction;
-                        if (asyncStartupAction != null)
-                        {
+                        case IStartupAction startupAction:
+                            Log.Verbose().WriteLine("Trying to start {0}", startupAction.GetType());
+                            // Wrap sync call as async task
+                            startupTask = Task.Run(() => startupAction.Start(), cancellationToken);
+                            break;
+                        case IAsyncStartupAction asyncStartupAction:
                             Log.Verbose().WriteLine("Trying to start {0}", asyncStartupAction.GetType());
                             // Create a task (it will start running, but we don't await it yet)
                             startupTask = asyncStartupAction.StartAsync(cancellationToken);
-                        }
+                            break;
                     }
 
                     if (startupTask != null)

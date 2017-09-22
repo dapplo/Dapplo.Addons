@@ -33,7 +33,7 @@ using System.Reflection;
 namespace Dapplo.Addons.Tests.Utils
 {
     /// <summary>
-    /// Helper class for the tests
+    ///     Helper class for the tests
     /// </summary>
     internal static class AssemblyUtils
     {

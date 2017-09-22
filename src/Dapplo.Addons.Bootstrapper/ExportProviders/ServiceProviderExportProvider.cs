@@ -42,19 +42,24 @@ using Dapplo.Log;
 namespace Dapplo.Addons.Bootstrapper.ExportProviders
 {
     /// <summary>
-    ///     The ServiceProviderExportProvider is an ExportProvider which can solve special cases by using IServiceLocator implementations to resolve type requests.
-    ///     Meaning it can do last minute dynamic lookups. The IServiceLocator will create the type derrived classes, and this ExportProvider will create the export so it can be injected.
+    ///     The ServiceProviderExportProvider is an ExportProvider which can solve special cases by using IServiceLocator
+    ///     implementations to resolve type requests.
+    ///     Meaning it can do last minute dynamic lookups. The IServiceLocator will create the type derrived classes, and this
+    ///     ExportProvider will create the export so it can be injected.
     /// </summary>
     internal sealed class ServiceProviderExportProvider : ExportProvider
     {
         private static readonly LogSource Log = new LogSource();
+
         private static readonly IDictionary<string, Regex> IgnoreContractRegexes = new Dictionary<string, Regex>
         {
             {"System", new Regex(@"^System\..+", RegexOptions.Compiled)},
             {"Dapplo.Addons interface", new Regex(@"^Dapplo\.Addons\.I[^\.]+$", RegexOptions.Compiled)},
             {"No FQ-type", new Regex(@"^[a-z]+$", RegexOptions.Compiled)}
         };
-        private static readonly IList<Regex> IgnoreAssemblyRegexes = new List<Regex> {
+
+        private static readonly IList<Regex> IgnoreAssemblyRegexes = new List<Regex>
+        {
             new Regex(@"^System\..+", RegexOptions.Compiled),
             new Regex(@"^Dapplo\.(Addons|InterfaceImpl|Utils)$", RegexOptions.Compiled),
             new Regex(@"^Dapplo\.Addons.\Bootstrapper$", RegexOptions.Compiled),
@@ -62,7 +67,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
         };
 
         /// <summary>
-        /// Type-Cache for all the ServiceExportProvider 
+        ///     Type-Cache for all the ServiceExportProvider
         /// </summary>
         private readonly IDictionary<string, Type> _typeLookupDictionary = new ConcurrentDictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
 
@@ -80,16 +85,14 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
         }
 
         /// <summary>
-        /// Create the export and store it for caching
+        ///     Create the export and store it for caching
         /// </summary>
         /// <param name="contractType"></param>
         /// <param name="specifiedContractName"></param>
         /// <returns>Export</returns>
         private Export CreateExport(Type contractType, string specifiedContractName = null)
         {
-            Export export;
-
-            if (specifiedContractName != null && _lookup.TryGetValue(specifiedContractName, out export))
+            if (specifiedContractName != null && _lookup.TryGetValue(specifiedContractName, out var export))
             {
                 return export;
             }
@@ -99,7 +102,10 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
             if (_lookup.TryGetValue(contractName, out export))
             {
                 // Don't forget to register
-                _lookup[specifiedContractName] = export;
+                if (specifiedContractName != null)
+                {
+                    _lookup[specifiedContractName] = export;
+                }
                 return export;
             }
 
@@ -118,7 +124,10 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
             {
                 Log.Verbose().WriteLine("No provider for {0} found", contractType);
                 // So we couldn't get an instance, add null so we don't try again.
-                _lookup[specifiedContractName] = null;
+                if (specifiedContractName != null)
+                {
+                    _lookup[specifiedContractName] = null;
+                }
                 return null;
             }
 
@@ -144,7 +153,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
         }
 
         /// <summary>
-        /// Helper predicate
+        ///     Helper predicate
         /// </summary>
         /// <param name="assembly"></param>
         /// <returns></returns>
@@ -160,7 +169,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
         }
 
         /// <summary>
-        /// Do the actual resolving, try to find out what type is wanted
+        ///     Do the actual resolving, try to find out what type is wanted
         /// </summary>
         /// <param name="definition">ImportDefinition</param>
         /// <param name="contractType">Type or null</param>
@@ -212,9 +221,8 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
                 Log.Verbose().WriteLine("Not resolving contract {0}, it was excluded due to rule: {1}.", definition.ContractName, ignoreRegex.Key);
                 yield break;
             }
-            Export export;
             // See if we already cached the value
-            if (_lookup.TryGetValue(definition.ContractName, out export))
+            if (_lookup.TryGetValue(definition.ContractName, out var export))
             {
                 if (export != null)
                 {
@@ -223,8 +231,7 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
                 yield break;
             }
 
-            Type contractType;
-            if (TryToResolveType(definition, out contractType))
+            if (TryToResolveType(definition, out var contractType))
             {
                 // So we found a type, try to create a export for it. 
                 try

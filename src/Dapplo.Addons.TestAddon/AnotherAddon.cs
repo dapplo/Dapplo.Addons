@@ -38,7 +38,6 @@ namespace Dapplo.Addons.TestAddon
     [ShutdownAction]
     public class AnotherAddon : IAsyncStartupAction, IAsyncShutdownAction
     {
-
         [ImportingConstructor]
         public AnotherAddon(IThisIsSubConfiguration mysubConfig)
         {
@@ -47,6 +46,7 @@ namespace Dapplo.Addons.TestAddon
                 throw new NotSupportedException();
             }
         }
+
         /// <summary>
         ///     This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
         /// </summary>
