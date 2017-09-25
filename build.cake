@@ -13,7 +13,7 @@ var configuration = Argument("configuration", "release");
 var nugetApiKey = Argument("nugetApiKey", EnvironmentVariable("NuGetApiKey"));
 var solutionFilePath = GetFiles("./**/*.sln").First();
 var solutionName = solutionFilePath.GetDirectory().GetDirectoryName();
-var coveralsRepoToken = Argument("coveralsRepoToken", EnvironmentVariable("CoverallsRepoToken"));
+var coverallsRepoToken = Argument("coverallsRepoToken", EnvironmentVariable("CoverallsRepoToken"));
 
 // Used to store the version, which is needed during the build and the packaging
 var version = EnvironmentVariable("APPVEYOR_BUILD_VERSION") ?? "1.0.0";
@@ -98,7 +98,7 @@ Task("Documentation")
 
 Task("CreateAndUploadCoverageReport")
     .IsDependentOn("Coverage")
-    .WithCriteria(() => !string.IsNullOrEmpty(coveralsRepoToken))
+    .WithCriteria(() => !string.IsNullOrEmpty(coverallsRepoToken))
     .IsDependentOn("UploadCoverageReport")
     .Does(() =>
 {
@@ -106,12 +106,12 @@ Task("CreateAndUploadCoverageReport")
 
 Task("UploadCoverageReport")
     .WithCriteria(() => FileExists("./artifacts/coverage.xml"))
-    .WithCriteria(() => !string.IsNullOrEmpty(coveralsRepoToken))
+    .WithCriteria(() => !string.IsNullOrEmpty(coverallsRepoToken))
     .Does(() =>
 {
     CoverallsNet("./artifacts/coverage.xml", CoverallsNetReportType.OpenCover, new CoverallsNetSettings
     {
-        RepoToken = coveralsRepoToken
+        RepoToken = coverallsRepoToken
     });
 });
 
