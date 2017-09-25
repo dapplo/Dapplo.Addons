@@ -1,7 +1,7 @@
 #tool "xunit.runner.console"
 #tool "OpenCover"
 #tool "docfx.console"
-#tool "coveralls.io"
+#tool "coveralls.net"
 #addin "SharpZipLib"
 #addin "Cake.FileHelpers"
 #addin "Cake.DocFx"
@@ -29,7 +29,7 @@ Task("Default")
 
 // Publish the Artifact of the Package Task to the Nexus Pro
 Task("Publish")
-	.IsDependentOn("UploadCoverageReport")
+	.IsDependentOn("CreateAndUploadCoverageReport")
     .IsDependentOn("PublishPackages")
     .WithCriteria(() => !BuildSystem.IsLocalBuild)
     .WithCriteria(() => !string.IsNullOrEmpty(nugetApiKey))
@@ -96,12 +96,20 @@ Task("Documentation")
     ZipCompress("./doc/_site", "./artifacts/site.zip");
 });
 
-Task("UploadCoverageReport")
-	.IsDependentOn("Coverage")
-	.WithCriteria(() => !string.IsNullOrEmpty(coveralsRepoToken))
+Task("CreateAndUploadCoverageReport")
+    .IsDependentOn("Coverage")
+    .WithCriteria(() => !string.IsNullOrEmpty(coveralsRepoToken))
+    .IsDependentOn("UploadCoverageReport")
     .Does(() =>
 {
-    CoverallsIo("./artifacts/coverage.xml", new CoverallsIoSettings()
+});
+
+Task("UploadCoverageReport")
+    .WithCriteria(() => FileExists("./artifacts/coverage.xml"))
+    .WithCriteria(() => !string.IsNullOrEmpty(coveralsRepoToken))
+    .Does(() =>
+{
+    CoverallsNet("./artifacts/coverage.xml", CoverallsNetReportType.OpenCover, new CoverallsNetSettings
     {
         RepoToken = coveralsRepoToken
     });
