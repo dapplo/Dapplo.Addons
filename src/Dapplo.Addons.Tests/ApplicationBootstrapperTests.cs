@@ -168,7 +168,7 @@ namespace Dapplo.Addons.Tests
                 bootstrapper.FindAndLoadAssemblies("Dapplo*");
 
                 // Test if our test addon was loaded
-                Assert.True(bootstrapper.KnownFiles.Any(addon => addon.EndsWith("TestAddon.dll")));
+                Assert.Contains(bootstrapper.KnownFiles, addon => addon.EndsWith("TestAddon.dll"));
 
                 // Initialize, so we can export
                 Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");

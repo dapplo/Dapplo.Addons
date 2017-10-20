@@ -36,12 +36,12 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using CommonServiceLocator;
 using Dapplo.Addons.Bootstrapper.ExportProviders;
 using Dapplo.Addons.Bootstrapper.Extensions;
 using Dapplo.Addons.Bootstrapper.Internal;
 using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Log;
-using Microsoft.Practices.ServiceLocation;
 
 #endregion
 
@@ -473,7 +473,7 @@ namespace Dapplo.Addons.Bootstrapper
         #region IMefServiceLocator
 
         /// <inheritdoc />
-        public Lazy<T> GetExport<T>(string contractname = "")
+        public Lazy<T> GetExport<T>(string contractName = "")
         {
             if (!IsInitialized)
             {
@@ -483,11 +483,11 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
             }
-            return Container.GetExport<T>(contractname);
+            return Container.GetExport<T>(contractName);
         }
 
         /// <inheritdoc />
-        public Lazy<T, TMetaData> GetExport<T, TMetaData>(string contractname = "")
+        public Lazy<T, TMetaData> GetExport<T, TMetaData>(string contractName = "")
         {
             if (!IsInitialized)
             {
@@ -497,12 +497,12 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
             }
-            return Container.GetExport<T, TMetaData>(contractname);
+            return Container.GetExport<T, TMetaData>(contractName);
         }
 
 
         /// <inheritdoc />
-        public object GetExport(Type type, string contractname = "")
+        public object GetExport(Type type, string contractName = "")
         {
             if (!IsInitialized)
             {
@@ -512,12 +512,12 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 Log.Verbose().WriteLine("Getting export for {0}", type);
             }
-            var lazyResult = Container.GetExports(type, null, contractname).FirstOrDefault();
+            var lazyResult = Container.GetExports(type, null, contractName).FirstOrDefault();
             return lazyResult?.Value;
         }
 
         /// <inheritdoc />
-        public IEnumerable<Lazy<T>> GetExports<T>(string contractname = "")
+        public IEnumerable<Lazy<T>> GetExports<T>(string contractName = "")
         {
             if (!IsInitialized)
             {
@@ -527,11 +527,11 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 Log.Verbose().WriteLine("Getting exports for {0}", typeof(T));
             }
-            return Container.GetExports<T>(contractname);
+            return Container.GetExports<T>(contractName);
         }
 
         /// <inheritdoc />
-        public IEnumerable<Lazy<object>> GetExports(Type type, string contractname = "")
+        public IEnumerable<Lazy<object>> GetExports(Type type, string contractName = "")
         {
             if (!IsInitialized)
             {
@@ -541,11 +541,11 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 Log.Verbose().WriteLine("Getting exports for {0}", type);
             }
-            return Container.GetExports(type, null, contractname);
+            return Container.GetExports(type, null, contractName);
         }
 
         /// <inheritdoc />
-        public IEnumerable<Lazy<T, TMetaData>> GetExports<T, TMetaData>(string contractname = "")
+        public IEnumerable<Lazy<T, TMetaData>> GetExports<T, TMetaData>(string contractName = "")
         {
             if (!IsInitialized)
             {
@@ -555,7 +555,7 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 Log.Verbose().WriteLine("Getting export for {0}", typeof(T));
             }
-            return Container.GetExports<T, TMetaData>(contractname);
+            return Container.GetExports<T, TMetaData>(contractName);
         }
 
         #endregion
@@ -693,14 +693,11 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 // If there wasn't an export, the ExportMetadataAttribute is not checked... so we do it ourselves
                 var exportMetadataAttributes = obj.GetType().GetCustomAttributes<ExportMetadataAttribute>(true);
-                if (exportMetadataAttributes != null)
+                foreach (var exportMetadataAttribute in exportMetadataAttributes)
                 {
-                    foreach (var exportMetadataAttribute in exportMetadataAttributes)
+                    if (!metadata.ContainsKey(exportMetadataAttribute.Name))
                     {
-                        if (!metadata.ContainsKey(exportMetadataAttribute.Name))
-                        {
-                            metadata.Add(exportMetadataAttribute.Name, exportMetadataAttribute.Value);
-                        }
+                        metadata.Add(exportMetadataAttribute.Name, exportMetadataAttribute.Value);
                     }
                 }
             }

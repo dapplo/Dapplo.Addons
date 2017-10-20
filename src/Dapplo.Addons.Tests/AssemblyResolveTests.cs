@@ -63,12 +63,12 @@ namespace Dapplo.Addons.Tests
             var fileNoMatch = @"C:\Project\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
             var fileMatch = @"C:\Project\blub\bin\Debug\Dapplo.something.dll";
             var regex = FileTools.FilenameToRegex("Dapplo.Something*", AssemblyResolver.Extensions);
-            Assert.False(regex.IsMatch(fileNoMatch));
-            Assert.True(regex.IsMatch(fileMatch));
+            Assert.DoesNotMatch(regex, fileNoMatch);
+            Assert.Matches(regex, fileMatch);
 
             var regex2 = FileTools.FilenameToRegex("Something*", AssemblyResolver.Extensions);
-            Assert.False(regex2.IsMatch(fileNoMatch));
-            Assert.False(regex2.IsMatch(fileMatch));
+            Assert.DoesNotMatch(regex2, fileNoMatch);
+            Assert.DoesNotMatch(regex2, fileMatch);
         }
     }
 }

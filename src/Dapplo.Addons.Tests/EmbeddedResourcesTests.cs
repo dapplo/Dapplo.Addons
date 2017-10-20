@@ -74,7 +74,7 @@ namespace Dapplo.Addons.Tests
             using (var stream = GetType().Assembly.GetEmbeddedResourceAsStream(@"TestFiles\embedded-dapplo.png"))
             {
                 var bitmap = Image.FromStream(stream);
-                Assert.NotNull(bitmap.Width);
+                Assert.NotNull(bitmap);
                 Assert.True(bitmap.Width > 0);
             }
         }
@@ -94,7 +94,7 @@ namespace Dapplo.Addons.Tests
             {
                 using (var bitmap = Image.FromStream(stream))
                 {
-                    Assert.NotNull(bitmap.Width);
+                    Assert.NotNull(bitmap);
                     Assert.True(bitmap.Width > 0);
                 }
             }
@@ -114,7 +114,7 @@ namespace Dapplo.Addons.Tests
             {
                 using (var bitmap = Image.FromStream(stream))
                 {
-                    Assert.NotNull(bitmap.Width);
+                    Assert.NotNull(bitmap);
                     Assert.True(bitmap.Width > 0);
                 }
             }
