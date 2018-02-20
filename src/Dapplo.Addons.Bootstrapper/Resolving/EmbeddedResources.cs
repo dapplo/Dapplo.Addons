@@ -1,7 +1,7 @@
-﻿#region Dapplo 2016 - GNU Lesser General Public License
+﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016 Dapplo
+// Copyright (C) 2016-2018 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -104,6 +104,12 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 {
                     resultStream = new GZipStream(resultStream, CompressionMode.Decompress);
                 }
+
+                if (resultStream != null && resourceName.EndsWith(".compressed", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    resultStream = new DeflateStream(resultStream, CompressionMode.Decompress);
+                }
+
                 if (resultStream == null)
                 {
                     Log.Warn().WriteLine("Couldn't get the resource stream for {0} from assembly {1}", resourceName, assembly.FullName);
@@ -273,16 +279,17 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 Log.Verbose().WriteLine("Resource not directly found, trying {0}", resourcesFile);
                 using (var resourceStream = assembly.GetEmbeddedResourceAsStream(resourcesFile))
                 {
-                    if (resourceStream != null)
+                    if (resourceStream == null)
                     {
-                        using (var resourceReader = new ResourceReader(resourceStream))
-                        {
-                            // Check if it contains the filename
-                            return
-                                resourceReader.OfType<DictionaryEntry>()
-                                    .Select(x => x.Key as string)
-                                    .Any(x => string.Equals(x, filePath, ignoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture));
-                        }
+                        continue;
+                    }
+
+                    using (var resourceReader = new ResourceReader(resourceStream))
+                    {
+                        // Check if it contains the filename
+                        return resourceReader.OfType<DictionaryEntry>()
+                               .Select(x => x.Key as string)
+                               .Any(x => string.Equals(x, filePath, ignoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture));
                     }
                 }
             }

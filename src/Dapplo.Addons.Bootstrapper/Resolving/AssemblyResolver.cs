@@ -1,7 +1,7 @@
-﻿#region Dapplo 2016 - GNU Lesser General Public License
+﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016 Dapplo
+// Copyright (C) 2016-2018 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -49,6 +49,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     {
         private static readonly LogSource Log = new LogSource();
         private static readonly ISet<string> AppDomainRegistrations = new HashSet<string>();
+        private static readonly ISet<Assembly> CosturaAssemblies = new HashSet<Assembly>();
         private static readonly ISet<string> ResolveDirectories = new HashSet<string>();
         private static readonly IDictionary<string, Assembly> AssembliesByName = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
         private static readonly IDictionary<string, Assembly> AssembliesByPath = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
@@ -161,9 +162,25 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 {
                     AppDomainRegistrations.Add(appDomain.FriendlyName);
                     appDomain.AssemblyResolve += ResolveEventHandler;
+                    appDomain.AssemblyLoad += AssemblyLoadHandler;
                     Log.Verbose().WriteLine("Registered Assembly-Resolving functionality to AppDomain {0}", appDomain.FriendlyName);
                 }
                 return SimpleDisposable.Create(() => UnregisterAssemblyResolve(appDomain));
+            }
+        }
+
+        /// <summary>
+        /// Used to track which assemblies are loaded, and register costura assemblies
+        /// </summary>
+        /// <param name="sender">object sender</param>
+        /// <param name="assemblyLoadEventArgs">AssemblyLoadEventArgs</param>
+        private static void AssemblyLoadHandler(object sender, AssemblyLoadEventArgs assemblyLoadEventArgs)
+        {
+            Log.Verbose().WriteLine("Loaded assembly {0}", assemblyLoadEventArgs.LoadedAssembly.FullName);
+
+            if (assemblyLoadEventArgs.LoadedAssembly.HasCosturaResources())
+            {
+                CosturaAssemblies.Add(assemblyLoadEventArgs.LoadedAssembly);
             }
         }
 
@@ -221,11 +238,17 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             }
             Log.Verbose().WriteLine("Resolve event for {0}", assemblyName.FullName);
             var assembly = FindAssembly(assemblyName.Name);
+
+            // Check Costura resources
+            if (assembly == null)
+            {
+                assembly = CosturaAssemblies.Select(costuraAssembly => costuraAssembly.LoadCosturaEmbeddedAssembly(assemblyName.Name)).FirstOrDefault();
+            }
             if (assembly != null && assembly.FullName != assemblyName.FullName)
             {
-                Log.Warn().WriteLine("Requested was {0} returned was {1}, this might cause issues but loading the same assembly would be worse.", assemblyName.FullName,
-                    assembly.FullName);
+                Log.Warn().WriteLine("Requested was {0} returned was {1}, this might cause issues but loading the same assembly would be worse.", assemblyName.FullName, assembly.FullName);
             }
+
             return assembly;
         }
 
@@ -251,8 +274,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             else
             {
                 // The assembly was not found in our own cache, find it in the current AppDomain
-                assembly = AppDomain.CurrentDomain.GetAssemblies()
-                    .FirstOrDefault(x => string.Equals(x.GetName().Name, assemblyName, StringComparison.InvariantCultureIgnoreCase));
+                assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => string.Equals(x.GetName().Name, assemblyName, StringComparison.InvariantCultureIgnoreCase));
                 if (assembly != null)
                 {
                     Log.Verbose().WriteLine("Using already loaded assembly {1} for requested {0}.", assemblyName, assembly.FullName);
@@ -350,7 +372,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             {
                 using (var fileStream = new FileStream(filepath, FileMode.Open, FileAccess.ReadWrite))
                 {
-                    assembly = LoadAssemblyFromStream(fileStream, filepath.EndsWith(".gz") ? CompressionTypes.Gzip : CompressionTypes.Deflate);
+                    assembly = fileStream.ToAssembly(filepath.EndsWith(".gz") ? CompressionTypes.Gzip : CompressionTypes.Deflate);
                     assembly.Register(filepath);
                 }
             }
@@ -393,7 +415,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <param name="compressionType">specify the compression type for the stream</param>
         /// <param name="checkCache">specify if the cache needs to be checked, this costs performance</param>
         /// <returns>Assembly or null when the stream is null</returns>
-        public static Assembly LoadAssemblyFromStream(Stream assemblyStream, CompressionTypes compressionType = CompressionTypes.None, bool checkCache = false)
+        public static Assembly ToAssembly(this Stream assemblyStream, CompressionTypes compressionType = CompressionTypes.None, bool checkCache = false)
         {
             if (assemblyStream == null)
             {
@@ -402,23 +424,25 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
             byte[] assemblyBytes;
 
-            if (compressionType == CompressionTypes.Gzip)
+            switch (compressionType)
             {
-                using (var stream = new GZipStream(assemblyStream, CompressionMode.Decompress, true))
-                {
-                    assemblyBytes = stream.ToByteArray();
-                }
-            }
-            else if (compressionType == CompressionTypes.Deflate)
-            {
-                using (var stream = new DeflateStream(assemblyStream, CompressionMode.Decompress, true))
-                {
-                    assemblyBytes = stream.ToByteArray();
-                }
-            }
-            else
-            {
-                assemblyBytes = assemblyStream.ToByteArray();
+                case CompressionTypes.Gzip:
+                    using (var stream = new GZipStream(assemblyStream, CompressionMode.Decompress, true))
+                    {
+                        assemblyBytes = stream.ToByteArray();
+                    }
+
+                    break;
+                case CompressionTypes.Deflate:
+                    using (var stream = new DeflateStream(assemblyStream, CompressionMode.Decompress, true))
+                    {
+                        assemblyBytes = stream.ToByteArray();
+                    }
+
+                    break;
+                default:
+                    assemblyBytes = assemblyStream.ToByteArray();
+                    break;
             }
 
             if (checkCache)
@@ -547,16 +571,14 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 var cachedAssembly = FindCachedAssemblyByAssemblyName(possibleAssemblyName);
                 if (cachedAssembly != null)
                 {
-                    Log.Warn().WriteLine(
-                        "Cached assembly {0} found for resource {1}, if this is not correct disable this by setting CheckEmbeddedResourceNameAgainstCache to false",
-                        cachedAssembly.FullName, resourceName);
+                    Log.Warn().WriteLine("Cached assembly {0} found for resource {1}, if this is not correct disable this by setting CheckEmbeddedResourceNameAgainstCache to false", cachedAssembly.FullName, resourceName);
                     return cachedAssembly;
                 }
             }
             using (var stream = assembly.GetEmbeddedResourceAsStream(resourceName))
             {
                 Log.Verbose().WriteLine("Loading assembly from resource {0} in assembly {1}", resourceName, assembly.FullName);
-                return LoadAssemblyFromStream(stream, CompressionTypes.None, !CheckEmbeddedResourceNameAgainstCache);
+                return stream.ToAssembly(CompressionTypes.None, !CheckEmbeddedResourceNameAgainstCache);
             }
         }
 

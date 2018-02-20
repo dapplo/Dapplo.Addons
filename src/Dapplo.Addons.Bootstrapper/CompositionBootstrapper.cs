@@ -1,7 +1,7 @@
-﻿#region Dapplo 2016-2017 - GNU Lesser General Public License
+﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016-2017 Dapplo
+// Copyright (C) 2016-2018 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -56,7 +56,6 @@ namespace Dapplo.Addons.Bootstrapper
         private const string NotInitialized = "Bootstrapper is not initialized";
         private static readonly LogSource Log = new LogSource();
         private readonly IList<IDisposable> _disposables = new List<IDisposable>();
-        private static readonly CosturaHelper Costura = new CosturaHelper();
 
         /// <summary>
         ///     The AggregateCatalog contains all the catalogs with the assemblies in it.
@@ -314,7 +313,7 @@ namespace Dapplo.Addons.Bootstrapper
             directories = directories.ToList();
 
             // Pre-cleanup
-            if (AllowAssemblyCleanup && Costura.IsActive)
+            if (AllowAssemblyCleanup && CosturaHelper.IsActive)
             {
                 foreach (var directory in directories)
                 {
@@ -367,14 +366,14 @@ namespace Dapplo.Addons.Bootstrapper
         /// <param name="directory">string with the </param>
         private void RemoveEmbeddedAssembliesFromDirectory(string directory)
         {
-            if (!Costura.IsActive)
+            if (!CosturaHelper.IsActive)
             {
                 return;
             }
 
             foreach (var filePath in FileLocations.Scan(directory, "*.dll"))
             {
-                if (!Costura.HasResource(Path.GetFileName(filePath)))
+                if (!CosturaHelper.HasResource(Path.GetFileName(filePath)))
                 {
                     continue;
                 }
@@ -386,17 +385,17 @@ namespace Dapplo.Addons.Bootstrapper
         /// <summary>
         ///     Helper method which triggers the loading of embedded assemblies
         /// </summary>
-        /// <param name="pattern"></param>
-        /// <param name="loadEmbedded"></param>
+        /// <param name="pattern">Regex</param>
+        /// <param name="loadEmbedded">bool</param>
         private void FindEmbeddedAssemblies(Regex pattern, bool loadEmbedded = true)
         {
             if (!loadEmbedded)
             {
                 return;
             }
-            if (Costura.IsActive)
+            if (CosturaHelper.IsActive)
             {
-                foreach (var assembly in Costura.LoadEmbeddedAssemblies(pattern))
+                foreach (var assembly in CosturaHelper.LoadEmbeddedAssemblies(pattern))
                 {
                     assembly?.Register();
                     Add(assembly);

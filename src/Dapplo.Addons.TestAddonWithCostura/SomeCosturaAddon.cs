@@ -26,47 +26,34 @@
 #region Usings
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Dapplo.Jira;
+using Dapplo.Log;
 
 #endregion
 
-namespace Dapplo.Addons.Bootstrapper.Internal
+namespace Dapplo.Addons.TestAddonWithCostura
 {
-    /// <summary>
-    ///     A simple way to return something, which calls an action on Dispose.
-    /// </summary>
-    public sealed class SimpleDisposable : IDisposable
+    [StartupAction(AwaitStart = true)]
+    [ShutdownAction("CosturaTest")]
+    public class SomeCosturaAddon : IAsyncStartupAction, IAsyncShutdownAction
     {
-        private readonly Action _action;
+        private static readonly LogSource Log = new LogSource();
 
-        // To detect redundant calls, we store a flag
-        private bool _disposed;
-
-        private SimpleDisposable(Action action)
+        public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
         {
-            _action = action;
+            await Task.Delay(100, token).ConfigureAwait(false);
+            Log.Debug().WriteLine("ShutdownAsync called!");
+            throw new NotSupportedException("This should be logged!");
         }
 
-        /// <summary>
-        ///     Dispose will call the stored action
-        /// </summary>
-        public void Dispose()
+        public async Task StartAsync(CancellationToken token = new CancellationToken())
         {
-            if (_disposed)
-            {
-                return;
-            }
-            _disposed = true;
-            _action();
-        }
-
-        /// <summary>
-        ///     Create an IDisposable which will call the passed action on Dispose.
-        /// </summary>
-        /// <param name="action">Action to call when the object is disposed.</param>
-        /// <returns>IDisposable</returns>
-        public static IDisposable Create(Action action)
-        {
-            return new SimpleDisposable(action);
+            Log.Debug().WriteLine("StartAsync called!");
+            var serverInfo = await JiraClient.Create(new Uri("https://greenshot.atlassian.net")).Server.GetInfoAsync(cancellationToken: token).ConfigureAwait(false);
+            Log.Debug().WriteLine("Jira server version {0}", serverInfo.Version);
+            await Task.Delay(100, token).ConfigureAwait(false);
         }
     }
 }

@@ -1,7 +1,7 @@
-﻿#region Dapplo 2016-2017 - GNU Lesser General Public License
+﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016-2017 Dapplo
+// Copyright (C) 2016-2018 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -39,7 +39,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Dapplo")]
 [assembly: AssemblyProduct("Dapplo.Addons")]
-[assembly: AssemblyCopyright("Copyright © 2015-2016-2017 Dapplo")]
+[assembly: AssemblyCopyright("Copyright © 2015-2016-2018 Dapplo")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

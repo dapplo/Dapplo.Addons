@@ -1,7 +1,7 @@
-﻿#region Dapplo 2016-2017 - GNU Lesser General Public License
+﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016-2017 Dapplo
+// Copyright (C) 2016-2018 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -100,8 +100,10 @@ namespace Dapplo.Addons.Tests
                 // Add test project, without having a direct reference
 #if DEBUG
                 bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");
+                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug");
 #else
                 bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release");
+                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release");
 #endif
                 bootstrapper.RegisterForDisposal(SimpleDisposable.Create(() => isDisposed = true));
                 // Add all file starting with Dapplo and ending on .dll or .dll.gz
@@ -161,8 +163,10 @@ namespace Dapplo.Addons.Tests
                 // Add test project, without having a direct reference
 #if DEBUG
                 bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");
+                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug");
 #else
                 bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release");
+                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release");
 #endif
                 // Add all file starting with Dapplo and ending on .dll or .dll.gz
                 bootstrapper.FindAndLoadAssemblies("Dapplo*");
@@ -190,7 +194,7 @@ namespace Dapplo.Addons.Tests
                 Assert.False(bootstrapper.GetExports<ApplicationBootstrapperTests>().Any());
 
                 // Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
-                Assert.Equal(5, bootstrapper.GetExports<IStartupModule>().Count());
+                Assert.Equal(6, bootstrapper.GetExports<IStartupModule>().Count());
 
                 // Test localization of a IStartupAction with meta-data, which is exported via [StartupAction(DoNotAwait = true)]
                 var hasAwaitStartFalse = bootstrapper.GetExports<IStartupModule, IStartupMetadata>().Any(x => x.Metadata.AwaitStart == false);
