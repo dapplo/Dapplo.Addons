@@ -58,14 +58,14 @@ namespace Dapplo.Addons.TestAddon
         [Import(AllowDefault = true)]
         private bool ThrowStartupException { get; set; }
 
-        public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
+        public async Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            await Task.Delay(100, token).ConfigureAwait(false);
+            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
             Log.Debug().WriteLine("ShutdownAsync called!");
             throw new NotSupportedException("This should be logged!");
         }
 
-        public async Task StartAsync(CancellationToken token = new CancellationToken())
+        public async Task StartAsync(CancellationToken cancellationToken = new CancellationToken())
         {
             if (ThrowStartupException)
             {
@@ -77,7 +77,7 @@ namespace Dapplo.Addons.TestAddon
                 Log.Debug().WriteLine("Section {0}", name);
             }
             Log.Debug().WriteLine("This shoud not give an exception!");
-            await Task.Delay(100, token).ConfigureAwait(false);
+            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
             Log.Debug().WriteLine("StartAsync called!");
             Log.Debug().WriteLine("Value: {0}", MyConfig.Name);
         }

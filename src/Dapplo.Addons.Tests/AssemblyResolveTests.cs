@@ -60,8 +60,8 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void Test_AssemblyNameToRegex()
         {
-            var fileNoMatch = @"C:\Project\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
-            var fileMatch = @"C:\Project\blub\bin\Debug\Dapplo.something.dll";
+            const string fileNoMatch = @"C:\Project\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
+            const string fileMatch = @"C:\Project\blub\bin\Debug\Dapplo.something.dll";
             var regex = FileTools.FilenameToRegex("Dapplo.Something*", AssemblyResolver.Extensions);
             Assert.DoesNotMatch(regex, fileNoMatch);
             Assert.Matches(regex, fileMatch);

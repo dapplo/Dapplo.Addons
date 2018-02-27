@@ -43,8 +43,8 @@ namespace Dapplo.Addons
         ///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
         ///     throw a StartupException if something went terribly wrong and the application should NOT continue
         /// </summary>
-        /// <param name="token">CancellationToken</param>
+        /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task</returns>
-        Task StartAsync(CancellationToken token = default(CancellationToken));
+        Task StartAsync(CancellationToken cancellationToken = default(CancellationToken));
     }
 }

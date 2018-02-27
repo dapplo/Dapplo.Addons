@@ -46,7 +46,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     public static class EmbeddedResources
     {
         private static readonly Regex PackRegex = new Regex(@"/(?<assembly>[a-zA-Z\.]+);component/(?<path>.*)", RegexOptions.Compiled);
-        internal static readonly LogSource Log = new LogSource();
+        private static readonly LogSource Log = new LogSource();
 
         /// <summary>
         ///     Create a regex to find a resource in an assembly

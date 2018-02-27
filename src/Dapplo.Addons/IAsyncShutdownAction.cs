@@ -41,8 +41,8 @@ namespace Dapplo.Addons
         ///     Perform a shutdown of whatever needs to be shutdown.
         ///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
         /// </summary>
-        /// <param name="token">CancellationToken</param>
+        /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task</returns>
-        Task ShutdownAsync(CancellationToken token = default(CancellationToken));
+        Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken));
     }
 }

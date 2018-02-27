@@ -132,19 +132,23 @@ namespace Dapplo.Addons.NuGet
                 return null;
             }
             var basePath = Path.GetFullPath(packageManager.LocalRepository.Source);
-            if (Directory.Exists(basePath))
+            if (!Directory.Exists(basePath))
             {
-                var dllPath = Directory.EnumerateFiles(basePath, assemblyName.Name + ".dll", SearchOption.AllDirectories).OrderBy(path => path).LastOrDefault();
-                if (!string.IsNullOrEmpty(dllPath))
-                {
-                    Log.Info().WriteLine("Dll found in Package {0}, installed here {1}", assemblyName.Name, dllPath);
-                    if (File.Exists(dllPath))
-                    {
-                        return Assembly.LoadFrom(dllPath);
-                        // The following doesn't work, as Fusion isn't called. See: http://blogs.msdn.com/b/suzcook/archive/2003/09/19/loadfile-vs-loadfrom.aspx
-                        // return Assembly.LoadFile(dllPath);
-                    }
-                }
+                return null;
+            }
+
+            var dllPath = Directory.EnumerateFiles(basePath, assemblyName.Name + ".dll", SearchOption.AllDirectories).OrderBy(path => path).LastOrDefault();
+            if (string.IsNullOrEmpty(dllPath))
+            {
+                return null;
+            }
+
+            Log.Info().WriteLine("Dll found in Package {0}, installed here {1}", assemblyName.Name, dllPath);
+            if (File.Exists(dllPath))
+            {
+                // The following doesn't work, as Fusion isn't called. See: http://blogs.msdn.com/b/suzcook/archive/2003/09/19/loadfile-vs-loadfrom.aspx
+                // return Assembly.LoadFile(dllPath);
+                return Assembly.LoadFrom(dllPath);
             }
             return null;
         }

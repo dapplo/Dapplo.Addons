@@ -41,19 +41,19 @@ namespace Dapplo.Addons.TestAddonWithCostura
     {
         private static readonly LogSource Log = new LogSource();
 
-        public async Task ShutdownAsync(CancellationToken token = default(CancellationToken))
+        public async Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            await Task.Delay(100, token).ConfigureAwait(false);
+            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
             Log.Debug().WriteLine("ShutdownAsync called!");
             throw new NotSupportedException("This should be logged!");
         }
 
-        public async Task StartAsync(CancellationToken token = new CancellationToken())
+        public async Task StartAsync(CancellationToken cancellationToken = new CancellationToken())
         {
             Log.Debug().WriteLine("StartAsync called!");
-            var serverInfo = await JiraClient.Create(new Uri("https://greenshot.atlassian.net")).Server.GetInfoAsync(cancellationToken: token).ConfigureAwait(false);
+            var serverInfo = await JiraClient.Create(new Uri("https://greenshot.atlassian.net")).Server.GetInfoAsync(cancellationToken).ConfigureAwait(false);
             Log.Debug().WriteLine("Jira server version {0}", serverInfo.Version);
-            await Task.Delay(100, token).ConfigureAwait(false);
+            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
         }
     }
 }

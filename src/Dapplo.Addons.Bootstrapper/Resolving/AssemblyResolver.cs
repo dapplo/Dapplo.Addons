@@ -397,13 +397,15 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             // this takes care of dlls which are in the same directory as this assembly.
             // It only makes sense if this method was called directly, but as the ResolveDirectories is a set, it doesn't hurt.
             var assemblyDirectory = Path.GetDirectoryName(filepath);
-            if (!string.IsNullOrEmpty(assemblyDirectory))
+            if (string.IsNullOrEmpty(assemblyDirectory))
             {
-                lock (ResolveDirectories)
-                {
-                    Log.Verbose().WriteLine("Added {0} for resolving relative to {1}", assemblyDirectory, filepath);
-                    ResolveDirectories.Add(assemblyDirectory);
-                }
+                return assembly;
+            }
+
+            lock (ResolveDirectories)
+            {
+                Log.Verbose().WriteLine("Added {0} for resolving relative to {1}", assemblyDirectory, filepath);
+                ResolveDirectories.Add(assemblyDirectory);
             }
             return assembly;
         }
@@ -604,17 +606,19 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         {
             var assemblyRegex = FileTools.FilenameToRegex(assemblyName, extensions ?? Extensions);
             var filepath = FileLocations.Scan(directories, assemblyRegex).Select(x => x.Item1).FirstOrDefault();
-            if (!string.IsNullOrEmpty(filepath) && File.Exists(filepath))
+            if (string.IsNullOrEmpty(filepath) || !File.Exists(filepath))
             {
-                try
-                {
-                    return LoadAssemblyFromFile(filepath);
-                }
-                catch (Exception ex)
-                {
-                    // don't log with other libraries as this might cause issues / recurse resolving
-                    Log.Error().WriteLine("Error loading assembly from file {0}: {1}", filepath, ex.Message);
-                }
+                return null;
+            }
+
+            try
+            {
+                return LoadAssemblyFromFile(filepath);
+            }
+            catch (Exception ex)
+            {
+                // don't log with other libraries as this might cause issues / recurse resolving
+                Log.Error().WriteLine("Error loading assembly from file {0}: {1}", filepath, ex.Message);
             }
             return null;
         }
