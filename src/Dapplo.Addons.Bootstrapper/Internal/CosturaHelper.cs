@@ -141,13 +141,21 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         /// <returns>Assembly</returns>
         public static Assembly LoadCosturaEmbeddedAssembly(this Assembly costuraAssembly, string assemblyName)
         {
-            var assemblyResourceName = costuraAssembly
-                .GetManifestResourceNames()
+            var resources = costuraAssembly.GetManifestResourceNames();
+            if (resources.Length < 1)
+            {
+                Log.Verbose().WriteLine("No resources in {0}", costuraAssembly.FullName);
+                return null;
+            }
+            Log.Verbose().WriteLine("Looking for {0} in {1} [{2}]", assemblyName, costuraAssembly.FullName, string.Join(",", resources));
+
+            var assemblyResourceName = resources
                 .FirstOrDefault(resourceName => string.Equals(resourceName, $"{CosturaPrefix}{assemblyName}.dll{CosturaPostfix}", StringComparison.InvariantCultureIgnoreCase) ||
                                                 string.Equals(resourceName, $"{CosturaPrefix}{assemblyName}.dll", StringComparison.InvariantCultureIgnoreCase));
 
             if (assemblyResourceName == null)
             {
+                Log.Verbose().WriteLine("Couldn't find assembly {0} embedded in {1}", assemblyName, costuraAssembly.FullName);
                 return null;
             }
             using (var assemblyStream = costuraAssembly.GetEmbeddedResourceAsStream(assemblyResourceName))

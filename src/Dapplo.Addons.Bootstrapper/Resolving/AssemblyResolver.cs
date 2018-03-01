@@ -69,17 +69,33 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         ///     The extensions used for finding assemblies, you can add your own.
         ///     Extensions can end on .gz when such a file/resource is used it will automatically be decompresed
         /// </summary>
-        public static ISet<string> Extensions { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {"dll", "dll.gz", "dll.compressed"};
+        public static IEnumerable<string> Extensions { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {"dll", "dll.gz", "dll.compressed"};
 
         /// <summary>
         ///     Directories which this AssemblyResolver uses to find assemblies
         /// </summary>
-        public static IEnumerable<string> Directories => ResolveDirectories;
+        public static IEnumerable<string> Directories {
+            get
+            {
+                lock (ResolveDirectories)
+                {
+                    return ResolveDirectories.ToList();
+                }
+            }
+        }
 
         /// <summary>
         ///     IEnumerable with all cached assemblies
         /// </summary>
-        public static IEnumerable<Assembly> AssemblyCache => AssembliesByName.Values;
+        public static IEnumerable<Assembly> AssemblyCache {
+            get
+            {
+                lock (AssembliesByName)
+                {
+                    return AssembliesByName.Values.ToList();
+                }
+            }
+        } 
 
         /// <summary>
         ///     Defines if the resolving is first loading internal files, if nothing was found check the file system
@@ -178,10 +194,13 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         {
             Log.Verbose().WriteLine("Loaded assembly {0}", assemblyLoadEventArgs.LoadedAssembly.FullName);
 
-            if (assemblyLoadEventArgs.LoadedAssembly.HasCosturaResources())
+            if (!assemblyLoadEventArgs.LoadedAssembly.HasCosturaResources())
             {
-                CosturaAssemblies.Add(assemblyLoadEventArgs.LoadedAssembly);
+                return;
             }
+
+            Log.Verbose().WriteLine("Detected possible costura assembly {0}", assemblyLoadEventArgs.LoadedAssembly.FullName);
+            CosturaAssemblies.Add(assemblyLoadEventArgs.LoadedAssembly);
         }
 
         /// <summary>
@@ -592,7 +611,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <returns>Assembly</returns>
         public static Assembly LoadAssemblyFromFileSystem(string assemblyName, IEnumerable<string> extensions = null)
         {
-            return LoadAssemblyFromFileSystem(ResolveDirectories, assemblyName, extensions);
+            lock (ResolveDirectories)
+            {
+                return LoadAssemblyFromFileSystem(ResolveDirectories, assemblyName, extensions);
+            }
         }
 
         /// <summary>
