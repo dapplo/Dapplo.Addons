@@ -261,7 +261,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             // Check Costura resources
             if (assembly == null)
             {
-                assembly = CosturaAssemblies.Select(costuraAssembly => costuraAssembly.LoadCosturaEmbeddedAssembly(assemblyName.Name)).FirstOrDefault();
+                assembly = CosturaAssemblies.Select(costuraAssembly => costuraAssembly.LoadCosturaEmbeddedAssembly(assemblyName.Name)).FirstOrDefault(a => a != null);
             }
             if (assembly != null && assembly.FullName != assemblyName.FullName)
             {
