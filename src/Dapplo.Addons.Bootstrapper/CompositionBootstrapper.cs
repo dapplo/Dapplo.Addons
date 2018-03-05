@@ -315,7 +315,7 @@ namespace Dapplo.Addons.Bootstrapper
             // Pre-cleanup
             if (AllowAssemblyCleanup && CosturaHelper.IsActive)
             {
-                foreach (var directory in directories)
+                foreach (var directory in directories.Where(d => !d.Substring(1).StartsWith(@":\Windows\", StringComparison.InvariantCultureIgnoreCase)))
                 {
                     RemoveEmbeddedAssembliesFromDirectory(directory);
                 }

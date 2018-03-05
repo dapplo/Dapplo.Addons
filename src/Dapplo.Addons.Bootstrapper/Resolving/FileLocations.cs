@@ -109,7 +109,14 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <returns>IEnumerable with file paths</returns>
         public static IEnumerable<string> Scan(string directory, string simplePattern, SearchOption searchOption = SearchOption.AllDirectories)
         {
-            return Directory.EnumerateFiles(directory, simplePattern, searchOption);
+            try
+            {
+                return Directory.EnumerateFiles(directory, simplePattern, searchOption);
+            }
+            catch
+            {
+                return Enumerable.Empty<string>();
+            }
         }
 
         /// <summary>

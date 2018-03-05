@@ -54,7 +54,6 @@ namespace Dapplo.Addons
         {
         }
 
-
         /// <summary>
         ///     Here the order of the startup action can be specified, starting with low values and ending with high.
         ///     With this a cheap form of "dependency" management is made.
