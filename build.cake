@@ -1,28 +1,37 @@
 #tool "xunit.runner.console"
 #tool "OpenCover"
+#tool "GitVersion.CommandLine"
 #tool "docfx.console"
 #tool "coveralls.net"
+#tool "PdbGit"
+// Needed for Cake.Compression, as described here: https://github.com/akordowski/Cake.Compression/issues/3
 #addin "SharpZipLib"
 #addin "Cake.FileHelpers"
 #addin "Cake.DocFx"
-#addin nuget:?package=Cake.Compression&version=0.1.4
 #addin "Cake.Coveralls"
+#addin "Cake.Compression"
 
 var target = Argument("target", "Build");
 var configuration = Argument("configuration", "release");
+
+// Used to publish NuGet packages
 var nugetApiKey = Argument("nugetApiKey", EnvironmentVariable("NuGetApiKey"));
-var solutionFilePath = GetFiles("./**/*.sln").First();
-var solutionName = solutionFilePath.GetDirectory().GetDirectoryName();
+
+// Used to publish coverage report
 var coverallsRepoToken = Argument("coverallsRepoToken", EnvironmentVariable("CoverallsRepoToken"));
 
-// Used to store the version, which is needed during the build and the packaging
-var version = EnvironmentVariable("APPVEYOR_BUILD_VERSION") ?? "1.0.0";
+// where is our solution located?
+var solutionFilePath = GetFiles("src/*.sln").First();
+var solutionName = solutionFilePath.GetDirectory().GetDirectoryName();
 
 // Check if we are in a pull request, publishing of packages and coverage should be skipped
 var isPullRequest = !string.IsNullOrEmpty(EnvironmentVariable("APPVEYOR_PULL_REQUEST_NUMBER"));
 
 // Check if the commit is marked as release
 var isRelease = Argument<bool>("isRelease", string.Compare("[release]", EnvironmentVariable("appveyor_repo_commit_message_extended"), true) == 0);
+
+// Used to store the version, which is needed during the build and the packaging
+var version = EnvironmentVariable("APPVEYOR_BUILD_VERSION") ?? "1.0.0";
 
 Task("Default")
     .IsDependentOn("Publish");
@@ -52,15 +61,15 @@ Task("PublishPackages")
         ApiKey = nugetApiKey
     };
 
-    var packages = GetFiles("./artifacts/*.nupkg").Where(p => !p.FullPath.Contains("symbols"));
+    var packages = GetFiles("./artifacts/*.nupkg").Where(p => !p.FullPath.ToLower().Contains("symbols"));
     NuGetPush(packages, settings);
 });
 
 // Package the results of the build, if the tests worked, into a NuGet Package
 Task("Package")
     .IsDependentOn("Coverage")
-    .IsDependentOn("AssemblyVersion")
     .IsDependentOn("Documentation")
+    .IsDependentOn("GitLink")
     .Does(()=>
 {
     var settings = new NuGetPackSettings 
@@ -76,7 +85,14 @@ Task("Package")
         }
     };
 
-    var projectFilePaths = GetFiles("./**/*.csproj").Where(p => !p.FullPath.Contains("Test") && !p.FullPath.Contains("NuGet") && !p.FullPath.Contains("Diagnostics") &&!p.FullPath.Contains("packages") &&!p.FullPath.Contains("tools"));
+    var projectFilePaths = GetFiles("./**/*.csproj")
+		.Where(p => !p.FullPath.ToLower().Contains("test"))
+		.Where(p => !p.FullPath.ToLower().Contains("packages"))
+		.Where(p => !p.FullPath.ToLower().Contains("tools"))
+		.Where(p => !p.FullPath.ToLower().Contains("demo"))
+		.Where(p => !p.FullPath.ToLower().Contains("diagnostics"))
+		.Where(p => !p.FullPath.ToLower().Contains("power"))
+		.Where(p => !p.FullPath.ToLower().Contains("example"));
     foreach(var projectFilePath in projectFilePaths)
     {
         Information("Packaging: " + projectFilePath.FullPath);
@@ -187,6 +203,24 @@ Task("Build")
     
     // Make sure the .dlls in the obj path are not found elsewhere
     CleanDirectories("./**/obj");
+});
+
+// Generate Git links in the PDB files
+Task("GitLink")
+    .IsDependentOn("Build")
+    .Does(() =>
+{
+	FilePath pdbGitPath = Context.Tools.Resolve("PdbGit.exe");
+	var pdbFiles = GetFiles("./**/*.pdb")
+		.Where(p => !p.FullPath.ToLower().Contains("test"))
+		.Where(p => !p.FullPath.ToLower().Contains("tools"))
+		.Where(p => !p.FullPath.ToLower().Contains("packages"))
+		.Where(p => !p.FullPath.ToLower().Contains("example"));
+    foreach(var pdbFile in pdbFiles)
+    {
+		Information("Processing: " + pdbFile.FullPath);
+		StartProcess(pdbGitPath, new ProcessSettings { Arguments = new ProcessArgumentBuilder().Append(pdbFile.FullPath)});
+	}
 });
 
 // Load the needed NuGet packages to make the build work

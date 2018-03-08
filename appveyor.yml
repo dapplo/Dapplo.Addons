@@ -14,7 +14,7 @@ environment:
   CoverallsRepoToken:
     secure: hmXmadCb4cGSBxriCSnrIAtRJF5Jz42rEKKfzJR8HdvY/PFIFUhWZu1xSgN237Se
 build_script:
-- ps: .\build.ps1
+- ps: .\build.ps1 --settings_skipverification=true
 artifacts:
 - path: artifacts\**\*.nupkg
 - path: artifacts\**\site.zip
