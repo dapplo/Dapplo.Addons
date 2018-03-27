@@ -234,7 +234,11 @@ namespace Dapplo.Addons.Bootstrapper
             try
             {
                 var location = assemblyCatalog.Assembly.GetLocation(false);
-                Log.Verbose().WriteLine("Adding assembly {0} from {1}", assemblyCatalog.Assembly.FullName, location);
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Adding assembly {0} from {1}", assemblyCatalog.Assembly.FullName, location);
+                }
+
                 if (assemblyCatalog.Parts.ToList().Count > 0)
                 {
                     AggregateCatalog.Catalogs.Add(assemblyCatalog);
@@ -245,7 +249,7 @@ namespace Dapplo.Addons.Bootstrapper
                         KnownFiles.Add(location);
                     }
                 }
-                else
+                else if (Log.IsVerboseEnabled())
                 {
                     Log.Verbose().WriteLine("Assembly {0} from {1} doesn't have any parts exported.", assemblyCatalog.Assembly.FullName, location);
                 }
@@ -441,7 +445,10 @@ namespace Dapplo.Addons.Bootstrapper
                 throw new ArgumentNullException(nameof(exportProvider));
             }
 
-            Log.Verbose().WriteLine("Adding ExportProvider: {0}", exportProvider.GetType().FullName);
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Adding ExportProvider: {0}", exportProvider.GetType().FullName);
+            }
             ExportProviders.Add(exportProvider);
         }
 

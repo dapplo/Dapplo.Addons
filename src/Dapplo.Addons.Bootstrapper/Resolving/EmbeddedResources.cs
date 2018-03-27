@@ -98,7 +98,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             var resourceName = assembly.FindEmbeddedResources(filePathRegex).FirstOrDefault();
             if (resourceName != null)
             {
-                Log.Verbose().WriteLine("Requested stream for path {0}, using resource {1} from assembly {2}", filePath, resourceName, assembly.FullName);
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Requested stream for path {0}, using resource {1} from assembly {2}", filePath, resourceName, assembly.FullName);
+                }
                 var resultStream = assembly.GetManifestResourceStream(resourceName);
                 if (resultStream != null && resourceName.EndsWith(".gz"))
                 {

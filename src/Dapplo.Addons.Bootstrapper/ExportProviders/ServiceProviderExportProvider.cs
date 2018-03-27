@@ -116,13 +116,19 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
                 .Where(provider => !ReferenceEquals(_bootstrapper, provider))
                 .Select(provider =>
                 {
-                    Log.Verbose().WriteLine("Trying to get service {0} from service provider {1}", contractType, provider.GetType());
+                    if (Log.IsVerboseEnabled())
+                    {
+                        Log.Verbose().WriteLine("Trying to get service {0} from service provider {1}", contractType, provider.GetType());
+                    }
                     return provider.GetService(contractType);
                 })
                 .FirstOrDefault(o => o != null);
             if (instance == null)
             {
-                Log.Verbose().WriteLine("No provider for {0} found", contractType);
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("No provider for {0} found", contractType);
+                }
                 // So we couldn't get an instance, add null so we don't try again.
                 if (specifiedContractName != null)
                 {
@@ -178,7 +184,10 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
         {
             if (!_typeLookupDictionary.TryGetValue(definition.ContractName, out contractType))
             {
-                Log.Verbose().WriteLine("Searching for an export {0}", definition.ContractName);
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Searching for an export {0}", definition.ContractName);
+                }
                 // Loop over all the supplied assemblies, these should come from the bootstrapper
 
                 try
@@ -191,13 +200,16 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
                 catch (Exception ex)
                 {
                     // Ignore & break the loop at it is most likely a problem with the contract name
-                    Log.Verbose().WriteLine("Couldn't get type {0} due to {1}", definition.ContractName, ex.Message);
+                    if (Log.IsVerboseEnabled())
+                    {
+                        Log.Verbose().WriteLine("Couldn't get type {0} due to {1}", definition.ContractName, ex.Message);
+                    }
                 }
                 _typeLookupDictionary[definition.ContractName] = contractType;
             }
 
             // Log if the type was not found
-            if (contractType == null)
+            if (contractType == null && Log.IsVerboseEnabled())
             {
                 Log.Verbose().WriteLine("Couldn't find type for {0}", definition.ContractName);
             }
@@ -218,7 +230,11 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
                 {
                     continue;
                 }
-                Log.Verbose().WriteLine("Not resolving contract {0}, it was excluded due to rule: {1}.", definition.ContractName, ignoreRegex.Key);
+
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Not resolving contract {0}, it was excluded due to rule: {1}.", definition.ContractName, ignoreRegex.Key);
+                }
                 yield break;
             }
             // See if we already cached the value
@@ -247,16 +263,26 @@ namespace Dapplo.Addons.Bootstrapper.ExportProviders
                 if (export == null)
                 {
                     // No export
-                    Log.Verbose().WriteLine("Couldn't create export for {0}", definition.ContractName);
+                    if (Log.IsVerboseEnabled())
+                    {
+                        Log.Verbose().WriteLine("Couldn't create export for {0}", definition.ContractName);
+                    }
                     yield break;
                 }
-                Log.Verbose().WriteLine("Export for {0} found as type {1}", definition.ContractName, contractType);
+
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Export for {0} found as type {1}", definition.ContractName, contractType);
+                }
                 yield return export;
             }
             else if (contractType == null)
             {
                 // The type is not found
-                Log.Verbose().WriteLine("Couldn't find type for {0}", definition.ContractName);
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Couldn't find type for {0}", definition.ContractName);
+                }
                 _lookup.Add(definition.ContractName, null);
             }
         }

@@ -49,7 +49,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     {
         private static readonly LogSource Log = new LogSource();
         private static readonly ISet<string> AppDomainRegistrations = new HashSet<string>();
+        // Assemblies which contain embedded files
         private static readonly ISet<Assembly> CosturaAssemblies = new HashSet<Assembly>();
+        // The assembly names in this set are not found in the CosturaAssemblies
+        private static readonly ISet<string> NotLocatedInCosturaAssemblies = new HashSet<string>();
         private static readonly ISet<string> ResolveDirectories = new HashSet<string>();
         private static readonly IDictionary<string, Assembly> AssembliesByName = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
         private static readonly IDictionary<string, Assembly> AssembliesByPath = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
@@ -179,7 +182,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     AppDomainRegistrations.Add(appDomain.FriendlyName);
                     appDomain.AssemblyResolve += ResolveEventHandler;
                     appDomain.AssemblyLoad += AssemblyLoadHandler;
-                    Log.Verbose().WriteLine("Registered Assembly-Resolving functionality to AppDomain {0}", appDomain.FriendlyName);
+                    if (Log.IsVerboseEnabled())
+                    {
+                        Log.Verbose().WriteLine("Registered Assembly-Resolving functionality to AppDomain {0}", appDomain.FriendlyName);
+                    }
                 }
                 return SimpleDisposable.Create(() => UnregisterAssemblyResolve(appDomain));
             }
@@ -192,15 +198,23 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <param name="assemblyLoadEventArgs">AssemblyLoadEventArgs</param>
         private static void AssemblyLoadHandler(object sender, AssemblyLoadEventArgs assemblyLoadEventArgs)
         {
-            Log.Verbose().WriteLine("Loaded assembly {0}", assemblyLoadEventArgs.LoadedAssembly.FullName);
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Loaded assembly {0}", assemblyLoadEventArgs.LoadedAssembly.FullName);
+            }
 
             if (!assemblyLoadEventArgs.LoadedAssembly.HasCosturaResources())
             {
                 return;
             }
 
-            Log.Verbose().WriteLine("Detected possible costura assembly {0}", assemblyLoadEventArgs.LoadedAssembly.FullName);
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Detected possible costura assembly {0}", assemblyLoadEventArgs.LoadedAssembly.FullName);
+            }
             CosturaAssemblies.Add(assemblyLoadEventArgs.LoadedAssembly);
+            // as a new assembly was added, clear the cache of assemblies which cannot be found in the costura embedded files
+            NotLocatedInCosturaAssemblies.Clear();
         }
 
         /// <summary>
@@ -252,16 +266,28 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             if (assemblyName.Name.EndsWith(".resources"))
             {
                 // Ignore to prevent resolving logic which doesn't find anything anyway
-                Log.Verbose().WriteLine("Ignoring resolve event for {0}", assemblyName.FullName);
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Ignoring resolve event for {0}", assemblyName.FullName);
+                }
                 return null;
             }
-            Log.Verbose().WriteLine("Resolve event for {0}", assemblyName.FullName);
+
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Resolve event for {0}", assemblyName.FullName);
+            }
+
             var assembly = FindAssembly(assemblyName.Name);
 
             // Check Costura resources
-            if (assembly == null)
+            if (assembly == null && CosturaAssemblies.Any() && !NotLocatedInCosturaAssemblies.Contains(assemblyName.Name))
             {
                 assembly = CosturaAssemblies.Select(costuraAssembly => costuraAssembly.LoadCosturaEmbeddedAssembly(assemblyName.Name)).FirstOrDefault(a => a != null);
+                if (assembly == null)
+                {
+                    NotLocatedInCosturaAssemblies.Add(assemblyName.Name);
+                }
             }
             if (assembly != null && assembly.FullName != assemblyName.FullName)
             {
@@ -286,7 +312,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             {
                 AssembliesByName.TryGetValue(assemblyName, out assembly);
             }
-            if (assembly != null)
+            if (assembly != null && Log.IsVerboseEnabled())
             {
                 Log.Verbose().WriteLine("Using cached assembly {0}.", assembly.FullName);
             }
@@ -296,7 +322,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => string.Equals(x.GetName().Name, assemblyName, StringComparison.InvariantCultureIgnoreCase));
                 if (assembly != null)
                 {
-                    Log.Verbose().WriteLine("Using already loaded assembly {1} for requested {0}.", assemblyName, assembly.FullName);
+                    if (Log.IsVerboseEnabled())
+                    {
+                        Log.Verbose().WriteLine("Using already loaded assembly {1} for requested {0}.", assemblyName, assembly.FullName);
+                    }
                     // Register the assembly, so the Dapplo.Addons Bootstrapper knows it too
                     assembly.Register();
                 }
@@ -374,7 +403,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
             if (assembly != null)
             {
-                Log.Verbose().WriteLine("Returning cached assembly for {0}, as {1} was already loaded.", filepath, assembly.FullName);
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Returning cached assembly for {0}, as {1} was already loaded.", filepath, assembly.FullName);
+                }
                 return assembly;
             }
             // check if the file was already loaded, this assumes that the filename (without extension) IS the assembly name
@@ -382,7 +414,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             assembly = FindCachedAssemblyByAssemblyName(assemblyNameFromPath);
             if (assembly != null)
             {
-                Log.Verbose().WriteLine("Skipping loading assembly-file from {0}, as {1} was already loaded.", filepath, assembly.FullName);
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Skipping loading assembly-file from {0}, as {1} was already loaded.", filepath, assembly.FullName);
+                }
                 return assembly;
             }
 
@@ -598,7 +633,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             }
             using (var stream = assembly.GetEmbeddedResourceAsStream(resourceName))
             {
-                Log.Verbose().WriteLine("Loading assembly from resource {0} in assembly {1}", resourceName, assembly.FullName);
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Loading assembly from resource {0} in assembly {1}", resourceName, assembly.FullName);
+                }
                 return stream.ToAssembly(CompressionTypes.None, !CheckEmbeddedResourceNameAgainstCache);
             }
         }

@@ -113,10 +113,17 @@ namespace Dapplo.Addons.Bootstrapper.Internal
                 var loadedAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly => string.Equals(assembly.GetName().Name, assemblyKeyValuePair.Key, StringComparison.InvariantCultureIgnoreCase));
                 if (loadedAssembly != null)
                 {
-                    Log.Verbose().WriteLine("Returning assembly '{0}' which was already loaded from: {1}", loadedAssembly.FullName, loadedAssembly.GetLocation() ?? "N.A.");
+                    if (Log.IsVerboseEnabled())
+                    {
+                        Log.Verbose().WriteLine("Returning assembly '{0}' which was already loaded from: {1}", loadedAssembly.FullName, loadedAssembly.GetLocation() ?? "N.A.");
+                    }
                     return loadedAssembly;
                 }
-                Log.Verbose().WriteLine("Forcing load from Costura packed assembly '{0}'", assemblyKeyValuePair.Key);
+
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Forcing load from Costura packed assembly '{0}'", assemblyKeyValuePair.Key);
+                }
 
                 return ReadFromEmbeddedResourcesMethodInfo.Invoke(null, new object[] {AssembliesAsResources, SymbolsAsResources, new AssemblyName(assemblyKeyValuePair.Key)}) as Assembly;
             }).Where(assembly => assembly != null);
@@ -144,10 +151,17 @@ namespace Dapplo.Addons.Bootstrapper.Internal
             var resources = costuraAssembly.GetManifestResourceNames();
             if (resources.Length < 1)
             {
-                Log.Verbose().WriteLine("No resources in {0}", costuraAssembly.FullName);
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("No resources in {0}", costuraAssembly.FullName);
+                }
                 return null;
             }
-            Log.Verbose().WriteLine("Looking for {0} in {1} [{2}]", assemblyName, costuraAssembly.FullName, string.Join(",", resources));
+
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Looking for {0} in {1} [{2}]", assemblyName, costuraAssembly.FullName, string.Join(",", resources));
+            }
 
             var assemblyResourceName = resources
                 .FirstOrDefault(resourceName => string.Equals(resourceName, $"{CosturaPrefix}{assemblyName}.dll{CosturaPostfix}", StringComparison.InvariantCultureIgnoreCase) ||
@@ -155,7 +169,10 @@ namespace Dapplo.Addons.Bootstrapper.Internal
 
             if (assemblyResourceName == null)
             {
-                Log.Verbose().WriteLine("Couldn't find assembly {0} embedded in {1}", assemblyName, costuraAssembly.FullName);
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Couldn't find assembly {0} embedded in {1}", assemblyName, costuraAssembly.FullName);
+                }
                 return null;
             }
             using (var assemblyStream = costuraAssembly.GetEmbeddedResourceAsStream(assemblyResourceName))

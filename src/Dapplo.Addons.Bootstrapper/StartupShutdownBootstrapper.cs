@@ -261,12 +261,18 @@ namespace Dapplo.Addons.Bootstrapper
                     switch (startupModule)
                     {
                         case IStartupAction startupAction:
-                            Log.Verbose().WriteLine("Trying to start {0}", startupAction.GetType());
+                            if (Log.IsVerboseEnabled())
+                            {
+                                Log.Verbose().WriteLine("Trying to start {0}", startupAction.GetType());
+                            }
                             // Wrap sync call as async task
                             startupTask = Task.Run(() => startupAction.Start(), cancellationToken);
                             break;
                         case IAsyncStartupAction asyncStartupAction:
-                            Log.Verbose().WriteLine("Trying to start {0}", asyncStartupAction.GetType());
+                            if (Log.IsVerboseEnabled())
+                            {
+                                Log.Verbose().WriteLine("Trying to start {0}", asyncStartupAction.GetType());
+                            }
                             // Create a task (it will start running, but we don't await it yet)
                             startupTask = asyncStartupAction.StartAsync(cancellationToken);
                             break;
