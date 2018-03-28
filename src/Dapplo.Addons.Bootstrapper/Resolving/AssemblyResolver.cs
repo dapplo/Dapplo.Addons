@@ -49,8 +49,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     {
         private static readonly LogSource Log = new LogSource();
         private static readonly ISet<string> AppDomainRegistrations = new HashSet<string>();
-        // Assemblies which contain embedded files
-        private static readonly ISet<Assembly> CosturaAssemblies = new HashSet<Assembly>();
         // The assembly names in this set are not found in the CosturaAssemblies
         private static readonly ISet<string> NotLocatedInCosturaAssemblies = new HashSet<string>();
         private static readonly ISet<string> ResolveDirectories = new HashSet<string>();
@@ -203,16 +201,16 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 Log.Verbose().WriteLine("Loaded assembly {0}", assemblyLoadEventArgs.LoadedAssembly.FullName);
             }
 
-            if (!assemblyLoadEventArgs.LoadedAssembly.HasCosturaResources())
+            if (!assemblyLoadEventArgs.LoadedAssembly.HasResources())
             {
                 return;
             }
 
             if (Log.IsVerboseEnabled())
             {
-                Log.Verbose().WriteLine("Detected possible costura assembly {0}", assemblyLoadEventArgs.LoadedAssembly.FullName);
+                Log.Verbose().WriteLine("Detected resources in assembly {0}", assemblyLoadEventArgs.LoadedAssembly.FullName);
             }
-            CosturaAssemblies.Add(assemblyLoadEventArgs.LoadedAssembly);
+
             // as a new assembly was added, clear the cache of assemblies which cannot be found in the costura embedded files
             NotLocatedInCosturaAssemblies.Clear();
         }
@@ -281,9 +279,9 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             var assembly = FindAssembly(assemblyName.Name);
 
             // Check Costura resources
-            if (assembly == null && CosturaAssemblies.Any() && !NotLocatedInCosturaAssemblies.Contains(assemblyName.Name))
+            if (assembly == null && !NotLocatedInCosturaAssemblies.Contains(assemblyName.Name))
             {
-                assembly = CosturaAssemblies.Select(costuraAssembly => costuraAssembly.LoadCosturaEmbeddedAssembly(assemblyName.Name)).FirstOrDefault(a => a != null);
+                assembly = CosturaHelper.FindCosturaEmbeddedAssembly(assemblyName.Name);
                 if (assembly == null)
                 {
                     NotLocatedInCosturaAssemblies.Add(assemblyName.Name);

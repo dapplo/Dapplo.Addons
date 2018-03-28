@@ -49,6 +49,7 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         private const string AssemblyLoaderTypeName = "Costura.AssemblyLoader";
         private static readonly MethodInfo ReadFromEmbeddedResourcesMethodInfo;
 
+
         /// <summary>
         ///     all the assemblies which Costura has available
         /// </summary>
@@ -130,14 +131,43 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         }
 
         /// <summary>
-        /// Test if the specified assembly has a costura resource
+        /// Test if the specified assembly has resources
         /// </summary>
-        /// <param name="possibleCosturaAssembly"></param>
-        /// <returns>bool true if there is a costura resource in the assembly</returns>
-        public static bool HasCosturaResources(this Assembly possibleCosturaAssembly)
+        /// <param name="costuraAssembly">Assembly</param>
+        /// <returns>bool true if there is are costura resources in the assembly</returns>
+        public static bool ContainsCosturaResource(this Assembly costuraAssembly)
         {
-            return possibleCosturaAssembly.GetManifestResourceNames().Any(resourceName =>
-                resourceName.StartsWith(CosturaPrefix, StringComparison.InvariantCultureIgnoreCase));
+            if (!EmbeddedResources.AssemblyResourceNames.TryGetValue(costuraAssembly, out var resources))
+            {
+                return false;
+            }
+            if (resources == null || resources.Length == 0)
+            {
+                return false;
+            }
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach (var resourceName in resources)
+            {
+                if (resourceName.StartsWith(CosturaPrefix, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Load an embedded assembly from the specified assembly
+        /// </summary>
+        /// <param name="assemblyName">string with the name of the assembly to look for</param>
+        /// <returns>Assembly or null</returns>
+        public static Assembly FindCosturaEmbeddedAssembly(string assemblyName)
+        {
+            return EmbeddedResources.AssemblyResourceNames.Keys
+                .Where(assembly => assembly.ContainsCosturaResource())
+                .Select(assembly => assembly.LoadCosturaEmbeddedAssembly(assemblyName))
+                .FirstOrDefault(a => a != null);
         }
 
         /// <summary>
@@ -148,12 +178,11 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         /// <returns>Assembly</returns>
         public static Assembly LoadCosturaEmbeddedAssembly(this Assembly costuraAssembly, string assemblyName)
         {
-            var resources = costuraAssembly.GetManifestResourceNames();
-            if (resources.Length < 1)
+            if (!EmbeddedResources.AssemblyResourceNames.TryGetValue(costuraAssembly, out var resources) || resources == null || resources.Length == 0)
             {
                 if (Log.IsVerboseEnabled())
                 {
-                    Log.Verbose().WriteLine("No resources in {0}", costuraAssembly.FullName);
+                    Log.Verbose().WriteLine("Couldn't find {0} in {1}", assemblyName, costuraAssembly.FullName);
                 }
                 return null;
             }
@@ -163,9 +192,19 @@ namespace Dapplo.Addons.Bootstrapper.Internal
                 Log.Verbose().WriteLine("Looking for {0} in {1} [{2}]", assemblyName, costuraAssembly.FullName, string.Join(",", resources));
             }
 
-            var assemblyResourceName = resources
-                .FirstOrDefault(resourceName => string.Equals(resourceName, $"{CosturaPrefix}{assemblyName}.dll{CosturaPostfix}", StringComparison.InvariantCultureIgnoreCase) ||
-                                                string.Equals(resourceName, $"{CosturaPrefix}{assemblyName}.dll", StringComparison.InvariantCultureIgnoreCase));
+            string assemblyResourceName = null;
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach (var resourceName in resources)
+            {
+                if (!string.Equals(resourceName, $"{CosturaPrefix}{assemblyName}.dll{CosturaPostfix}", StringComparison.InvariantCultureIgnoreCase) &&
+                    !string.Equals(resourceName, $"{CosturaPrefix}{assemblyName}.dll", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    continue;
+                }
+
+                assemblyResourceName = resourceName;
+                break;
+            }
 
             if (assemblyResourceName == null)
             {

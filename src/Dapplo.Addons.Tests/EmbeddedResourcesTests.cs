@@ -85,7 +85,7 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void Test_GetEmbeddedResourceAsStream_GZ()
         {
-            foreach (var manifestResourceName in GetType().Assembly.GetManifestResourceNames())
+            foreach (var manifestResourceName in GetType().Assembly.GetCachedManifestResourceNames())
             {
                 Log.Info().WriteLine("Resource: {0}", manifestResourceName);
             }

@@ -27,6 +27,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -47,6 +48,38 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     {
         private static readonly Regex PackRegex = new Regex(@"/(?<assembly>[a-zA-Z\.]+);component/(?<path>.*)", RegexOptions.Compiled);
         private static readonly LogSource Log = new LogSource();
+        /// <summary>
+        /// Mapping between Assemblies and the contained resources files
+        /// </summary>
+        public static IDictionary<Assembly, string[]> AssemblyResourceNames { get; } = new ConcurrentDictionary<Assembly, string[]>();
+
+        /// <summary>
+        /// Get the ManifestResourceNames for the specified assembly from cache or directly.
+        /// </summary>
+        /// <param name="possibleResourceAssembly">Assembly</param>
+        /// <returns>string array with resources names</returns>
+        public static string[] GetCachedManifestResourceNames(this Assembly possibleResourceAssembly)
+        {
+            // Get the resources from the cache
+            if (!AssemblyResourceNames.TryGetValue(possibleResourceAssembly, out var manifestResourceNames))
+            {
+                // If there was no cache, create it
+                manifestResourceNames = possibleResourceAssembly.GetManifestResourceNames();
+                AssemblyResourceNames.Add(possibleResourceAssembly, manifestResourceNames);
+            }
+
+            return manifestResourceNames;
+        }
+
+        /// <summary>
+        /// Test if the specified assembly has resources, the results are cached
+        /// </summary>
+        /// <param name="possibleResourceAssembly">Assembly</param>
+        /// <returns>bool true if there is are resources in the assembly</returns>
+        public static bool HasResources(this Assembly possibleResourceAssembly)
+        {
+            return possibleResourceAssembly.GetCachedManifestResourceNames().Length > 0;
+        }
 
         /// <summary>
         ///     Create a regex to find a resource in an assembly
@@ -143,8 +176,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <returns>bool with true if there is a matching resource</returns>
         public static bool HasResource(this Assembly assembly, Regex regexPattern)
         {
-            var resourceNames = assembly.GetManifestResourceNames();
-            return resourceNames.Any(regexPattern.IsMatch);
+            return assembly.GetCachedManifestResourceNames().Any(regexPattern.IsMatch);
         }
 
         /// <summary>
@@ -155,7 +187,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <returns>IEnumerable with matching resource names</returns>
         public static IEnumerable<string> FindEmbeddedResources(this Assembly assembly, Regex regexPattern)
         {
-            return from resourceName in assembly.GetManifestResourceNames()
+            return from resourceName in assembly.GetCachedManifestResourceNames()
                 where regexPattern.IsMatch(resourceName)
                 select resourceName;
         }
@@ -182,7 +214,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public static IEnumerable<Tuple<Assembly, string>> FindEmbeddedResources(this IEnumerable<Assembly> assemblies, Regex regex)
         {
             return from assembly in assemblies
-                from resourceName in assembly.GetManifestResourceNames()
+                from resourceName in assembly.GetCachedManifestResourceNames()
                 where regex.IsMatch(resourceName)
                 select new Tuple<Assembly, string>(assembly, resourceName);
         }
@@ -276,7 +308,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <returns>bool with true if there is a matching resource</returns>
         public static bool HasEmbeddedDotResourcesResource(this Assembly assembly, string filePath, bool ignoreCase = true)
         {
-            var resourceNames = assembly.GetManifestResourceNames();
+            var resourceNames = assembly.GetCachedManifestResourceNames();
             foreach (var resourcesFile in resourceNames.Where(x => x.EndsWith(".g.resources")))
             {
                 Log.Verbose().WriteLine("Resource not directly found, trying {0}", resourcesFile);
