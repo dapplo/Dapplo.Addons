@@ -48,8 +48,8 @@
     <Reference Include="Dapplo.Jira, Version=0.7.7.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Dapplo.Jira.0.7.7\lib\net45\Dapplo.Jira.dll</HintPath>
     </Reference>
-    <Reference Include="Dapplo.Log, Version=1.1.5.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Log.1.1.5\lib\net45\Dapplo.Log.dll</HintPath>
+    <Reference Include="Dapplo.Log, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapplo.Log.1.2.1\lib\net45\Dapplo.Log.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
