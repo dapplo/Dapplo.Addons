@@ -52,8 +52,8 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         // The assembly names in this set are not found in the CosturaAssemblies
         private static readonly ISet<string> NotLocatedInCosturaAssemblies = new HashSet<string>();
         private static readonly ISet<string> ResolveDirectories = new HashSet<string>();
-        private static readonly IDictionary<string, Assembly> AssembliesByName = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
-        private static readonly IDictionary<string, Assembly> AssembliesByPath = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
+        private static readonly ConcurrentDictionary<string, Assembly> AssembliesByName = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
+        private static readonly ConcurrentDictionary<string, Assembly> AssembliesByPath = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         ///     Setup and Register some of the default assemblies in the assembly cache
@@ -88,15 +88,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <summary>
         ///     IEnumerable with all cached assemblies
         /// </summary>
-        public static IEnumerable<Assembly> AssemblyCache {
-            get
-            {
-                lock (AssembliesByName)
-                {
-                    return AssembliesByName.Values.ToList();
-                }
-            }
-        } 
+        public static IEnumerable<Assembly> AssemblyCache => AssembliesByName.Values;
 
         /// <summary>
         ///     Defines if the resolving is first loading internal files, if nothing was found check the file system
@@ -140,30 +132,22 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 return;
             }
             var assemblyName = assembly.GetName().Name;
-            lock (AssembliesByName)
+            if (AssembliesByName.TryAdd(assemblyName, assembly))
             {
-                if (!AssembliesByName.ContainsKey(assembly.GetName().Name))
-                {
-                    Log.Verbose().WriteLine("Registering Assembly {0}", assemblyName);
-                    AssembliesByName[assembly.GetName().Name] = assembly;
-                }
+                Log.Verbose().WriteLine("Registering Assembly {0}", assemblyName);
             }
             filepath = filepath ?? assembly.GetLocation();
             if (string.IsNullOrEmpty(filepath))
             {
                 return;
             }
-            lock (AssembliesByPath)
+            // Make sure the name is always the same.
+            filepath = FileTools.RemoveExtensions(Path.GetFullPath(filepath), Extensions) + ".dll";
+            if (!AssembliesByPath.TryAdd(filepath, assembly))
             {
-                // Make sure the name is always the same.
-                filepath = FileTools.RemoveExtensions(Path.GetFullPath(filepath), Extensions) + ".dll";
-                if (AssembliesByPath.ContainsKey(filepath))
-                {
-                    return;
-                }
-                AssembliesByPath[filepath] = assembly;
-                Log.Verbose().WriteLine("Registering Assembly {0} to file {1}", assemblyName, filepath);
+                return;
             }
+            Log.Verbose().WriteLine("Registering Assembly {0} to file {1}", assemblyName, filepath);
         }
 
         /// <summary>
@@ -201,17 +185,13 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 Log.Verbose().WriteLine("Loaded assembly {0}", assemblyLoadEventArgs.LoadedAssembly.FullName);
             }
 
+            // Force caching the embedded resources
             if (!assemblyLoadEventArgs.LoadedAssembly.HasResources())
             {
                 return;
             }
 
-            if (Log.IsVerboseEnabled())
-            {
-                Log.Verbose().WriteLine("Detected resources in assembly {0}", assemblyLoadEventArgs.LoadedAssembly.FullName);
-            }
-
-            // as a new assembly was added, clear the cache of assemblies which cannot be found in the costura embedded files
+            // as a new assembly with resources was added, clear the cache of assemblies which cannot be found in the costura embedded files
             NotLocatedInCosturaAssemblies.Clear();
         }
 
@@ -278,6 +258,16 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
             var assembly = FindAssembly(assemblyName.Name);
 
+            if (assembly == null && assemblyName.Name.StartsWith("System."))
+            {
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Not scanning embedded System files for {0}", assemblyName.FullName);
+                }
+
+                return null;
+            }
+
             // Check Costura resources
             if (assembly == null && !NotLocatedInCosturaAssemblies.Contains(assemblyName.Name))
             {
@@ -304,12 +294,8 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         private static Assembly FindCachedAssemblyByAssemblyName(string assemblyName)
         {
             // check if the file was already loaded, this assumes that the filename (without extension) IS the assembly name
-            Assembly assembly;
 
-            lock (AssembliesByName)
-            {
-                AssembliesByName.TryGetValue(assemblyName, out assembly);
-            }
+            AssembliesByName.TryGetValue(assemblyName, out var assembly);
             if (assembly != null && Log.IsVerboseEnabled())
             {
                 Log.Verbose().WriteLine("Using cached assembly {0}.", assembly.FullName);
@@ -343,30 +329,22 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         private static Assembly FindCachedAssemblyByFilepath(string filepath)
         {
             filepath = FileTools.RemoveExtensions(Path.GetFullPath(filepath), Extensions) + ".dll";
-            Assembly assembly;
 
-            lock (AssembliesByName)
-            {
-                // Dynamic assemblies don't have a location, skip them, it would cause a NotSupportedException
-                assembly = AssembliesByName.Values.FirstOrDefault(x => string.Equals(x.GetLocation(), filepath, StringComparison.InvariantCultureIgnoreCase));
-            }
+            // Dynamic assemblies don't have a location, skip them, it would cause a NotSupportedException
+            var assembly = AssembliesByName.Values
+                .FirstOrDefault(x => string.Equals(x.GetLocation(), filepath, StringComparison.InvariantCultureIgnoreCase));
 
             // Check for assemblies by path
             if (assembly == null)
             {
-                lock (AssembliesByPath)
-                {
-                    AssembliesByPath.TryGetValue(filepath, out assembly);
-                }
+                AssembliesByPath.TryGetValue(filepath, out assembly);
             }
             if (assembly == null)
             {
-                lock (AssembliesByPath)
-                {
-                    assembly = AssembliesByPath
-                        .Where(x => string.Equals(Path.GetFileNameWithoutExtension(x.Key), Path.GetFileNameWithoutExtension(filepath),
-                            StringComparison.InvariantCultureIgnoreCase)).Select(x => x.Value).FirstOrDefault();
-                }
+                assembly = AssembliesByPath
+                    .Where(x => string.Equals(Path.GetFileNameWithoutExtension(x.Key), Path.GetFileNameWithoutExtension(filepath),StringComparison.InvariantCultureIgnoreCase))
+                    .Select(x => x.Value)
+                    .FirstOrDefault();
                 if (assembly != null)
                 {
                     return assembly;
@@ -510,13 +488,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                         tmpFileStream.Write(assemblyBytes, 0, assemblyBytes.Length);
                     }
                     var assemblyName = AssemblyName.GetAssemblyName(fileName);
-                    lock (AssembliesByName)
+                    Assembly cachedAssembly = FindCachedAssemblyByAssemblyName(assemblyName.Name);
+                    if (cachedAssembly != null)
                     {
-                        Assembly cachedAssembly = FindCachedAssemblyByAssemblyName(assemblyName.Name);
-                        if (cachedAssembly != null)
-                        {
-                            return cachedAssembly;
-                        }
+                        return cachedAssembly;
                     }
                 }
                 catch (Exception ex)

@@ -66,6 +66,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 // If there was no cache, create it
                 manifestResourceNames = possibleResourceAssembly.GetManifestResourceNames();
                 AssemblyResourceNames.Add(possibleResourceAssembly, manifestResourceNames);
+                if (Log.IsVerboseEnabled() && manifestResourceNames.Length > 0)
+                {
+                    Log.Verbose().WriteLine("Assembly {0} contains the following resources: {1}", possibleResourceAssembly.FullName, string.Join(", ", manifestResourceNames));
+                }
             }
 
             return manifestResourceNames;

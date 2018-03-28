@@ -63,6 +63,8 @@ namespace Dapplo.Addons.Tests
         {
             var resources = GetType().FindEmbeddedResources(@"embedded-dapplo.png");
             Assert.True(resources.Any());
+            resources = GetType().FindEmbeddedResources(@"dapplo.png");
+            Assert.True(resources.Any());
         }
 
         /// <summary>
