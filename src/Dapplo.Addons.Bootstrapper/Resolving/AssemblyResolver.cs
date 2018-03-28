@@ -256,13 +256,14 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 Log.Verbose().WriteLine("Resolve event for {0}", assemblyName.FullName);
             }
 
+            // See if we can find the assembly
             var assembly = FindAssembly(assemblyName.Name);
 
             if (assembly == null && assemblyName.Name.StartsWith("System."))
             {
                 if (Log.IsVerboseEnabled())
                 {
-                    Log.Verbose().WriteLine("Not scanning embedded System files for {0}", assemblyName.FullName);
+                    Log.Verbose().WriteLine("Not scanning for embedded DLL files when the name starts with \"System.\", like: {0}", assemblyName.FullName);
                 }
 
                 return null;
@@ -296,20 +297,23 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             // check if the file was already loaded, this assumes that the filename (without extension) IS the assembly name
 
             AssembliesByName.TryGetValue(assemblyName, out var assembly);
-            if (assembly != null && Log.IsVerboseEnabled())
+            if (assembly == null)
             {
-                Log.Verbose().WriteLine("Using cached assembly {0}.", assembly.FullName);
-            }
-            else
-            {
+                // Do not scan for all the loaded assemblies when it's a system assembly
+                if (assemblyName.StartsWith("System."))
+                {
+                    return null;
+                }
                 // The assembly was not found in our own cache, find it in the current AppDomain
-                assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => string.Equals(x.GetName().Name, assemblyName, StringComparison.InvariantCultureIgnoreCase));
+                assembly = AppDomain.CurrentDomain.GetAssemblies()
+                    .FirstOrDefault(x => string.Equals(x.GetName().Name, assemblyName, StringComparison.InvariantCultureIgnoreCase));
                 if (assembly != null)
                 {
                     if (Log.IsVerboseEnabled())
                     {
                         Log.Verbose().WriteLine("Using already loaded assembly {1} for requested {0}.", assemblyName, assembly.FullName);
                     }
+
                     // Register the assembly, so the Dapplo.Addons Bootstrapper knows it too
                     assembly.Register();
                 }
@@ -318,6 +322,11 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     Log.Verbose().WriteLine("Couldn't find an available assembly called {0}.", assemblyName);
                 }
             }
+            else if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Using cached assembly {0}.", assembly.FullName);
+            }
+
             return assembly;
         }
 
