@@ -23,26 +23,21 @@
 
 #endregion
 
-namespace Dapplo.Addons.Bootstrapper.Internal
+#region Usings
+
+#endregion
+
+namespace Dapplo.Addons
 {
     /// <summary>
-    ///     Enum to specify the compression type
+    ///     Use IShutdown for things that need a shutdown
     /// </summary>
-    public enum CompressionTypes
+    public interface IShutdown : IShutdownMarker
     {
         /// <summary>
-        ///     No compression
+        ///     Perform a shutdown of whatever needs to be shutdown.
+        ///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
         /// </summary>
-        None,
-
-        /// <summary>
-        ///     Used for .gz files
-        /// </summary>
-        Gzip,
-
-        /// <summary>
-        ///     Used for .compressed files
-        /// </summary>
-        Deflate
+        void Shutdown();
     }
 }

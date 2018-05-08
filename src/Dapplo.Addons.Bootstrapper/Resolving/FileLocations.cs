@@ -32,6 +32,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Dapplo.Addons.Bootstrapper.Extensions;
+using Dapplo.Log;
 
 #endregion
 
@@ -42,6 +43,8 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     /// </summary>
     public static class FileLocations
     {
+        private static readonly LogSource Log = new LogSource();
+
         /// <summary>
         ///     Get the startup location, which is either the location of the entry assemby, or the executing assembly
         /// </summary>
@@ -70,12 +73,12 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public static IEnumerable<Tuple<string, Match>> Scan(IEnumerable<string> directories, Regex filePattern, SearchOption searchOption = SearchOption.AllDirectories)
         {
             return from directory in directories
-                from path in DirectoriesFor(directory)
-                where Directory.Exists(path)
-                from file in Directory.EnumerateFiles(path, "*", searchOption)
-                let match = filePattern.Match(file)
-                where match.Success
-                select Tuple.Create(file, match);
+                   from path in DirectoriesFor(directory)
+                   where Directory.Exists(path)
+                   from file in Directory.EnumerateFiles(path, "*", searchOption)
+                   let match = filePattern.Match(file)
+                   where match.Success
+                   select Tuple.Create(file, match);
         }
 
         /// <summary>
@@ -91,10 +94,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public static IEnumerable<string> Scan(IEnumerable<string> directories, string simplePattern, SearchOption searchOption = SearchOption.AllDirectories)
         {
             return from directory in directories
-                from path in DirectoriesFor(directory)
-                where Directory.Exists(path)
-                from file in Scan(path, simplePattern, searchOption)
-                select file;
+                   from path in DirectoriesFor(directory)
+                   where Directory.Exists(path)
+                   from file in Scan(path, simplePattern, searchOption)
+                   select file;
         }
 
         /// <summary>
@@ -160,9 +163,9 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             {
                 return Path.GetFullPath(new Uri(directory, UriKind.Absolute).LocalPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             }
-            catch
+            catch (Exception ex)
             {
-                // Do nothing
+                Log.Error().WriteLine(ex, "Couldn't get the fullpath of {0}", directory);
             }
             return null;
         }
@@ -178,9 +181,9 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             {
                 return Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, directory)).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             }
-            catch
+            catch (Exception ex)
             {
-                // Do nothing
+                Log.Error().WriteLine(ex, "Couldn't get the directory {1} relative to the current working directory {0}", Environment.CurrentDirectory, directory);
             }
             return null;
         }
@@ -192,22 +195,36 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <returns>string directory</returns>
         private static string DirectoryRelativeToExe(string directory)
         {
+            string assemblyLocation;
             try
             {
-                var assemblyLocation = Assembly.GetExecutingAssembly().GetLocation();
-                if (!string.IsNullOrEmpty(assemblyLocation) && File.Exists(assemblyLocation))
+                assemblyLocation = Assembly.GetExecutingAssembly().GetLocation();
+            }
+            catch (Exception ex)
+            {
+                Log.Error().WriteLine(ex, "Couldn't get the assembly location");
+                return null;
+            }
+
+            try
+            {
+                if (string.IsNullOrEmpty(assemblyLocation) || !File.Exists(assemblyLocation))
                 {
-                    var exeDirectory = Path.GetDirectoryName(assemblyLocation);
-                    if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
-                    {
-                        var relativeToExe = Path.GetFullPath(Path.Combine(exeDirectory, directory)).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                        return relativeToExe;
-                    }
+                    Log.Warn().WriteLine("Executable location {0} does not exist", assemblyLocation);
+                    return null;
+                }
+
+                var exeDirectory = Path.GetDirectoryName(assemblyLocation);
+                if (!string.IsNullOrEmpty(exeDirectory))
+                {
+                    var relativeToExe = Path.GetFullPath(Path.Combine(exeDirectory, directory))
+                        .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    return relativeToExe;
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Do nothing
+                Log.Error().WriteLine(ex, "Couldn't get the directory {1} relative to the executable {0}", Environment.CurrentDirectory, directory);
             }
             return null;
         }

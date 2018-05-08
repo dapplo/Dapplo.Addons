@@ -33,18 +33,16 @@ using System.Threading.Tasks;
 namespace Dapplo.Addons
 {
     /// <summary>
-    ///     The IAsyncStartupAction is an interface for modules that can be started when the application starts
-    ///     Extend you module with this interface, and use the StartupActionAttribute to annotate the module
+    ///     Use IShutdownAsync for things that need to be shutdown async
     /// </summary>
-    public interface IAsyncStartupAction : IStartupModule
+    public interface IShutdownAsync : IShutdownMarker
     {
         /// <summary>
-        ///     Perform a start of whatever needs to be started.
+        ///     Perform a shutdown of whatever needs to be shutdown.
         ///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
-        ///     throw a StartupException if something went terribly wrong and the application should NOT continue
         /// </summary>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task</returns>
-        Task StartAsync(CancellationToken cancellationToken = default(CancellationToken));
+        Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken));
     }
 }

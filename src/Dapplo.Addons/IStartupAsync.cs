@@ -25,48 +25,25 @@
 
 #region Usings
 
-using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 #endregion
 
-namespace Dapplo.Addons.Bootstrapper.Internal
+namespace Dapplo.Addons
 {
     /// <summary>
-    ///     A simple way to return something, which calls an action on Dispose.
+    ///     Use IStartupAsync for things which need to start async
     /// </summary>
-    public sealed class SimpleDisposable : IDisposable
+    public interface IStartupAsync : IStartupMarker
     {
-        private readonly Action _action;
-
-        // To detect redundant calls, we store a flag
-        private bool _disposed;
-
-        private SimpleDisposable(Action action)
-        {
-            _action = action;
-        }
-
         /// <summary>
-        ///     Dispose will call the stored action
+        ///     Perform a start of whatever needs to be started.
+        ///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
+        ///     throw a StartupException if something went terribly wrong and the application should NOT continue
         /// </summary>
-        public void Dispose()
-        {
-            if (_disposed)
-            {
-                return;
-            }
-            _disposed = true;
-            _action();
-        }
-
-        /// <summary>
-        ///     Create an IDisposable which will call the passed action on Dispose.
-        /// </summary>
-        /// <param name="action">Action to call when the object is disposed.</param>
-        /// <returns>IDisposable</returns>
-        public static IDisposable Create(Action action)
-        {
-            return new SimpleDisposable(action);
-        }
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>Task</returns>
+        Task StartAsync(CancellationToken cancellationToken = default(CancellationToken));
     }
 }

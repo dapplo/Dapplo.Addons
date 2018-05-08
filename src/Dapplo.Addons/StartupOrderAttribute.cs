@@ -26,36 +26,42 @@
 #region Usings
 
 using System;
-using System.ComponentModel.Composition;
+using System.ComponentModel;
 
 #endregion
 
 namespace Dapplo.Addons
 {
     /// <summary>
-    ///     This is the Module attribute which can be used to specify type-safe meta-data
-    ///     Currently there are none in here, but it was made available so it's possible to add them at a later time
-    ///     In general it is bad to import via a specific type, always try to use contract interfaces.
-    ///     As the IModule is pretty much only a marker interface, it is not very usefull and this is why the attribute is
-    ///     abstract
+    ///     This attribute can be used to specify the startup order
     /// </summary>
-    [MetadataAttribute]
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-    public abstract class ModuleAttribute : InheritedExportAttribute
+    [System.ComponentModel.Composition.MetadataAttribute]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
+    public class StartupOrderAttribute : Attribute
     {
-        /// <summary>
-        ///     Constructor with a contractname, and a type
-        /// </summary>
-        protected ModuleAttribute(string contractname, Type type) : base(contractname, type)
+        public StartupOrderAttribute()
         {
+
+        }
+        public StartupOrderAttribute(int order)
+        {
+            StartupOrder = order;
         }
 
         /// <summary>
-        ///     Constructor with the type
+        ///     Here the order of the startup action can be specified, starting with low values and ending with high.
+        ///     With this a cheap form of "dependency" management is made.
         /// </summary>
-        /// <param name="type"></param>
-        protected ModuleAttribute(Type type) : base(type)
-        {
-        }
+        [DefaultValue(1)]
+        public int StartupOrder { get; set; } = 1;
+
+
+        /// <summary>
+        ///     Specify if the startup needs to be awaited, this could be set to false if you want to have a task doing something
+        ///     in the background
+        ///     In general you would like this to be true, otherwise depending code might be started to early
+        /// </summary>
+        [DefaultValue(true)]
+        public bool AwaitStart { get; set; } = true;
     }
 }

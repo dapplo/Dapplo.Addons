@@ -23,21 +23,16 @@
 
 #endregion
 
+#region Usings
+
+#endregion
+
 namespace Dapplo.Addons
 {
     /// <summary>
-    ///     Interface for the ApplicationBootstrapper
+    ///     The IShutdownMarker is a marker interface for things that need a shutdown
     /// </summary>
-    public interface IApplicationBootstrapper : IStartupShutdownBootstrapper
+    public interface IShutdownMarker
     {
-        /// <summary>
-        ///     Name of the application for this bootstrapper
-        /// </summary>
-        string ApplicationName { get; }
-
-        /// <summary>
-        ///     Is the mutex for the application locked=
-        /// </summary>
-        bool IsMutexLocked { get; }
     }
 }

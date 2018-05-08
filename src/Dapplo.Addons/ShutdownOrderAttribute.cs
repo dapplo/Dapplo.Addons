@@ -25,22 +25,33 @@
 
 #region Usings
 
+using System;
 using System.ComponentModel;
 
 #endregion
 
 namespace Dapplo.Addons
 {
-	/// <summary>
-	///     Meta-data belonging to the AsyncShutdownActionAttribute or ShutdownActionAttribute, which makes it possible to
-	///     specify type-safe meta-data.
-	/// </summary>
-	public interface IShutdownMetadata
+    /// <summary>
+    ///     This attribute can be used to specify a shutdown order
+    /// </summary>
+    [System.ComponentModel.Composition.MetadataAttribute]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
+    public class ShutdownOrderAttribute : Attribute
     {
+        public ShutdownOrderAttribute()
+        {
+        }
+
+        public ShutdownOrderAttribute(int order)
+        {
+            ShutdownOrder = order;
+        }
+
         /// <summary>
-        ///     Order in which IShutdownAction.Shutdown / IAsyncShutdownAction.ShutdownAsync is called
+        ///     Order for the shutdowns to be called
         /// </summary>
         [DefaultValue(1)]
-        int ShutdownOrder { get; }
+        public int ShutdownOrder { get; set; } = 1;
     }
 }

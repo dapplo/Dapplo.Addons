@@ -23,12 +23,22 @@
 
 #endregion
 
+#region Usings
+
+#endregion
+
 namespace Dapplo.Addons
 {
     /// <summary>
-    ///     Basic interface which every module should implement
-    /// </summary>
-    public interface IModule
+    ///     IStartup is an interface that is used for things that need to start
+     /// </summary>
+    public interface IStartup : IStartupMarker
     {
+        /// <summary>
+        ///     Perform a start of whatever needs to be started.
+        ///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
+        ///     throw a StartupException if something went terribly wrong and the application should NOT continue
+        /// </summary>
+        void Start();
     }
 }
