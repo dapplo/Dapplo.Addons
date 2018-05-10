@@ -25,7 +25,6 @@
 
 #region Usings
 
-using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Addons.Tests.TestAssembly;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
@@ -53,22 +52,6 @@ namespace Dapplo.Addons.Tests
         {
             var helloWorld = ExternalClass.HelloWord();
             Assert.Equal(nameof(ExternalClass.HelloWord), helloWorld);
-        }
-
-        /// <summary>
-        /// </summary>
-        [Fact]
-        public void Test_AssemblyNameToRegex()
-        {
-            const string fileNoMatch = @"C:\Project\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
-            const string fileMatch = @"C:\Project\blub\bin\Debug\Dapplo.something.dll";
-            var regex = FileTools.FilenameToRegex("Dapplo.Something*", AssemblyResolver.Extensions);
-            Assert.DoesNotMatch(regex, fileNoMatch);
-            Assert.Matches(regex, fileMatch);
-
-            var regex2 = FileTools.FilenameToRegex("Something*", AssemblyResolver.Extensions);
-            Assert.DoesNotMatch(regex2, fileNoMatch);
-            Assert.DoesNotMatch(regex2, fileMatch);
         }
     }
 }

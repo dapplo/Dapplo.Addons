@@ -140,8 +140,10 @@ namespace Dapplo.Addons.Bootstrapper
                 if (IsLocked)
                 {
                     _applicationMutex.ReleaseMutex();
+                    IsLocked = false;
                     Log.Info().WriteLine("Released Mutex {0} for {1}", _mutexId, _resourceName);
                 }
+                _applicationMutex.Dispose();
             }
             catch (Exception ex)
             {

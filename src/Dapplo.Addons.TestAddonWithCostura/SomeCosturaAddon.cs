@@ -35,9 +35,7 @@ using Dapplo.Log;
 
 namespace Dapplo.Addons.TestAddonWithCostura
 {
-    [StartupAction(AwaitStart = true)]
-    [ShutdownAction("CosturaTest")]
-    public class SomeCosturaAddon : IAsyncStartupAction, IAsyncShutdownAction
+    public class SomeCosturaAddon : IStartupAsync, IShutdownAsync
     {
         private static readonly LogSource Log = new LogSource();
 

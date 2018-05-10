@@ -23,6 +23,8 @@ namespace Dapplo.Addons.Bootstrapper
         private static readonly Regex AssembliesToIgnore = new Regex(@"(Microsoft\..*|mscorlib|UIAutomationProvider|PresentationFramework|PresentationCore|WindowsBase|autofac.*|Dapplo\.Log|system.*|.*resources|Dapplo\.InterfaceImpl.*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly ResourceMutex _resourceMutex;
         private readonly AssemblyResolver _resolver = new AssemblyResolver();
+        private readonly IList<string> _scanDirectories = new List<string>();
+        private readonly IList<IDisposable> _disposables = new List<IDisposable>();
         private bool _isStartedUp;
         private bool _isShutDown;
 
@@ -67,8 +69,10 @@ namespace Dapplo.Addons.Bootstrapper
         {
             Instance = this;
             ApplicationName = applicationName ?? throw new ArgumentNullException(nameof(applicationName));
-            Thread.CurrentThread.Name = applicationName;
-
+            if (Thread.CurrentThread.Name == null)
+            {
+                Thread.CurrentThread.Name = applicationName;
+            }
             if (mutexId != null)
             {
                 _resourceMutex = ResourceMutex.Create(mutexId, applicationName, global);
@@ -80,6 +84,49 @@ namespace Dapplo.Addons.Bootstrapper
         ///     This also returns true if no mutex is used
         /// </summary>
         public bool IsAlreadyRunning => _resourceMutex != null && !_resourceMutex.IsLocked;
+
+        /// <summary>
+        /// Add the disposable to a list, everything in there is disposed when the bootstrapper is disposed.
+        /// </summary>
+        /// <param name="disposable">IDisposable</param>
+        public void RegisterForDisposal(IDisposable disposable)
+        {
+            if (disposable == null)
+            {
+                throw new ArgumentNullException(nameof(disposable));
+            }
+            _disposables.Add(disposable);
+        }
+
+        /// <summary>
+        /// Add an additional scan directory
+        /// </summary>
+        /// <param name="scanDirectory">string</param>
+        public void AddScanDirectory(string scanDirectory)
+        {
+            if (string.IsNullOrEmpty(scanDirectory))
+            {
+                throw new ArgumentNullException(nameof(scanDirectory));
+            }
+            scanDirectory = FileLocations.NormalizeDirectory(scanDirectory);
+            if (!_scanDirectories.Contains(scanDirectory))
+            {
+                _scanDirectories.Add(scanDirectory);
+            }
+        }
+
+        /// <summary>
+        /// Find a certain assembly in the available scan directories and load this
+        /// </summary>
+        /// <param name="pattern">string</param>
+        public void FindAndLoadAssemblies(string pattern)
+        {
+            if (string.IsNullOrEmpty(pattern))
+            {
+                throw new ArgumentNullException(nameof(pattern));
+            }
+            LoadAssemblies(FileLocations.Scan(_scanDirectories, pattern));
+        }
 
         /// <summary>
         /// Load the specified assembly files
@@ -137,7 +184,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <summary>
         /// Initialize the bootstrapper
         /// </summary>
-        public virtual Task InitializeAsync(CancellationToken cancellationToken = default)
+        public virtual Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
         {
             if (Container != null)
             {
@@ -178,10 +225,14 @@ namespace Dapplo.Addons.Bootstrapper
         /// Start the IStartupModules
         /// </summary>
         /// <param name="cancellationToken">CancellationToken</param>
-        public Task StartupAsync(CancellationToken cancellationToken = default)
+        public async Task StartupAsync(CancellationToken cancellationToken = default)
         {
+            if (Container == null)
+            {
+                await InitializeAsync(cancellationToken);
+            }
             _isStartedUp = true;
-            return Scope.Resolve<StartupHandler>().StartupAsync(cancellationToken);
+            await Scope.Resolve<StartupHandler>().StartupAsync(cancellationToken);
         }
 
         /// <summary>
@@ -212,6 +263,15 @@ namespace Dapplo.Addons.Bootstrapper
                     ShutdownAsync().Wait();
                 }
             }
+
+            var reversedDisposables = _disposables.Reverse().ToList();
+            _disposables.Clear();
+            foreach (var disposable in reversedDisposables)
+            {
+                disposable?.Dispose();
+            }
+
+            
             Scope?.Dispose();
             Container?.Dispose();
         }

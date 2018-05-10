@@ -26,20 +26,17 @@
 #region Usings
 
 using System;
-using System.ComponentModel.Composition;
 
 #endregion
 
 namespace Dapplo.Addons.TestAddon
 {
-    [StartupAction(AwaitStart = true, StartupOrder = 1)]
-    public class StartupExceptionThrowingAddon : IStartupAction
+    public class StartupExceptionThrowingAddon : IStartup
     {
         /// <summary>
         ///     This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
         /// </summary>
-        [Import(AllowDefault = true)]
-        private bool ThrowStartupException { get; set; }
+        public bool ThrowStartupException { get; set; }
 
         public void Start()
         {

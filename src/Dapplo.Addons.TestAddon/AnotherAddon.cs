@@ -34,9 +34,7 @@ using System.Threading.Tasks;
 
 namespace Dapplo.Addons.TestAddon
 {
-    [StartupAction(AwaitStart = false, StartupOrder = 1)]
-    [ShutdownAction]
-    public class AnotherAddon : IAsyncStartupAction, IAsyncShutdownAction
+    public class AnotherAddon : IStartupAsync, IShutdownAsync
     {
         [ImportingConstructor]
         public AnotherAddon(IThisIsSubConfiguration mysubConfig)

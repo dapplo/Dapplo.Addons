@@ -5,8 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Autofac;
 using Dapplo.Addons.Bootstrapper;
+using Dapplo.Addons.Bootstrapper.Handler;
 using Dapplo.Addons.Tests.Entities;
+using Dapplo.Addons.Tests.TestModules;
 using Xunit;
 
 #endregion
@@ -18,12 +21,12 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void Test_Startup_Grouping()
         {
-            IList<Lazy<IStartupModule, IStartupMetadata>> startupModules = new List<Lazy<IStartupModule, IStartupMetadata>>();
+            IList<Lazy<IStartupMarker, StartupOrderAttribute>> startupModules = new List<Lazy<IStartupMarker, StartupOrderAttribute>>();
 
             var randomCreator = new Random();
-            startupModules.Add(new Lazy<IStartupModule, IStartupMetadata>(
+            startupModules.Add(new Lazy<IStartupMarker, StartupOrderAttribute>(
                 () => new TestAsyncStartupAction(randomCreator.Next(100, 1000)),
-                new StartupActionAttribute {AwaitStart = true, StartupOrder = 10})
+                new StartupOrderAttribute { AwaitStart = true, StartupOrder = 10})
             );
 
             var cancellationToken = default(CancellationToken);
@@ -32,38 +35,10 @@ namespace Dapplo.Addons.Tests
             {
                 var tasks = startupGroup.Select(lazy =>
                 {
-                    return lazy.Value is IStartupAction startupAction
+                    return lazy.Value is IStartup startupAction
                         ? Task.Run(() => startupAction.Start(), cancellationToken)
-                        : (lazy.Value as IAsyncStartupAction)?.StartAsync(cancellationToken);
+                        : (lazy.Value as IStartupAsync)?.StartAsync(cancellationToken);
                 });
-            }
-        }
-
-        [Fact]
-        public async Task Test_Startup_Cancel()
-        {
-            bool didFirstRun = false;
-            bool didSecondRun = false;
-            using (var bootstrapper = new StartupShutdownBootstrapper())
-            {
-                bootstrapper.Add(GetType());
-                await bootstrapper.InitializeAsync();
-
-                void FirstAction()
-                {
-                    didFirstRun = true;
-                    bootstrapper.CancelStartup();
-                }
-
-                void SecondAction() => didSecondRun = true;
-
-                bootstrapper.Export("FirstAction", (Action) FirstAction);
-                bootstrapper.Export("SecondAction", (Action) SecondAction);
-
-                await bootstrapper.RunAsync();
-
-                Assert.True(didFirstRun);
-                Assert.False(didSecondRun);
             }
         }
 
@@ -72,18 +47,24 @@ namespace Dapplo.Addons.Tests
         {
             bool didFirstRun = false;
             bool didSecondRun = false;
-            using (var bootstrapper = new StartupShutdownBootstrapper())
+            using (var bootstrapper = new ApplicationBootstrapper("StartupTest"))
             {
-                bootstrapper.Add(GetType());
+                bootstrapper.Configure();
+
+                bootstrapper.Builder.RegisterType<StartupHandler>();
+
+                bootstrapper.Builder.Register(context => new FirstStartupAction
+                {
+                    MyStartAction = () => didFirstRun = true
+                }).As<IStartupMarker>().SingleInstance();
+
+                bootstrapper.Builder.Register(context => new SecondStartupAction
+                {
+                    MyStartAction = () => didSecondRun = true
+                }).As<IStartupMarker>().SingleInstance();
+
                 await bootstrapper.InitializeAsync();
-                Action firstAction = () => didFirstRun = true;
-                Action secondAction = () => didSecondRun = true;
-
-                bootstrapper.Export("FirstAction", firstAction);
-                bootstrapper.Export("SecondAction", secondAction);
-
-                await bootstrapper.RunAsync();
-
+                await bootstrapper.StartupAsync();
                 Assert.True(didFirstRun);
                 Assert.True(didSecondRun);
             }

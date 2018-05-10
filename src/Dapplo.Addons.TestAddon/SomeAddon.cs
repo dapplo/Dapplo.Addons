@@ -37,9 +37,7 @@ using Dapplo.Log;
 
 namespace Dapplo.Addons.TestAddon
 {
-    [StartupAction(AwaitStart = false, StartupOrder = 1)]
-    [ShutdownAction("ImproveCoverage")]
-    public class SomeAddon : IAsyncStartupAction, IAsyncShutdownAction
+    public class SomeAddon : IStartupAsync, IShutdownAsync
     {
         private static readonly LogSource Log = new LogSource();
 
