@@ -12,7 +12,7 @@
 		<summary>A bootstrapper which loads Dapplo.Addons addons</summary>
         <language>en-us</language>
 		<copyright>$author$</copyright>
-		<tags>MEF bootstrapper addon</tags>
+		<tags>autofac bootstrapper addon</tags>
 		<dependencies>
 			<dependency id="Dapplo.Addons" version="$version$" />
 			<dependency id="Dapplo.Log" version="1.2.1.0" />
