@@ -23,11 +23,11 @@ namespace Dapplo.Addons.Extensions
         }
 
         /// <summary>
-        /// This registers all the IStartupModule implementing classes for Startup
+        /// This registers all the IStartup and IStartupAsync implementing classes for Startup
         /// This doesn't prevent the type from being registered multiple times, e.g. when it also implements other interfaces which are registered.
         /// </summary>
         /// <param name="registerAssemblyTypes">The result of _builder.RegisterAssemblyTypes</param>
-        public static void EnableStartupActions(this IRegistrationBuilder<object, ScanningActivatorData, DynamicRegistrationStyle> registerAssemblyTypes)
+        public static void EnableStartup(this IRegistrationBuilder<object, ScanningActivatorData, DynamicRegistrationStyle> registerAssemblyTypes)
         {
             registerAssemblyTypes
                 .AssignableTo<IStartupMarker>()
@@ -36,11 +36,11 @@ namespace Dapplo.Addons.Extensions
         }
 
         /// <summary>
-        /// This registers all the IShutdownModule implementing classes for Shutdown
+        /// This registers all the IShutdown and IShtudownAsync implementing classes for Shutdown
         /// This doesn't prevent the type from being registered multiple times, e.g. when it also implements other interfaces which are registered.
         /// </summary>
         /// <param name="registerAssemblyTypes">The result of _builder.RegisterAssemblyTypes</param>
-        public static void EnableShutdownActions(this IRegistrationBuilder<object, ScanningActivatorData, DynamicRegistrationStyle> registerAssemblyTypes)
+        public static void EnableShutdown(this IRegistrationBuilder<object, ScanningActivatorData, DynamicRegistrationStyle> registerAssemblyTypes)
         {
             registerAssemblyTypes
                 .AssignableTo<IShutdownMarker>()
