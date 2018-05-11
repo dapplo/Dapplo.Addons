@@ -16,9 +16,6 @@
 		<dependencies>
 			<dependency id="Dapplo.Addons" version="$version$" />
 			<dependency id="Dapplo.Log" version="1.2.1.0" />
-			<dependency id="Autofac" version="4.8.1.0" />
-			<dependency id="Autofac.Extras.AttributeMetadata" version="4.8.1.0" />
-			<dependency id="Autofac.Integration.Mef" version="4.0.0.0" />
 		</dependencies>
 		<frameworkAssemblies>
 			<frameworkAssembly assemblyName="System.ComponentModel.Composition" targetFramework="net45" />

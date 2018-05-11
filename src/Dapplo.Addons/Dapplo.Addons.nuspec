@@ -15,7 +15,7 @@
 		<tags>autofac addon</tags>
 		<dependencies>
 			<dependency id="Autofac" version="4.8.1.0" />
-			<dependency id="Autofac.Extras.AttributeMetadata" version="4.8.1.0" />
+			<dependency id="Autofac.Extras.AttributeMetadata" version="4.0.1.0" />
 			<dependency id="Autofac.Integration.Mef" version="4.0.0.0" />
 		</dependencies>
 		<frameworkAssemblies>
