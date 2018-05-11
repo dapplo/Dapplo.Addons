@@ -9,13 +9,6 @@ branches:
   only:
   - master
   - /feature.*/
-notifications:
-- provider: GitHubPullRequest
-  auth_token:
-    secure: YDFCm4fj2pYoTR+QCKcR1Q==
-  on_build_success: true
-  on_build_failure: true
-  on_build_status_changed: true
 environment:
   NuGetApiKey:
     secure: xkDQ385+smLqdzhESsXBJvnUjK4FZ4Djjrqi9tFR29dwESIvPYOrQAqgri5Nf/fA
@@ -35,3 +28,9 @@ notifications:
   on_build_success: true
   on_build_failure: true
   on_build_status_changed: false
+- provider: GitHubPullRequest
+  auth_token:
+    secure: YDFCm4fj2pYoTR+QCKcR1Q==
+  on_build_success: true
+  on_build_failure: true
+  on_build_status_changed: true
