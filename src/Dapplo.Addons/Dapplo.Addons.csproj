@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions\RegisterAssemblyTypesExtensions.cs" />
+    <Compile Include="IResourceProvider.cs" />
     <Compile Include="IShutdownAsync.cs" />
     <Compile Include="IStartupAsync.cs" />
     <Compile Include="IShutdown.cs" />

@@ -15,6 +15,10 @@ namespace Dapplo.Addons.Bootstrapper.Handler
         private static readonly LogSource Log = new LogSource();
         private readonly IEnumerable<Lazy<IStartupMarker, StartupOrderAttribute>> _startupModules;
 
+        /// <summary>
+        /// The constructor to specify the startup modules
+        /// </summary>
+        /// <param name="startupModules">IEnumerable</param>
         public StartupHandler(IEnumerable<Lazy<IStartupMarker, StartupOrderAttribute>> startupModules)
         {
             _startupModules = startupModules;

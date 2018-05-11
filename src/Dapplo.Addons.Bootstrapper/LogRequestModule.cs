@@ -4,13 +4,20 @@ using Dapplo.Log;
 
 namespace Dapplo.Addons.Bootstrapper
 {
+    /// <summary>
+    /// A module to enable logs
+    /// </summary>
     public class LogRequestModule : Module
     {
         private static readonly LogSource Log = new LogSource();
         private int _depth;
 
-        protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry,
-            IComponentRegistration registration)
+        /// <summary>
+        /// Implement the AttachToComponentRegistration, to register logging
+        /// </summary>
+        /// <param name="componentRegistry">IComponentRegistry</param>
+        /// <param name="registration">IComponentRegistration</param>
+        protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry, IComponentRegistration registration)
         {
             registration.Preparing += RegistrationOnPreparing;
             registration.Activating += RegistrationOnActivating;

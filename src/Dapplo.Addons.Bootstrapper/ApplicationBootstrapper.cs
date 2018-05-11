@@ -55,6 +55,9 @@ namespace Dapplo.Addons.Bootstrapper
         /// </summary>
         public string ApplicationName { get; }
 
+        /// <summary>
+        /// An IEnumerable with the loaded assemblies, but filtered to the ones not from the .NET Framework (where possible) 
+        /// </summary>
         public IEnumerable<Assembly> LoadedAssemblies => _resolver.LoadedAssemblies
             .Where(pair => !AssembliesToIgnore.IsMatch(pair.Key) && !pair.Value.IsDynamic)
             .Select(pair => pair.Value);
@@ -179,6 +182,8 @@ namespace Dapplo.Addons.Bootstrapper
             // Provide the startup & shutdown functionality
             _builder.RegisterType<StartupHandler>().AsSelf().SingleInstance();
             _builder.RegisterType<ShutdownHandler>().AsSelf().SingleInstance();
+            // Provide the IResourceProvider
+            _builder.RegisterInstance(_resolver.Resources).As<IResourceProvider>().ExternallyOwned();
         }
 
         /// <summary>

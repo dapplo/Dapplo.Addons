@@ -15,6 +15,10 @@ namespace Dapplo.Addons.Bootstrapper.Handler
         private static readonly LogSource Log = new LogSource();
         private readonly IEnumerable<Lazy<IShutdownMarker, ShutdownOrderAttribute>> _shutdownModules;
  
+        /// <summary>
+        /// This is the constructo used to specify the modules
+        /// </summary>
+        /// <param name="shutdownModules"></param>
         public ShutdownHandler(IEnumerable<Lazy<IShutdownMarker, ShutdownOrderAttribute>> shutdownModules)
         {
             _shutdownModules = shutdownModules;

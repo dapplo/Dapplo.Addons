@@ -14,10 +14,23 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     {
         private static readonly LogSource Log = new LogSource();
 
+        /// <summary>
+        /// A dictionary with all the loaded assemblies, for caching and analysing
+        /// </summary>
         public IDictionary<string, Assembly> LoadedAssemblies { get; } = new ConcurrentDictionary<string, Assembly>();
 
+        /// <summary>
+        /// Gives access to the resources in assemblies
+        /// </summary>
+        public ManifestResources Resources { get; }
+
+        /// <summary>
+        /// The constructor of the Assembly Resolver
+        /// </summary>
         public AssemblyResolver()
         {
+            Resources = new ManifestResources(assemblyName => LoadedAssemblies.ContainsKey(assemblyName) ? LoadedAssemblies[assemblyName] : null);
+
             foreach (var loadedAssembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 LoadedAssemblies[loadedAssembly.GetName().Name] = loadedAssembly;
@@ -74,7 +87,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
             Log.Info().WriteLine("Returned {0} from cache.", args.Name);
             return assembly;
-
         }
 
         /// <summary>
@@ -86,6 +98,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         {
             var assembly = args.LoadedAssembly;
             var assemblyName = assembly.GetName().Name;
+
             LoadedAssemblies[assemblyName] = assembly;
         }
     }

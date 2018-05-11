@@ -30,6 +30,7 @@ using System.Drawing;
 using System.IO.Packaging;
 using System.Linq;
 using Dapplo.Addons.Bootstrapper.Resolving;
+using Dapplo.Addons.Tests.TestFiles;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
 using Xunit;
@@ -39,9 +40,11 @@ using Xunit.Abstractions;
 
 namespace Dapplo.Addons.Tests
 {
-    public class EmbeddedResourcesTests
+    public class ManifestResourcesTests
     {
-        public EmbeddedResourcesTests(ITestOutputHelper testOutputHelper)
+        private static readonly LogSource Log = new LogSource();
+        private readonly AssemblyResolver _resolver = new AssemblyResolver();
+        public ManifestResourcesTests(ITestOutputHelper testOutputHelper)
         {
             LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
 
@@ -53,17 +56,18 @@ namespace Dapplo.Addons.Tests
             }
         }
 
-        private static readonly LogSource Log = new LogSource();
-
         /// <summary>
         ///     Test if resources can be found
         /// </summary>
         [Fact]
         public void Test_FindEmbeddedResources()
         {
-            var resources = GetType().FindEmbeddedResources(@"embedded-dapplo.png");
-            Assert.True(resources.Any());
-            resources = GetType().FindEmbeddedResources(@"dapplo.png");
+            var resource = _resolver.Resources.Find(typeof(Dummy), @"embedded-dapplo.png");
+            Assert.NotNull(resource);
+            resource = _resolver.Resources.Find(GetType(), "TestFiles", @"embedded-dapplo.png");
+            Assert.NotNull(resource);
+
+            var resources = _resolver.Resources.FindEmbeddedResources(GetType(), @"dapplo.png");
             Assert.True(resources.Any());
         }
 
@@ -73,7 +77,7 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void Test_GetEmbeddedResourceAsStream()
         {
-            using (var stream = GetType().Assembly.GetEmbeddedResourceAsStream(@"TestFiles\embedded-dapplo.png"))
+            using (var stream = _resolver.Resources.GetEmbeddedResourceAsStream(GetType().Assembly, @"TestFiles\embedded-dapplo.png"))
             {
                 var bitmap = Image.FromStream(stream);
                 Assert.NotNull(bitmap);
@@ -87,12 +91,12 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void Test_GetEmbeddedResourceAsStream_GZ()
         {
-            foreach (var manifestResourceName in GetType().Assembly.GetCachedManifestResourceNames())
+            foreach (var manifestResourceName in _resolver.Resources.GetCachedManifestResourceNames(GetType().Assembly))
             {
                 Log.Info().WriteLine("Resource: {0}", manifestResourceName);
             }
 
-            using (var stream = GetType().Assembly.GetEmbeddedResourceAsStream(@"TestFiles\embedded-dapplo.png.gz"))
+            using (var stream = _resolver.Resources.GetEmbeddedResourceAsStream(GetType().Assembly, @"TestFiles\embedded-dapplo.png.gz"))
             {
                 using (var bitmap = Image.FromStream(stream))
                 {
@@ -110,9 +114,9 @@ namespace Dapplo.Addons.Tests
         {
             var packUri = new Uri("pack://application:,,,/Dapplo.Addons.Tests;component/TestFiles/embedded-dapplo.png", UriKind.RelativeOrAbsolute);
 
-            Assert.True(packUri.EmbeddedResourceExists());
+            Assert.True(_resolver.Resources.EmbeddedResourceExists(packUri));
 
-            using (var stream = packUri.GetEmbeddedResourceAsStream())
+            using (var stream = _resolver.Resources.GetEmbeddedResourceAsStream(packUri))
             {
                 using (var bitmap = Image.FromStream(stream))
                 {

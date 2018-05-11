@@ -39,10 +39,18 @@ namespace Dapplo.Addons
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class StartupOrderAttribute : Attribute
     {
+        /// <summary>
+        /// Startup order with order set to 1
+        /// </summary>
         public StartupOrderAttribute()
         {
 
         }
+
+        /// <summary>
+        /// Startup order with the specified 
+        /// </summary>
+        /// <param name="order">int</param>
         public StartupOrderAttribute(int order)
         {
             StartupOrder = order;
@@ -54,7 +62,6 @@ namespace Dapplo.Addons
         /// </summary>
         [DefaultValue(1)]
         public int StartupOrder { get; set; } = 1;
-
 
         /// <summary>
         ///     Specify if the startup needs to be awaited, this could be set to false if you want to have a task doing something

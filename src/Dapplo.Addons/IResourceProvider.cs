@@ -23,42 +23,22 @@
 
 #endregion
 
-#region Usings
-
 using System;
-using System.ComponentModel;
-
-#endregion
+using System.IO;
 
 namespace Dapplo.Addons
 {
     /// <summary>
-    ///     This attribute can be used to specify a shutdown order
+    /// This is the interface for something which can provide you with embedded resources
     /// </summary>
-    [System.ComponentModel.Composition.MetadataAttribute]
-    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-    public class ShutdownOrderAttribute : Attribute
+    public interface IResourceProvider
     {
         /// <summary>
-        /// ShutdownOrder with order set to 1
+        /// This helps you to get an embedded resource as Stream
         /// </summary>
-        public ShutdownOrderAttribute()
-        {
-        }
-
-        /// <summary>
-        /// A ShutdownOrder with the specified order
-        /// </summary>
-        /// <param name="order">int</param>
-        public ShutdownOrderAttribute(int order)
-        {
-            ShutdownOrder = order;
-        }
-
-        /// <summary>
-        ///     Order for the shutdowns to be called
-        /// </summary>
-        [DefaultValue(1)]
-        public int ShutdownOrder { get; set; } = 1;
+        /// <param name="type">The type whose namespace is used to scope the manifest resource name.</param>
+        /// <param name="segments">The case-sensitive name (or segments added to the namespace), of the manifest resource being requested.</param>
+        /// <returns></returns>
+        Stream ResourceAsStream(Type type, params string[] segments);
     }
 }
