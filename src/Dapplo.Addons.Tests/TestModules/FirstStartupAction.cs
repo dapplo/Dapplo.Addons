@@ -1,12 +1,12 @@
 ﻿#region Usings
 
 using System;
-
+using Dapplo.Addons.Tests.Entities;
 #endregion
 
 namespace Dapplo.Addons.Tests.TestModules
 {
-    [ServiceOrder(1000)]
+    [ServiceOrder(Orders.First)]
     public class FirstStartupAction : IStartup
     {
         public Action MyStartAction { get; set; }

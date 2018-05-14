@@ -85,6 +85,7 @@
   <ItemGroup>
     <Compile Include="AssemblyResolveTests.cs" />
     <Compile Include="ApplicationBootstrapperTests.cs" />
+    <Compile Include="Entities\Orders.cs" />
     <Compile Include="ManifestResourcesTests.cs" />
     <Compile Include="Entities\DependencyTaker.cs" />
     <Compile Include="Entities\TestAsyncStartupAction.cs" />

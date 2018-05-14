@@ -48,6 +48,23 @@ namespace Dapplo.Addons
         }
 
         /// <summary>
+        /// Startup and shutdown order as object, e.g. use enums
+        /// </summary>
+        /// <param name="startupOrder">object</param>
+        /// <param name="shutdownOrder">object, optional</param>
+        public ServiceOrderAttribute(object startupOrder, object shutdownOrder = null)
+        {
+            if (startupOrder != null)
+            {
+                StartupOrder = Convert.ToInt32(startupOrder);
+            }
+            if (shutdownOrder != null)
+            {
+                ShutdownOrder = Convert.ToInt32(shutdownOrder);
+            }
+        }
+
+        /// <summary>
         /// Startup order
         /// </summary>
         /// <param name="startupOrder">int</param>
@@ -68,14 +85,14 @@ namespace Dapplo.Addons
         }
 
         /// <summary>
-        ///     Here the order of the startup action can be specified, starting with low values and ending with high.
+        ///     Here the order of the startup action can be specified, starting startup with low values and ending with high.
         ///     With this a cheap form of "dependency" management is made.
         /// </summary>
         [DefaultValue(1)]
         public int StartupOrder { get; set; } = 1;
 
         /// <summary>
-        ///     Here the order of the service shutdown can be specified, starting with high values and ending with low.
+        ///     Here the order of the service shutdown can be specified, starting shutdown with low values and ending with high.
         ///     With this a cheap form of "dependency" management is made.
         /// </summary>
         [DefaultValue(1)]
