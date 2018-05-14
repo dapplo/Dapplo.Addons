@@ -159,15 +159,18 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <returns>normalized directory name</returns>
         public static string NormalizeDirectory(string directory)
         {
-            try
+            if (directory.Contains(":"))
             {
-                return Path.GetFullPath(new Uri(directory, UriKind.Absolute).LocalPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                try
+                {
+                    return Path.GetFullPath(new Uri(directory, UriKind.Absolute).LocalPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error().WriteLine(ex, "Couldn't get the fullpath of {0}", directory);
+                }
             }
-            catch (Exception ex)
-            {
-                Log.Error().WriteLine(ex, "Couldn't get the fullpath of {0}", directory);
-            }
-            return null;
+            return Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
 
         /// <summary>
