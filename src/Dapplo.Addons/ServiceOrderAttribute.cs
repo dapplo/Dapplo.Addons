@@ -33,27 +33,38 @@ using System.ComponentModel;
 namespace Dapplo.Addons
 {
     /// <summary>
-    ///     This attribute can be used to specify the startup order
+    ///     This attribute can be used to specify the startup and shutdown order of services
     /// </summary>
     [System.ComponentModel.Composition.MetadataAttribute]
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-    public class StartupOrderAttribute : Attribute
+    public class ServiceOrderAttribute : Attribute
     {
         /// <summary>
-        /// Startup order with order set to 1
+        /// Default service startup and shutdown order
         /// </summary>
-        public StartupOrderAttribute()
+        public ServiceOrderAttribute()
         {
 
         }
 
         /// <summary>
-        /// Startup order with the specified 
+        /// Startup order
         /// </summary>
-        /// <param name="order">int</param>
-        public StartupOrderAttribute(int order)
+        /// <param name="startupOrder">int</param>
+        public ServiceOrderAttribute(int startupOrder)
         {
-            StartupOrder = order;
+            StartupOrder = startupOrder;
+        }
+
+        /// <summary>
+        /// Startup and shutdown order
+        /// </summary>
+        /// <param name="startupOrder">int</param>
+        /// <param name="shutdownOrder">int</param>
+        public ServiceOrderAttribute(int startupOrder, int shutdownOrder)
+        {
+            StartupOrder = startupOrder;
+            ShutdownOrder = shutdownOrder;
         }
 
         /// <summary>
@@ -62,6 +73,13 @@ namespace Dapplo.Addons
         /// </summary>
         [DefaultValue(1)]
         public int StartupOrder { get; set; } = 1;
+
+        /// <summary>
+        ///     Here the order of the service shutdown can be specified, starting with high values and ending with low.
+        ///     With this a cheap form of "dependency" management is made.
+        /// </summary>
+        [DefaultValue(1)]
+        public int ShutdownOrder { get; set; } = 1;
 
         /// <summary>
         ///     Specify if the startup needs to be awaited, this could be set to false if you want to have a task doing something

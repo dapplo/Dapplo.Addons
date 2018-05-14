@@ -59,8 +59,7 @@
     <Compile Include="IStartup.cs" />
     <Compile Include="IStartupMarker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ShutdownOrderAttribute.cs" />
-    <Compile Include="StartupOrderAttribute.cs" />
+    <Compile Include="ServiceOrderAttribute.cs" />
     <Compile Include="StartupException.cs" />
   </ItemGroup>
   <ItemGroup>

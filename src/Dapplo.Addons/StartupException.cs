@@ -34,7 +34,7 @@ namespace Dapplo.Addons
 {
     /// <summary>
     ///     If this exception is thrown by an startup action, the startup of your application will be terminated.
-    ///     A prerequisite is that your class has the StartupActionAttribute where AwaitStart is true (this is default)
+    ///     A prerequisite is that your class has the ServiceOrderAttribute where AwaitStart is true (this is default)
     /// </summary>
     [Serializable]
     public class StartupException : Exception

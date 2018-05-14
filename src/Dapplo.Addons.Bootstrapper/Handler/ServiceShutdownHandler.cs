@@ -1,4 +1,29 @@
-﻿using System;
+﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+
+// Dapplo - building blocks for .NET applications
+// Copyright (C) 2016-2018 Dapplo
+// 
+// For more information see: http://dapplo.net/
+// Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+// 
+// This file is part of Dapplo.CaliburnMicro
+// 
+// Dapplo.CaliburnMicro is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// Dapplo.CaliburnMicro is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// 
+// You should have a copy of the GNU Lesser General Public License
+// along with Dapplo.CaliburnMicro. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+
+#endregion
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -8,20 +33,20 @@ using Dapplo.Log;
 namespace Dapplo.Addons.Bootstrapper.Handler
 {
     /// <summary>
-    /// This handles the shutdown of all IShutdownModule implementing classes
+    /// This handles the shutdown of all IShutdownMarker implementing services
     /// </summary>
-    public class ShutdownHandler
+    public class ServiceShutdownHandler
     {
         private static readonly LogSource Log = new LogSource();
-        private readonly IEnumerable<Lazy<IShutdownMarker, ShutdownOrderAttribute>> _shutdownModules;
+        private readonly IEnumerable<Lazy<IShutdownMarker, ServiceOrderAttribute>> _servicesToShutdown;
  
         /// <summary>
         /// This is the constructo used to specify the modules
         /// </summary>
-        /// <param name="shutdownModules"></param>
-        public ShutdownHandler(IEnumerable<Lazy<IShutdownMarker, ShutdownOrderAttribute>> shutdownModules)
+        /// <param name="servicesToShutdown"></param>
+        public ServiceShutdownHandler(IEnumerable<Lazy<IShutdownMarker, ServiceOrderAttribute>> servicesToShutdown)
         {
-            _shutdownModules = shutdownModules;
+            _servicesToShutdown = servicesToShutdown;
         }
 
         /// <summary>
@@ -30,15 +55,15 @@ namespace Dapplo.Addons.Bootstrapper.Handler
         /// <param name="cancellationToken">CancellationToken</param>
         public async Task ShutdownAsync(CancellationToken cancellationToken = default)
         {
-            Log.Debug().WriteLine("Shutdown of the shutdown actions, if any");
-            var orderedShutdownModules = from shutdownModule in _shutdownModules orderby shutdownModule.Metadata.ShutdownOrder select shutdownModule;
+            Log.Debug().WriteLine("Shutdown of services, if any");
+            var orderedServicesToShutdown = from shutdownModule in _servicesToShutdown orderby shutdownModule.Metadata.ShutdownOrder select shutdownModule;
 
             var tasks = new List<KeyValuePair<Type, Task>>();
 
             // Variable used for grouping the shutdowns
             var groupingOrder = int.MaxValue;
 
-            foreach (var lazyShutdownModule in orderedShutdownModules)
+            foreach (var lazyShutdownModule in orderedServicesToShutdown)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -62,7 +87,7 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                 }
                 catch (Exception ex)
                 {
-                    Log.Error().WriteLine(ex, "Exception instantiating IShutdownModule, probably a MEF issue. (ignoring in shutdown)");
+                    Log.Error().WriteLine(ex, "Exception instantiating IShutdownMarker (ignoring in shutdown)");
                     continue;
                 }
 
@@ -93,7 +118,7 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                 }
                 catch (Exception ex)
                 {
-                    Log.Error().WriteLine(ex, "Exception executing IShutdownModule {0}: ", shutdownModule.GetType());
+                    Log.Error().WriteLine(ex, "Exception executing shutdown {0}: ", shutdownModule.GetType());
                 }
             }
             // Await all remaining tasks, as the system is shutdown we NEED to wait, and ignore but log their exceptions

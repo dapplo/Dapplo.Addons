@@ -210,8 +210,8 @@ namespace Dapplo.Addons.Bootstrapper
             // Make sure Attributes are allowed
             _builder.RegisterModule<AttributedMetadataModule>();
             // Provide the startup & shutdown functionality
-            _builder.RegisterType<StartupHandler>().AsSelf().SingleInstance();
-            _builder.RegisterType<ShutdownHandler>().AsSelf().SingleInstance();
+            _builder.RegisterType<ServiceStartupHandler>().AsSelf().SingleInstance();
+            _builder.RegisterType<ServiceShutdownHandler>().AsSelf().SingleInstance();
             // Provide the IResourceProvider
             _builder.RegisterInstance(_resolver.Resources).As<IResourceProvider>().ExternallyOwned();
         }
@@ -271,7 +271,7 @@ namespace Dapplo.Addons.Bootstrapper
                 await InitializeAsync(cancellationToken);
             }
             _isStartedUp = true;
-            await Scope.Resolve<StartupHandler>().StartupAsync(cancellationToken);
+            await Scope.Resolve<ServiceStartupHandler>().StartupAsync(cancellationToken);
         }
 
         /// <summary>
@@ -285,7 +285,7 @@ namespace Dapplo.Addons.Bootstrapper
                 throw new NotSupportedException("Start before shutdown!");
             }
             _isShutDown = true;
-            return Scope.Resolve<ShutdownHandler>().ShutdownAsync(cancellationToken);
+            return Scope.Resolve<ServiceShutdownHandler>().ShutdownAsync(cancellationToken);
         }
 
         /// <summary>

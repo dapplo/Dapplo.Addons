@@ -46,7 +46,6 @@ namespace Dapplo.Addons.Tests
     public sealed class ApplicationBootstrapperTests : IDisposable
     {
         private const string ApplicationName = "Dapplo";
-        private static readonly LogSource Log = new LogSource();
         private readonly IniConfig _iniConfig = new IniConfig(ApplicationName, ApplicationName);
 
         public ApplicationBootstrapperTests(ITestOutputHelper testOutputHelper)

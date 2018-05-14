@@ -6,7 +6,7 @@ using System;
 
 namespace Dapplo.Addons.Tests.TestModules
 {
-    [StartupOrder(1000)]
+    [ServiceOrder(1000)]
     public class FirstStartupAction : IStartup
     {
         public Action MyStartAction { get; set; }

@@ -1,4 +1,29 @@
-﻿using System;
+﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+
+// Dapplo - building blocks for .NET applications
+// Copyright (C) 2016-2018 Dapplo
+// 
+// For more information see: http://dapplo.net/
+// Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+// 
+// This file is part of Dapplo.CaliburnMicro
+// 
+// Dapplo.CaliburnMicro is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// Dapplo.CaliburnMicro is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// 
+// You should have a copy of the GNU Lesser General Public License
+// along with Dapplo.CaliburnMicro. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+
+#endregion
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -10,16 +35,16 @@ namespace Dapplo.Addons.Bootstrapper.Handler
     /// <summary>
     /// This handles the startup of all IStartupModule implementing classes
     /// </summary>
-    public class StartupHandler
+    public class ServiceStartupHandler
     {
         private static readonly LogSource Log = new LogSource();
-        private readonly IEnumerable<Lazy<IStartupMarker, StartupOrderAttribute>> _startupModules;
+        private readonly IEnumerable<Lazy<IStartupMarker, ServiceOrderAttribute>> _startupModules;
 
         /// <summary>
         /// The constructor to specify the startup modules
         /// </summary>
         /// <param name="startupModules">IEnumerable</param>
-        public StartupHandler(IEnumerable<Lazy<IStartupMarker, StartupOrderAttribute>> startupModules)
+        public ServiceStartupHandler(IEnumerable<Lazy<IStartupMarker, ServiceOrderAttribute>> startupModules)
         {
             _startupModules = startupModules;
         }
@@ -33,7 +58,7 @@ namespace Dapplo.Addons.Bootstrapper.Handler
         {
             Log.Debug().WriteLine("Checking what needs to startup.");
 
-            var orderedStartupModules = from startupModule in _startupModules orderby startupModule.Metadata.StartupOrder select startupModule;
+            var orderedServicesToStartup = from startupModule in _startupModules orderby startupModule.Metadata.StartupOrder select startupModule;
 
             var tasks = new List<KeyValuePair<Type, Task>>();
             var nonAwaitables = new List<KeyValuePair<Type, Task>>();
@@ -50,11 +75,11 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                 cancellationTokenRegistration = cancellationToken.Register(() => startupCancellationTokenSource.Cancel());
             }
 
-            foreach (var lazyStartupModule in orderedStartupModules)
+            foreach (var lazyStartupModule in orderedServicesToStartup)
             {
                 try
                 {
-                    // Check if we have all the startup actions belonging to a group
+                    // Check if we have all the services belonging to a group
                     if (tasks.Count > 0 && groupingOrder != lazyStartupModule.Metadata.StartupOrder)
                     {
                         groupingOrder = lazyStartupModule.Metadata.StartupOrder;
@@ -83,24 +108,23 @@ namespace Dapplo.Addons.Bootstrapper.Handler
 
                     Task startupTask = null;
 
+                    if (Log.IsVerboseEnabled())
+                    {
+                        Log.Verbose().WriteLine("Starting {0}", startupModule.GetType());
+                    }
                     // Test if async / sync startup
                     switch (startupModule)
                     {
-                        case IStartup startupAction:
-                            if (Log.IsVerboseEnabled())
-                            {
-                                Log.Verbose().WriteLine("Trying to start {0}", startupAction.GetType());
-                            }
+                        case IStartup serviceToStartup:
                             // Wrap sync call as async task
-                            startupTask = Task.Run(() => startupAction.Start(), cancellationToken);
+                            startupTask = Task.Run(() => serviceToStartup.Start(), cancellationToken);
                             break;
-                        case IStartupAsync asyncStartupAction:
-                            if (Log.IsVerboseEnabled())
-                            {
-                                Log.Verbose().WriteLine("Trying to start {0}", asyncStartupAction.GetType());
-                            }
+                        case IStartupAsync serviceToStartupAsync:
                             // Create a task (it will start running, but we don't await it yet)
-                            startupTask = asyncStartupAction.StartAsync(cancellationToken);
+                            startupTask = serviceToStartupAsync.StartAsync(cancellationToken);
+                            break;
+                        default:
+                            Log.Verbose().WriteLine("Unknown interface for {0}", startupModule.GetType());
                             break;
                     }
 
@@ -127,7 +151,7 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                 }
                 catch (Exception ex)
                 {
-                    Log.Error().WriteLine(ex, "Exception executing IStartup {0}: ", lazyStartupModule.Value.GetType());
+                    Log.Error().WriteLine(ex, "Exception executing startup {0}: ", lazyStartupModule.Value.GetType());
                 }
                 if (cancellationToken.CanBeCanceled)
                 {

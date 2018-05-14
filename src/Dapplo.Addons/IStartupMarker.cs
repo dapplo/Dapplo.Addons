@@ -30,7 +30,7 @@
 namespace Dapplo.Addons
 {
     /// <summary>
-    ///     The IStartupMarker is a marker interface for things that should startup
+    ///     The IStartupMarker is a marker interface for services that should startup
     /// </summary>
     public interface IStartupMarker
     {

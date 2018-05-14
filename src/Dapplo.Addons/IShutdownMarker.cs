@@ -30,7 +30,7 @@
 namespace Dapplo.Addons
 {
     /// <summary>
-    ///     The IShutdownMarker is a marker interface for things that need a shutdown
+    ///     The IShutdownMarker is a marker interface for services that need a shutdown
     /// </summary>
     public interface IShutdownMarker
     {
