@@ -17,7 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.Tests.TestAss
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.TestAddonWithCostura", "Dapplo.Addons.TestAddonWithCostura\Dapplo.Addons.TestAddonWithCostura.csproj", "{BBD995D1-4CEE-4FE9-AECB-EC4D9C071AE6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.Config", "Dapplo.Addons.Config\Dapplo.Addons.Config.csproj", "{678A61B1-E89B-46A1-995F-2AC43D3A6A16}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.Config", "Dapplo.Addons.Config\Dapplo.Addons.Config.csproj", "{6746A1D7-E693-4B37-B045-61557B60143A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,10 +53,10 @@ Global
 		{BBD995D1-4CEE-4FE9-AECB-EC4D9C071AE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BBD995D1-4CEE-4FE9-AECB-EC4D9C071AE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BBD995D1-4CEE-4FE9-AECB-EC4D9C071AE6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{678A61B1-E89B-46A1-995F-2AC43D3A6A16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{678A61B1-E89B-46A1-995F-2AC43D3A6A16}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{678A61B1-E89B-46A1-995F-2AC43D3A6A16}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{678A61B1-E89B-46A1-995F-2AC43D3A6A16}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6746A1D7-E693-4B37-B045-61557B60143A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6746A1D7-E693-4B37-B045-61557B60143A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6746A1D7-E693-4B37-B045-61557B60143A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6746A1D7-E693-4B37-B045-61557B60143A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

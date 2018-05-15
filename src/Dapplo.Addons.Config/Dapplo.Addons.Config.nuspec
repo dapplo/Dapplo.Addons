@@ -15,7 +15,8 @@
 		<tags>autofac bootstrapper addon ini language</tags>
 		<dependencies>
 			<dependency id="Dapplo.Addons" version="$version$" />
-			<dependency id="Dapplo.Log" version="1.2.1.0" />
+			<dependency id="Dapplo.Ini" version="0.5.27" />
+			<dependency id="Dapplo.Language" version="0.5.27" />
 		</dependencies>
 	</metadata>
 	<files>

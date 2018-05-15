@@ -27,7 +27,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dapplo.Language;
 
-namespace Dapplo.Addons.Config.Services
+namespace Dapplo.Addons.Config
 {
     /// <summary>
     /// A service for loading the language

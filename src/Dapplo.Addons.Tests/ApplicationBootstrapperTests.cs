@@ -32,7 +32,6 @@ using System.Threading.Tasks;
 using Autofac;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
-using Dapplo.Addons.TestAddon;
 using Dapplo.Ini;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;

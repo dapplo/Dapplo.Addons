@@ -24,8 +24,6 @@
 #endregion
 
 using Autofac;
-using Dapplo.Addons.Config.RegistrationSources;
-using Dapplo.Addons.Config.Services;
 using Dapplo.Ini;
 using Dapplo.Language;
 

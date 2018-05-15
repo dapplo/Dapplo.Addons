@@ -32,7 +32,7 @@ using Autofac.Core;
 using Dapplo.Language;
 using Dapplo.Log;
 
-namespace Dapplo.Addons.Config.RegistrationSources
+namespace Dapplo.Addons.Config
 {
     /// <summary>
     /// This is an IRegistrationSource for the ILanguage
