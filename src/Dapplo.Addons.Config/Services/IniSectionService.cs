@@ -23,16 +23,28 @@
 
 #endregion
 
-#region Usings
+using System.Threading;
+using System.Threading.Tasks;
+using Dapplo.Ini;
 
-#endregion
-
-namespace Dapplo.Addons
+namespace Dapplo.Addons.Config.Services
 {
     /// <summary>
-    ///     The IShutdownMarker is a marker interface for services that need a shutdown
+    /// A service for loading and unloading the Ini configuration
     /// </summary>
-    public interface IShutdownMarker
+    [ServiceOrder(int.MinValue)]
+    internal class IniSectionService : IStartupAsync, IShutdownAsync
     {
+        /// <inheritdoc />
+        public Task StartAsync(CancellationToken cancellationToken = default)
+        {
+            return IniConfig.Current.LoadIfNeededAsync(cancellationToken);
+        }
+
+        /// <inheritdoc />
+        public Task ShutdownAsync(CancellationToken cancellationToken = default)
+        {
+            return IniConfig.Current.WriteAsync(cancellationToken);
+        }
     }
 }

@@ -21,10 +21,10 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void Test_Startup_Grouping()
         {
-            IList<Lazy<IStartupMarker, ServiceOrderAttribute>> startupModules = new List<Lazy<IStartupMarker, ServiceOrderAttribute>>();
+            IList<Lazy<IService, ServiceOrderAttribute>> startupModules = new List<Lazy<IService, ServiceOrderAttribute>>();
 
             var randomCreator = new Random();
-            startupModules.Add(new Lazy<IStartupMarker, ServiceOrderAttribute>(
+            startupModules.Add(new Lazy<IService, ServiceOrderAttribute>(
                 () => new TestAsyncStartupAction(randomCreator.Next(100, 1000)),
                 new ServiceOrderAttribute { AwaitStart = true, StartupOrder = 10})
             );
@@ -51,17 +51,16 @@ namespace Dapplo.Addons.Tests
             {
                 bootstrapper.Configure();
 
-                bootstrapper.Builder.RegisterType<ServiceStartupHandler>();
-
+                bootstrapper.Builder.RegisterType<ServiceHandler>();
                 bootstrapper.Builder.Register(context => new FirstStartupAction
                 {
                     MyStartAction = () => didFirstRun = true
-                }).As<IStartupMarker>().SingleInstance();
+                }).As<IService>().SingleInstance();
 
                 bootstrapper.Builder.Register(context => new SecondStartupAction
                 {
                     MyStartAction = () => didSecondRun = true
-                }).As<IStartupMarker>().SingleInstance();
+                }).As<IService>().SingleInstance();
 
                 await bootstrapper.InitializeAsync();
                 await bootstrapper.StartupAsync();

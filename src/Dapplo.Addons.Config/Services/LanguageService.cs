@@ -23,16 +23,26 @@
 
 #endregion
 
-#region Usings
+using System.Threading;
+using System.Threading.Tasks;
+using Dapplo.Language;
 
-#endregion
-
-namespace Dapplo.Addons
+namespace Dapplo.Addons.Config.Services
 {
     /// <summary>
-    ///     The IStartupMarker is a marker interface for services that should startup
+    /// A service for loading the language
     /// </summary>
-    public interface IStartupMarker
+    [ServiceOrder(int.MinValue)]
+    internal class LanguageService : IStartupAsync
     {
+        /// <summary>
+        /// async Start of the LanguageLoader
+        /// </summary>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>Task</returns>
+        public async Task StartAsync(CancellationToken cancellationToken = new CancellationToken())
+        {
+            await LanguageLoader.Current.LoadIfNeededAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 }

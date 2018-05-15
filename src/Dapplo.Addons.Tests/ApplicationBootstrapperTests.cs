@@ -26,10 +26,12 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Autofac;
 using Dapplo.Addons.Bootstrapper;
+using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Addons.TestAddon;
 using Dapplo.Ini;
 using Dapplo.Log;
@@ -46,7 +48,6 @@ namespace Dapplo.Addons.Tests
     public sealed class ApplicationBootstrapperTests : IDisposable
     {
         private const string ApplicationName = "Dapplo";
-        private readonly IniConfig _iniConfig = new IniConfig(ApplicationName, ApplicationName);
 
         public ApplicationBootstrapperTests(ITestOutputHelper testOutputHelper)
         {
@@ -55,7 +56,6 @@ namespace Dapplo.Addons.Tests
 
         public void Dispose()
         {
-            _iniConfig.Dispose();
             IniConfig.Delete(ApplicationName, ApplicationName);
         }
 
@@ -90,28 +90,33 @@ namespace Dapplo.Addons.Tests
         {
             bool isDisposed = false;
             SetEntryAssembly(GetType().Assembly);
-            // Fix startup issues due to unloaded configuration
-            await _iniConfig.LoadIfNeededAsync();
-            _iniConfig.Get<IThisIsConfiguration>();
+
             using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
             {
                 bootstrapper.Configure();
-                // Add test project, without having a direct reference
-#if DEBUG
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug");
-#else
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release");
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release");
-#endif
-                bootstrapper.RegisterForDisposal(SimpleDisposable.Create(() => isDisposed = true));
-                // Add all file starting with Dapplo and ending on .dll or .dll.gz
-                bootstrapper.FindAndLoadAssemblies("Dapplo*.dll");
 
-                bootstrapper.Builder.Register(c => new StartupExceptionThrowingAddon
+                // Enable logging
+                bootstrapper.Builder.RegisterModule<LogRequestModule>();
+
+                // Makes the startup break
+                bootstrapper.Builder.Register(context => true);
+
+                var scanDirectories = new List<string>
                 {
-                    ThrowStartupException = true
-                }).As<IStartupMarker>();
+                    FileLocations.StartupDirectory,
+#if DEBUG
+                    @"..\..\..\Dapplo.Addons.TestAddon\bin\Debug",
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug",
+#else
+                    @"..\..\..\Dapplo.Addons.TestAddon\bin\Release",
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release",
+#endif
+                };
+
+                // Add all file starting with Dapplo and ending on .dll
+                bootstrapper.LoadAssemblies(FileLocations.Scan(scanDirectories, "Dapplo*.dll"));
+
+                bootstrapper.RegisterForDisposal(SimpleDisposable.Create(() => isDisposed = true));
 
                 // Initialize, so we can export
                 Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");
@@ -148,22 +153,24 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public async Task TestStartupShutdown()
         {
-            // Fix startup issues due to unloaded configuration
-            await _iniConfig.LoadIfNeededAsync();
-            _iniConfig.Get<IThisIsConfiguration>();
-
             using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
             {
-                // Add test project, without having a direct reference
+                bootstrapper.Configure();
+
+                var scanDirectories = new List<string>
+                {
+                    FileLocations.StartupDirectory,
 #if DEBUG
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug");
+                    @"..\..\..\Dapplo.Addons.TestAddon\bin\Debug",
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug",
 #else
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release");
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release");
+                    @"..\..\..\Dapplo.Addons.TestAddon\bin\Release",
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release",
 #endif
-                // Add all file starting with Dapplo and ending on .dll or .dll.gz
-                bootstrapper.FindAndLoadAssemblies("Dapplo*.dll");
+                };
+
+                // Add all file starting with Dapplo and ending on .dll
+                bootstrapper.LoadAssemblies(FileLocations.Scan(scanDirectories, "Dapplo*.dll"));
 
                 // Test if our test addon was loaded
                 Assert.Contains(bootstrapper.LoadedAssemblies, addon => addon.GetName().Name.EndsWith("TestAddon"));

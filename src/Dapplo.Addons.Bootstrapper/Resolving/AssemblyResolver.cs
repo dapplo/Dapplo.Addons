@@ -81,6 +81,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             }
             if (LoadedAssemblies.ContainsKey(assemblyName))
             {
+                Log.Debug().WriteLine("Skipping {0} as the assembly was already loaded.", filename);
                 return false;
             }
 

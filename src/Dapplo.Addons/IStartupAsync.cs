@@ -35,7 +35,7 @@ namespace Dapplo.Addons
     /// <summary>
     ///     Use IStartupAsync for things which need to start async
     /// </summary>
-    public interface IStartupAsync : IStartupMarker
+    public interface IStartupAsync : IService
     {
         /// <summary>
         ///     Perform a start of whatever needs to be started.

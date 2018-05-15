@@ -50,14 +50,12 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Extensions\RegisterAssemblyTypesExtensions.cs" />
     <Compile Include="IResourceProvider.cs" />
     <Compile Include="IShutdownAsync.cs" />
     <Compile Include="IStartupAsync.cs" />
     <Compile Include="IShutdown.cs" />
-    <Compile Include="IShutdownMarker.cs" />
     <Compile Include="IStartup.cs" />
-    <Compile Include="IStartupMarker.cs" />
+    <Compile Include="IService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServiceOrderAttribute.cs" />
     <Compile Include="StartupException.cs" />

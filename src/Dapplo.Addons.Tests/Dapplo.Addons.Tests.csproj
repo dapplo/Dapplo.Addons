@@ -103,6 +103,10 @@
       <Project>{8dbe963a-5098-4dab-8050-0d31c847db19}</Project>
       <Name>Dapplo.Addons.Bootstrapper</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Dapplo.Addons.Config\Dapplo.Addons.Config.csproj">
+      <Project>{678a61b1-e89b-46a1-995f-2ac43d3a6a16}</Project>
+      <Name>Dapplo.Addons.Config</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dapplo.Addons.TestAddon\Dapplo.Addons.TestAddon.csproj">
       <Project>{450BA0DC-F37C-45F5-B250-0B20F4B1D594}</Project>
       <Name>Dapplo.Addons.TestAddon</Name>

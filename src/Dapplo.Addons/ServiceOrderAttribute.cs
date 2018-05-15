@@ -34,6 +34,8 @@ namespace Dapplo.Addons
 {
     /// <summary>
     ///     This attribute can be used to specify the startup and shutdown order of services
+    ///     In normal cases the Shutdown order is the startup order, and does not need to be specified.
+    ///     The startup is from small to large and the shutdown from large to small.
     /// </summary>
     [System.ComponentModel.Composition.MetadataAttribute]
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
@@ -62,6 +64,10 @@ namespace Dapplo.Addons
             {
                 ShutdownOrder = Convert.ToInt32(shutdownOrder);
             }
+            else
+            {
+                ShutdownOrder = StartupOrder;
+            }
         }
 
         /// <summary>
@@ -71,6 +77,7 @@ namespace Dapplo.Addons
         public ServiceOrderAttribute(int startupOrder)
         {
             StartupOrder = startupOrder;
+            ShutdownOrder = StartupOrder;
         }
 
         /// <summary>

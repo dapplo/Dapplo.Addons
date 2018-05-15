@@ -45,20 +45,19 @@ namespace Dapplo.Addons.Bootstrapper
     public class ApplicationBootstrapper : IDisposable
     {
         private static readonly LogSource Log = new LogSource();
-        private static readonly Regex AssembliesToIgnore = new Regex(@"(Microsoft\..*|mscorlib|UIAutomationProvider|PresentationFramework|PresentationCore|WindowsBase|autofac.*|Dapplo\.Log|system.*|.*resources|Dapplo\.InterfaceImpl.*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex AssembliesToIgnore = new Regex(@"^(xunit.*|microsoft\..*|mscorlib|UIAutomationProvider|PresentationFramework|PresentationCore|WindowsBase|autofac.*|Dapplo\.Log.*|Dapplo\.Ini|Dapplo\.Language|Dapplo\.Utils|Dapplo\.Addons|Dapplo\.Addons\.Bootstrapper|Dapplo\.Windows.*|system.*|.*resources|Dapplo\.InterfaceImpl.*)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly ResourceMutex _resourceMutex;
         private readonly AssemblyResolver _resolver = new AssemblyResolver();
         private readonly IList<string> _scanDirectories = new List<string>();
         private readonly IList<IDisposable> _disposables = new List<IDisposable>();
         private bool _isStartedUp;
         private bool _isShutDown;
+        private ContainerBuilder _builder;
 
         /// <summary>
         /// The current instance
         /// </summary>
         public static ApplicationBootstrapper Instance { get; private set; }
-
-        private ContainerBuilder _builder;
 
         /// <summary>
         /// Provides access to the builder, as long as it can be modified.
@@ -183,10 +182,6 @@ namespace Dapplo.Addons.Bootstrapper
                 {
                     Log.Debug().WriteLine("Loaded {0}", assemblyFile);
                 }
-                else
-                {
-                    Log.Debug().WriteLine("Ignored / failed: {0}", assemblyFile);
-                }
             }
         }
 
@@ -210,8 +205,7 @@ namespace Dapplo.Addons.Bootstrapper
             // Make sure Attributes are allowed
             _builder.RegisterModule<AttributedMetadataModule>();
             // Provide the startup & shutdown functionality
-            _builder.RegisterType<ServiceStartupHandler>().AsSelf().SingleInstance();
-            _builder.RegisterType<ServiceShutdownHandler>().AsSelf().SingleInstance();
+            _builder.RegisterType<ServiceHandler>().AsSelf().SingleInstance();
             // Provide the IResourceProvider
             _builder.RegisterInstance(_resolver.Resources).As<IResourceProvider>().ExternallyOwned();
         }
@@ -240,6 +234,10 @@ namespace Dapplo.Addons.Bootstrapper
                     .Where(key => processedAssemblies.Add(key))
                     .Where(key => !AssembliesToIgnore.IsMatch(key))
                     .Where(key => !_resolver.LoadedAssemblies[key].IsDynamic).ToList();
+                if (!assembliesToProcess.Any())
+                {
+                    break;
+                }
                 if (Log.IsDebugEnabled())
                 {
                     Log.Debug().WriteLine("Processing assemblies {0}", string.Join(",", assembliesToProcess));
@@ -271,7 +269,7 @@ namespace Dapplo.Addons.Bootstrapper
                 await InitializeAsync(cancellationToken);
             }
             _isStartedUp = true;
-            await Scope.Resolve<ServiceStartupHandler>().StartupAsync(cancellationToken);
+            await Scope.Resolve<ServiceHandler>().StartupAsync(cancellationToken);
         }
 
         /// <summary>
@@ -285,7 +283,7 @@ namespace Dapplo.Addons.Bootstrapper
                 throw new NotSupportedException("Start before shutdown!");
             }
             _isShutDown = true;
-            return Scope.Resolve<ServiceShutdownHandler>().ShutdownAsync(cancellationToken);
+            return Scope.Resolve<ServiceHandler>().ShutdownAsync(cancellationToken);
         }
 
         /// <summary>

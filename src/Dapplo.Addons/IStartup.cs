@@ -32,7 +32,7 @@ namespace Dapplo.Addons
     /// <summary>
     ///     IStartup is an interface that is used for things that need to start
      /// </summary>
-    public interface IStartup : IStartupMarker
+    public interface IStartup : IService
     {
         /// <summary>
         ///     Perform a start of whatever needs to be started.

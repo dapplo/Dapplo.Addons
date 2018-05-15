@@ -25,24 +25,14 @@
 
 #region Usings
 
-using System.Threading;
-using System.Threading.Tasks;
-
 #endregion
 
 namespace Dapplo.Addons
 {
     /// <summary>
-    ///     Use IShutdownAsync for services that need to be shutdown async
+    ///     The IService is a marker interface for services that startup and or shutdown
     /// </summary>
-    public interface IShutdownAsync : IService
+    public interface IService
     {
-        /// <summary>
-        ///     Perform a shutdown of whatever needs to be shutdown.
-        ///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
-        /// </summary>
-        /// <param name="cancellationToken">CancellationToken</param>
-        /// <returns>Task</returns>
-        Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken));
     }
 }

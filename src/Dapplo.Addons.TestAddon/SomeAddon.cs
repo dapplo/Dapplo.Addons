@@ -27,7 +27,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapplo.Ini;
@@ -41,20 +40,22 @@ namespace Dapplo.Addons.TestAddon
     {
         private static readonly LogSource Log = new LogSource();
 
-        [Import]
-        public IThisIsConfiguration MyConfig { get; set; }
+        public SomeAddon(IThisIsConfiguration myConfig, IThisIsSubConfiguration mysubConfig, IEnumerable<IIniSection> myConfigs, bool throwStartupException = false)
+        {
+            MyConfig = myConfig;
+            MysubConfig = mysubConfig;
+            MyConfigs = myConfigs;
+            ThrowStartupException = throwStartupException;
+        }
 
-        [Import]
-        public IThisIsSubConfiguration MysubConfig { get; set; }
-
-        [ImportMany]
-        public IEnumerable<IIniSection> MyConfigs { get; set; }
+        public IThisIsConfiguration MyConfig { get; }
+        public IThisIsSubConfiguration MysubConfig { get; }
+        public IEnumerable<IIniSection> MyConfigs { get; }
 
         /// <summary>
         ///     This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
         /// </summary>
-        [Import(AllowDefault = true)]
-        private bool ThrowStartupException { get; set; }
+        private bool ThrowStartupException { get; }
 
         public async Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken))
         {

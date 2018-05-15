@@ -33,24 +33,24 @@ using Dapplo.Log;
 namespace Dapplo.Addons.Bootstrapper.Handler
 {
     /// <summary>
-    /// This handles the startup of all IStartupModule implementing classes
+    /// This handles the startup of all IService implementing classes
     /// </summary>
-    public class ServiceStartupHandler
+    public class ServiceHandler
     {
         private static readonly LogSource Log = new LogSource();
-        private readonly IEnumerable<Lazy<IStartupMarker, ServiceOrderAttribute>> _startupModules;
+        private readonly IEnumerable<Lazy<IService, ServiceOrderAttribute>> _services;
 
         /// <summary>
         /// The constructor to specify the startup modules
         /// </summary>
-        /// <param name="startupModules">IEnumerable</param>
-        public ServiceStartupHandler(IEnumerable<Lazy<IStartupMarker, ServiceOrderAttribute>> startupModules)
+        /// <param name="services">IEnumerable</param>
+        public ServiceHandler(IEnumerable<Lazy<IService, ServiceOrderAttribute>> services)
         {
-            _startupModules = startupModules;
+            _services = services;
         }
 
         /// <summary>
-        /// Do the startup
+        /// Do the startup of the services who can startup
         /// </summary>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task</returns>
@@ -58,7 +58,7 @@ namespace Dapplo.Addons.Bootstrapper.Handler
         {
             Log.Debug().WriteLine("Checking what needs to startup.");
 
-            var orderedServicesToStartup = from startupModule in _startupModules orderby startupModule.Metadata.StartupOrder select startupModule;
+            var orderedServicesToStartup = from startupModule in _services orderby startupModule.Metadata.StartupOrder select startupModule;
 
             var tasks = new List<KeyValuePair<Type, Task>>();
             var nonAwaitables = new List<KeyValuePair<Type, Task>>();
@@ -75,14 +75,14 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                 cancellationTokenRegistration = cancellationToken.Register(() => startupCancellationTokenSource.Cancel());
             }
 
-            foreach (var lazyStartupModule in orderedServicesToStartup)
+            foreach (var lazyService in orderedServicesToStartup)
             {
                 try
                 {
                     // Check if we have all the services belonging to a group
-                    if (tasks.Count > 0 && groupingOrder != lazyStartupModule.Metadata.StartupOrder)
+                    if (tasks.Count > 0 && groupingOrder != lazyService.Metadata.StartupOrder)
                     {
-                        groupingOrder = lazyStartupModule.Metadata.StartupOrder;
+                        groupingOrder = lazyService.Metadata.StartupOrder;
                         // Await all belonging to the same order "group"
                         await WhenAll(tasks).ConfigureAwait(false);
                         // Clean the tasks, we are finished.
@@ -95,14 +95,14 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                         break;
                     }
 
-                    IStartupMarker startupModule;
+                    IService service;
                     try
                     {
-                        startupModule = lazyStartupModule.Value;
+                        service = lazyService.Value;
                     }
                     catch (Exception ex)
                     {
-                        Log.Error().WriteLine(ex, "Exception instantiating IStartupMarker.");
+                        Log.Error().WriteLine(ex, "Exception instantiating service.");
                         throw;
                     }
 
@@ -110,10 +110,10 @@ namespace Dapplo.Addons.Bootstrapper.Handler
 
                     if (Log.IsVerboseEnabled())
                     {
-                        Log.Verbose().WriteLine("Starting {0}", startupModule.GetType());
+                        Log.Verbose().WriteLine("Starting {0}", service.GetType());
                     }
                     // Test if async / sync startup
-                    switch (startupModule)
+                    switch (service)
                     {
                         case IStartup serviceToStartup:
                             // Wrap sync call as async task
@@ -123,23 +123,20 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                             // Create a task (it will start running, but we don't await it yet)
                             startupTask = serviceToStartupAsync.StartAsync(cancellationToken);
                             break;
-                        default:
-                            Log.Verbose().WriteLine("Unknown interface for {0}", startupModule.GetType());
-                            break;
                     }
 
                     if (startupTask != null)
                     {
-                        if (lazyStartupModule.Metadata.AwaitStart)
+                        if (lazyService.Metadata.AwaitStart)
                         {
-                            tasks.Add(new KeyValuePair<Type, Task>(lazyStartupModule.Value.GetType(), startupTask));
+                            tasks.Add(new KeyValuePair<Type, Task>(lazyService.Value.GetType(), startupTask));
                         }
                         else
                         {
                             if (Log.IsErrorEnabled())
                             {
                                 // We do await for them, but just to catch any exceptions
-                                nonAwaitables.Add(new KeyValuePair<Type, Task>(lazyStartupModule.Value.GetType(), startupTask));
+                                nonAwaitables.Add(new KeyValuePair<Type, Task>(lazyService.Value.GetType(), startupTask));
                             }
                         }
                     }
@@ -151,7 +148,7 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                 }
                 catch (Exception ex)
                 {
-                    Log.Error().WriteLine(ex, "Exception executing startup {0}: ", lazyStartupModule.Value.GetType());
+                    Log.Error().WriteLine(ex, "Exception executing startup {0}: ", lazyService.Value.GetType());
                 }
                 if (cancellationToken.CanBeCanceled)
                 {
@@ -188,6 +185,86 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                         Log.Info().WriteLine("Ignoring StartupException, as the startup has AwaitStart set to false.");
                     }
                 }, cancellationToken);
+            }
+        }
+
+
+        /// <summary>
+        /// Start the shutdown
+        /// </summary>
+        /// <param name="cancellationToken">CancellationToken</param>
+        public async Task ShutdownAsync(CancellationToken cancellationToken = default)
+        {
+            Log.Debug().WriteLine("Shutdown of services, if any");
+            var orderedServicesToShutdown = from shutdownModule in _services orderby shutdownModule.Metadata.ShutdownOrder descending select shutdownModule;
+
+            var tasks = new List<KeyValuePair<Type, Task>>();
+
+            // Variable used for grouping the shutdowns
+            var groupingOrder = int.MinValue;
+
+            foreach (var lazyService in orderedServicesToShutdown)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Log.Debug().WriteLine("Shutdown cancelled.");
+                    break;
+                }
+                // Check if we have all the startup actions belonging to a group
+                if (tasks.Count > 0 && groupingOrder != lazyService.Metadata.ShutdownOrder)
+                {
+                    groupingOrder = lazyService.Metadata.ShutdownOrder;
+
+                    // Await all belonging to the same order "group"
+                    await WhenAll(tasks).ConfigureAwait(false);
+                    // Clean the tasks, we are finished.
+                    tasks.Clear();
+                }
+                IService service;
+                try
+                {
+                    service = lazyService.Value;
+                }
+                catch (Exception ex)
+                {
+                    Log.Error().WriteLine(ex, "Exception instantiating IService (ignoring in shutdown)");
+                    continue;
+                }
+
+                if (Log.IsDebugEnabled())
+                {
+                    Log.Debug().WriteLine("Stopping {0}", service.GetType());
+                }
+
+                try
+                {
+                    Task shutdownTask = null;
+                    // Test if async / sync shutdown
+                    switch (service)
+                    {
+                        case IShutdown shutdownAction:
+                            shutdownTask = Task.Run(() => shutdownAction.Shutdown(), cancellationToken);
+                            break;
+                        case IShutdownAsync asyncShutdownAction:
+                            // Create a task (it will start running, but we don't await it yet)
+                            shutdownTask = asyncShutdownAction.ShutdownAsync(cancellationToken);
+                            break;
+                    }
+                    if (shutdownTask != null)
+                    {
+                        // Store it for awaiting
+                        tasks.Add(new KeyValuePair<Type, Task>(service.GetType(), shutdownTask));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error().WriteLine(ex, "Exception executing shutdown {0}: ", service.GetType());
+                }
+            }
+            // Await all remaining tasks, as the system is shutdown we NEED to wait, and ignore but log their exceptions
+            if (tasks.Count > 0)
+            {
+                await WhenAll(tasks).ConfigureAwait(false);
             }
         }
 

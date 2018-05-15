@@ -26,7 +26,6 @@
 #region Usings
 
 using System;
-using System.ComponentModel.Composition;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -36,20 +35,20 @@ namespace Dapplo.Addons.TestAddon
 {
     public class AnotherAddon : IStartupAsync, IShutdownAsync
     {
-        [ImportingConstructor]
-        public AnotherAddon(IThisIsSubConfiguration mysubConfig)
+        public AnotherAddon(IThisIsConfiguration myConfig, IThisIsSubConfiguration mysubConfig, bool throwStartupException = false)
         {
             if (!string.Equals("Dapplo", mysubConfig.Company))
             {
                 throw new NotSupportedException();
             }
+
+            ThrowStartupException = throwStartupException;
         }
 
         /// <summary>
         ///     This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
         /// </summary>
-        [Import(AllowDefault = true)]
-        private bool ThrowStartupException { get; set; }
+        private bool ThrowStartupException { get;}
 
         public async Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken))
         {

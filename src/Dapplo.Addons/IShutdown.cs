@@ -30,9 +30,9 @@
 namespace Dapplo.Addons
 {
     /// <summary>
-    ///     Use IShutdown for things that need a shutdown
+    ///     Use IShutdown for services that need a shutdown
     /// </summary>
-    public interface IShutdown : IShutdownMarker
+    public interface IShutdown : IService
     {
         /// <summary>
         ///     Perform a shutdown of whatever needs to be shutdown.

@@ -58,8 +58,7 @@
     <Compile Include="ApplicationBootstrapper.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\PackUriExtensions.cs" />
-    <Compile Include="Handler\ServiceShutdownHandler.cs" />
-    <Compile Include="Handler\ServiceStartupHandler.cs" />
+    <Compile Include="Handler\ServiceHandler.cs" />
     <Compile Include="Internal\NoSynchronizationContextScope.cs" />
     <Compile Include="LogRequestModule.cs" />
     <Compile Include="Resolving\AssemblyResolver.cs" />
