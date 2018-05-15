@@ -148,6 +148,23 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
+        /// Add additional scan directories
+        /// </summary>
+        /// <param name="scanDirectories">IEnumerable</param>
+        public void AddScanDirectoríes(IEnumerable<string> scanDirectories)
+        {
+            foreach (var scanDirectory in scanDirectories)
+            {
+                if (string.IsNullOrEmpty(scanDirectory))
+                {
+                    continue;
+                }
+
+                AddScanDirectory(scanDirectory);
+            }
+        }
+
+        /// <summary>
         /// Find a certain assembly in the available scan directories and load this
         /// </summary>
         /// <param name="pattern">string</param>

@@ -111,9 +111,10 @@ namespace Dapplo.Addons.Tests
                     @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release",
 #endif
                 };
+                bootstrapper.AddScanDirectoríes(scanDirectories);
 
                 // Add all file starting with Dapplo and ending on .dll
-                bootstrapper.LoadAssemblies(FileLocations.Scan(scanDirectories, "Dapplo*.dll"));
+                bootstrapper.FindAndLoadAssemblies("Dapplo*.dll");
 
                 bootstrapper.RegisterForDisposal(SimpleDisposable.Create(() => isDisposed = true));
 
