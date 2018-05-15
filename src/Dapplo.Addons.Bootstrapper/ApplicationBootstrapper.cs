@@ -151,7 +151,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// Add additional scan directories
         /// </summary>
         /// <param name="scanDirectories">IEnumerable</param>
-        public void AddScanDirectoríes(IEnumerable<string> scanDirectories)
+        public void AddScanDirectories(IEnumerable<string> scanDirectories)
         {
             foreach (var scanDirectory in scanDirectories)
             {
