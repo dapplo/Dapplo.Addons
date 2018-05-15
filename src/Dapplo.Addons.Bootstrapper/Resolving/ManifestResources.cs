@@ -92,7 +92,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// Returns the fully qualified resource name of a resource
         /// </summary>
         /// <param name="type">The type whose namespace is used to scope the manifest resource name.</param>
-        /// <param name="names">The case-sensitive name of the manifest resource being requested.</param>
+        /// <param name="names">The case-sensitive name, parts, of the manifest resource being requested.</param>
         /// <returns>string</returns>
         public string Find(Type type, params string [] names)
         {
@@ -110,7 +110,12 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             return resources.Contains(fqName) ? fqName : null;
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Get a resource as stream
+        /// </summary>
+        /// <param name="type">Type, used as the base to find the resource</param>
+        /// <param name="names">string array, used to specify the location and name of the resource</param>
+        /// <returns>Stream</returns>
         public Stream ResourceAsStream(Type type, params string [] names)
         {
             var assemblyName = type.Assembly.GetName().Name;
@@ -134,20 +139,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         }
 
         /// <summary>
-        /// Test if the specified assembly has resources, the results are cached
-        /// </summary>
-        /// <param name="possibleResourceAssembly">Assembly</param>
-        /// <returns>bool true if there is are resources in the assembly</returns>
-        public bool HasResources(Assembly possibleResourceAssembly)
-        {
-            return GetCachedManifestResourceNames(possibleResourceAssembly).Length > 0;
-        }
-
-        /// <summary>
         ///     Create a regex to find a resource in an assembly
         /// </summary>
-        /// <param name="filePath">string with the filepath to find</param>
         /// <param name="assembly">Assembly to look into</param>
+        /// <param name="filePath">string with the filepath to find</param>
         /// <param name="ignoreCase">true, which is default, to ignore the case when comparing</param>
         /// <param name="alternativeExtensions">Besides the specified extension in the filePath, these are also allowed</param>
         /// <returns>Regex</returns>
@@ -168,7 +163,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
         /// <summary>
         ///     Get the stream for a assembly manifest resource based on the filePath
-        ///     It will automatically wrapped as GZipStream if the file-ending is .gz
+        ///     It will automatically uncompress if the file-ending is .gz or .compressed
         ///     Note: a GZipStream is not seekable, this might cause issues.
         /// </summary>
         /// <param name="filePath">string with the filepath to find</param>
@@ -223,38 +218,12 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// </summary>
         /// <param name="assembly">Assembly to scan</param>
         /// <param name="regexPattern">Regex pattern to scan for</param>
-        /// <param name="regexOptions">RegexOptions.IgnoreCase as default</param>
-        /// <returns>IEnumerable with matching resource names</returns>
-        public IEnumerable<string> FindEmbeddedResources(Assembly assembly, string regexPattern, RegexOptions regexOptions = RegexOptions.IgnoreCase)
-        {
-            return FindEmbeddedResources(assembly, new Regex(regexPattern, regexOptions));
-        }
-
-
-        /// <summary>
-        ///     Scan the manifest of the supplied Assembly with a regex pattern for embedded resources
-        /// </summary>
-        /// <param name="assembly">Assembly to scan</param>
-        /// <param name="regexPattern">Regex pattern to scan for</param>
         /// <returns>IEnumerable with matching resource names</returns>
         public IEnumerable<string> FindEmbeddedResources(Assembly assembly, Regex regexPattern)
         {
             return from resourceName in GetCachedManifestResourceNames(assembly)
                 where regexPattern.IsMatch(resourceName)
                 select resourceName;
-        }
-
-        /// <summary>
-        ///     Scan the manifest of the supplied Assembly elements with a regex pattern for embedded resources
-        /// </summary>
-        /// <param name="assemblies">IEnumerable with Assembly elements to scan</param>
-        /// <param name="regexPattern">Regex pattern to scan for</param>
-        /// <param name="regexOptions">RegexOptions.IgnoreCase as default</param>
-        /// <returns>IEnumerable with matching resource names</returns>
-        public IEnumerable<Tuple<Assembly, string>> FindEmbeddedResources(IEnumerable<Assembly> assemblies, string regexPattern,
-            RegexOptions regexOptions = RegexOptions.IgnoreCase)
-        {
-            return FindEmbeddedResources(assemblies, new Regex(regexPattern, regexOptions));
         }
 
         /// <summary>
@@ -358,40 +327,15 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         }
 
         /// <summary>
-        ///     Get the stream for the calling assembly from the manifest resource based on the filePath
+        ///     Scan the manifest of the supplied Assembly with a regex pattern for embedded resources
         /// </summary>
-        /// <param name="filePath">string with the filepath to find</param>
-        /// <param name="ignoreCase">true, which is default, to ignore the case when comparing</param>
-        /// <returns>Stream for the filePath, or null if not found</returns>
-        public Stream GetEmbeddedResourceAsStream(string filePath, bool ignoreCase = true)
-        {
-            return GetEmbeddedResourceAsStream(Assembly.GetCallingAssembly(), filePath, ignoreCase);
-        }
-
-        /// <summary>
-        ///     Scan the manifest of the calling Assembly with a regex pattern for embedded resources
-        /// </summary>
+        /// <param name="assembly">Assembly to scan</param>
         /// <param name="regexPattern">Regex pattern to scan for</param>
         /// <param name="regexOptions">RegexOptions.IgnoreCase as default</param>
         /// <returns>IEnumerable with matching resource names</returns>
-        public IEnumerable<string> FindEmbeddedResources(string regexPattern, RegexOptions regexOptions = RegexOptions.IgnoreCase)
+        public IEnumerable<string> FindEmbeddedResources(Assembly assembly, string regexPattern, RegexOptions regexOptions = RegexOptions.IgnoreCase)
         {
-            var assembly = Assembly.GetCallingAssembly();
-            return FindEmbeddedResources(assembly, regexPattern, regexOptions);
-        }
-
-        /// <summary>
-        ///     Scan the manifest of all assemblies in the AppDomain with a regex pattern for embedded resources
-        ///     Usually this would be used with AppDomain.Current
-        /// </summary>
-        /// <param name="appDomain">AppDomain to scan</param>
-        /// <param name="regexPattern">Regex pattern to scan for</param>
-        /// <param name="regexOptions">RegexOptions.IgnoreCase as default</param>
-        /// <returns>IEnumerable with matching assembly resource name tuples</returns>
-        public IEnumerable<Tuple<Assembly, string>> FindEmbeddedResources(AppDomain appDomain, string regexPattern,
-            RegexOptions regexOptions = RegexOptions.IgnoreCase)
-        {
-            return FindEmbeddedResources(appDomain.GetAssemblies(), regexPattern, regexOptions);
+            return FindEmbeddedResources(assembly, new Regex(regexPattern, regexOptions));
         }
 
         /// <summary>
@@ -404,17 +348,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public IEnumerable<string> FindEmbeddedResources(Type type, string regexPattern, RegexOptions regexOptions = RegexOptions.IgnoreCase)
         {
             return FindEmbeddedResources(type.Assembly, regexPattern, regexOptions);
-        }
-
-        /// <summary>
-        ///     Scan the manifest of the Assembly of the supplied Type with a regex pattern for embedded resources
-        /// </summary>
-        /// <param name="type">Type is used to get the assembly </param>
-        /// <param name="regex">Regex to scan for</param>
-        /// <returns>IEnumerable with matching resource names</returns>
-        public IEnumerable<string> FindEmbeddedResources(Type type, Regex regex)
-        {
-            return FindEmbeddedResources(type.Assembly, regex);
         }
     }
 }

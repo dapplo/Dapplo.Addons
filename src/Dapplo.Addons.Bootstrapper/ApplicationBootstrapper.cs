@@ -45,7 +45,6 @@ namespace Dapplo.Addons.Bootstrapper
     public class ApplicationBootstrapper : IDisposable
     {
         private static readonly LogSource Log = new LogSource();
-        private static readonly Regex AssembliesToIgnore = new Regex(@"^(xunit.*|microsoft\..*|mscorlib|UIAutomationProvider|PresentationFramework|PresentationCore|WindowsBase|autofac.*|Dapplo\.Log.*|Dapplo\.Ini|Dapplo\.Language|Dapplo\.Utils|Dapplo\.Addons|Dapplo\.Addons\.Bootstrapper|Dapplo\.Windows.*|system.*|.*resources|Dapplo\.InterfaceImpl.*)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly ResourceMutex _resourceMutex;
         private readonly AssemblyResolver _resolver = new AssemblyResolver();
         private readonly IList<string> _scanDirectories = new List<string>();
@@ -88,7 +87,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// An IEnumerable with the loaded assemblies, but filtered to the ones not from the .NET Framework (where possible) 
         /// </summary>
         public IEnumerable<Assembly> LoadedAssemblies => _resolver.LoadedAssemblies
-            .Where(pair => !AssembliesToIgnore.IsMatch(pair.Key) && !pair.Value.IsDynamic)
+            .Where(pair => !_resolver.AssembliesToIgnore.IsMatch(pair.Key) && !pair.Value.IsDynamic)
             .Select(pair => pair.Value);
 
         /// <summary>
@@ -249,7 +248,7 @@ namespace Dapplo.Addons.Bootstrapper
 
                 var assembliesToProcess = _resolver.LoadedAssemblies.Keys.ToList()
                     .Where(key => processedAssemblies.Add(key))
-                    .Where(key => !AssembliesToIgnore.IsMatch(key))
+                    .Where(key => !_resolver.AssembliesToIgnore.IsMatch(key))
                     .Where(key => !_resolver.LoadedAssemblies[key].IsDynamic).ToList();
                 if (!assembliesToProcess.Any())
                 {
@@ -260,7 +259,18 @@ namespace Dapplo.Addons.Bootstrapper
                     Log.Debug().WriteLine("Processing assemblies {0}", string.Join(",", assembliesToProcess));
                 }
 
-                _builder.RegisterAssemblyModules(assembliesToProcess.Select(key => _resolver.LoadedAssemblies[key]).ToArray());
+                foreach (var key in assembliesToProcess)
+                {
+                    try
+                    {
+                        _builder.RegisterAssemblyModules(_resolver.LoadedAssemblies[key]);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warn().WriteLine(ex, "Couldn't read modules in {0}", key);
+                    }
+                }
+                
             } while (_resolver.LoadedAssemblies.Count > countBefore);          
 
             // Now build the container
@@ -325,9 +335,9 @@ namespace Dapplo.Addons.Bootstrapper
                 disposable?.Dispose();
             }
 
-            
             Scope?.Dispose();
             Container?.Dispose();
+            _resolver.Dispose();
         }
     }
 }

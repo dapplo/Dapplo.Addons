@@ -27,7 +27,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
+using Dapplo.Addons.Bootstrapper.Extensions;
 using Dapplo.Log;
 
 namespace Dapplo.Addons.Bootstrapper.Resolving
@@ -35,9 +38,14 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     /// <summary>
     /// This class supports the resolving of assemblies
     /// </summary>
-    public class AssemblyResolver
+    public class AssemblyResolver : IDisposable
     {
         private static readonly LogSource Log = new LogSource();
+
+        /// <summary>
+        /// A regex with all the assemblies which we should ignore
+        /// </summary>
+        public Regex AssembliesToIgnore { get; } = new Regex(@"^(xunit.*|microsoft\..*|mscorlib|UIAutomationProvider|PresentationFramework|PresentationCore|WindowsBase|autofac.*|Dapplo\.Log.*|Dapplo\.Ini|Dapplo\.Language|Dapplo\.Utils|Dapplo\.Addons|Dapplo\.Addons\.Bootstrapper|Dapplo\.Windows.*|system.*|.*resources|Dapplo\.InterfaceImpl.*)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// A dictionary with all the loaded assemblies, for caching and analysing
@@ -102,17 +110,47 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// This will try to resolve the requested assembly by looking into the cache
         /// </summary>
         /// <param name="sender">object</param>
-        /// <param name="args">ResolveEventArgs</param>
+        /// <param name="resolveEventArgs">ResolveEventArgs</param>
         /// <returns>Assembly</returns>
-        private Assembly AssemblyResolve(object sender, ResolveEventArgs args)
+        private Assembly AssemblyResolve(object sender, ResolveEventArgs resolveEventArgs)
         {
-            if (!LoadedAssemblies.TryGetValue(args.Name, out var assembly))
+            var assemblyName = new AssemblyName(resolveEventArgs.Name);
+            if (assemblyName.Name.EndsWith(".resources"))
             {
+                // Ignore to prevent resolving logic which doesn't find anything anyway
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Ignoring resolve event for {0}", assemblyName.Name);
+                }
                 return null;
             }
 
-            Log.Info().WriteLine("Returned {0} from cache.", args.Name);
-            return assembly;
+            if (LoadedAssemblies.TryGetValue(assemblyName.Name, out var assembly))
+            {
+                Log.Info().WriteLine("Returned {0} from cache.", assemblyName.Name);
+                return assembly;
+            }
+
+            var assemblyRegex = new Regex(@"^(costura\.)*" + assemblyName.Name.Replace(".", @"\.") + @"\.dll(\.compressed|\*.gz)*$", RegexOptions.IgnoreCase);
+            foreach (var loadedAssembly in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value))
+            {
+                var resources = Resources.GetCachedManifestResourceNames(loadedAssembly);
+                foreach (var resource in resources)
+                {
+                    if (!assemblyRegex.IsMatch(resource))
+                    {
+                        continue;
+                    }
+                    // Match
+                    using (var stream = Resources.GetEmbeddedResourceAsStream(loadedAssembly, resource, false))
+                    {
+                        Log.Verbose().WriteLine("Resolved {0} from {1}", assemblyName.Name, loadedAssembly.GetName().Name);
+                        return Assembly.Load(stream.ToByteArray());
+                    }
+                }
+            }
+            Log.Warn().WriteLine("Couldn't resolve {0}", assemblyName.Name);
+            return null;
         }
 
         /// <summary>
@@ -126,6 +164,17 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             var assemblyName = assembly.GetName().Name;
 
             LoadedAssemblies[assemblyName] = assembly;
+        }
+
+        /// <summary>
+        /// Remove event registrations
+        /// </summary>
+        public void Dispose()
+        {
+            // Unregister assembly loading
+            AppDomain.CurrentDomain.AssemblyLoad -= AssemblyLoad;
+            // Register assembly resolving
+            AppDomain.CurrentDomain.AssemblyResolve -= AssemblyResolve;
         }
     }
 }

@@ -57,6 +57,7 @@
     <Compile Include="ApplicationBootstrapper.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\PackUriExtensions.cs" />
+    <Compile Include="Extensions\StreamExtensions.cs" />
     <Compile Include="Handler\ServiceHandler.cs" />
     <Compile Include="Internal\NoSynchronizationContextScope.cs" />
     <Compile Include="LogRequestModule.cs" />
