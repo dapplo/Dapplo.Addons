@@ -277,7 +277,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <returns>IEnumerable with a tutple containing the name of the resource and of the assemblie</returns>
         public IEnumerable<string> EmbeddedAssemblyNames()
         {
-            foreach (var loadedAssembly in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value))
+            foreach (var loadedAssembly in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value).ToList())
             {
                 string[] resources;
                 try
@@ -313,7 +313,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 Log.Verbose().WriteLine("Returned {0} from cache.", assemblyName);
                 return cachedAssembly;
             }
-            foreach (var assemblyWithResources in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value))
+            foreach (var assemblyWithResources in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value).ToList())
             {
                 string[] resources;
                 try

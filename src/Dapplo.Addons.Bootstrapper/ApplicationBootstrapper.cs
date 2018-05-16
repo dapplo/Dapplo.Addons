@@ -177,12 +177,14 @@ namespace Dapplo.Addons.Bootstrapper
             var fileRegex = FileTools.FilenameToRegex(pattern, extensions ?? new[] { ".dll" });
             LoadAssemblies(FileLocations.Scan(Resolver.ScanDirectories, fileRegex).Select(tuple => tuple.Item1));
 
-            if (allowEmbedded)
+            if (!allowEmbedded)
             {
-                foreach (var assemblyName in Resolver.EmbeddedAssemblyNames().Where(assemblyName => fileRegex.IsMatch(assemblyName + ".dll")))
-                {
-                    Resolver.LoadEmbeddedAssembly(assemblyName);
-                }
+                return this;
+            }
+
+            foreach (var assemblyName in Resolver.EmbeddedAssemblyNames().Where(assemblyName => fileRegex.IsMatch(assemblyName + ".dll")).ToList())
+            {
+                Resolver.LoadEmbeddedAssembly(assemblyName);
             }
 
             return this;
