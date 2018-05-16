@@ -55,7 +55,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <summary>
         /// A dictionary with all the loaded assemblies, for caching and analysing
         /// </summary>
-        public IDictionary<string, Assembly> LoadedAssemblies { get; } = new ConcurrentDictionary<string, Assembly>();
+        public IDictionary<string, Assembly> LoadedAssemblies { get; } = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Gives access to the resources in assemblies
