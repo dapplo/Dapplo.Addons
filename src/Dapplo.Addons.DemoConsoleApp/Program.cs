@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
@@ -22,10 +23,18 @@ namespace Dapplo.Addons.DemoConsoleApp
                 {
                     FileLocations.StartupDirectory,
                     @"MyOtherLibs",
+#if DEBUG
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug",
+#else
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release",
+#endif
                 };
                 bootstrapper
                     .AddScanDirectories(scanDirectories)
-                    .FindAndLoadAssemblies("Dapplo.HttpExtensions");
+                    .FindAndLoadAssemblies("Dapplo.HttpExtensions")
+                    .FindAndLoadAssemblies("Dapplo.Addons.TestAddonWithCostura");
+
+
 
                 await bootstrapper.InitializeAsync().ConfigureAwait(false);
 
@@ -34,6 +43,7 @@ namespace Dapplo.Addons.DemoConsoleApp
                 {
                     Log.Debug().WriteLine("Available assembly {0}", resource);
                 }
+                var jiraAssembly = Assembly.Load("Svg");
             }
 
             return 0;

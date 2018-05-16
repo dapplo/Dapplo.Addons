@@ -81,5 +81,29 @@ namespace Dapplo.Addons.Tests
                 Assert.NotNull(jiraAssembly);
             }
         }
+
+        [Fact]
+        public void TestCostura_Nested()
+        {
+            using (var bootstrapper = new ApplicationBootstrapper("Test"))
+            {
+                var scanDirectories = new List<string>
+                {
+                    FileLocations.StartupDirectory,
+#if DEBUG
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug",
+#else
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release",
+#endif
+                };
+                bootstrapper.AddScanDirectories(scanDirectories);
+
+                // Add all file starting with Dapplo and ending on .dll
+                bootstrapper.FindAndLoadAssemblies("Dapplo.Addons.TestAddonWithCostura");
+
+                var jiraAssembly = Assembly.Load("Svg");
+                Assert.NotNull(jiraAssembly);
+            }
+        }
     }
 }

@@ -90,23 +90,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             AppDomain.CurrentDomain.AssemblyLoad += AssemblyLoad;
             // Register assembly resolving
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolve;
-            AppDomain.CurrentDomain.ProcessExit += (sender, args) =>
-            {
-                if (_assembliesToDeleteAtExit.Count == 0)
-                {
-                    return;
-                }
-                Log.Debug().WriteLine("Removing cached assembly files {0}", string.Join(" ", _assembliesToDeleteAtExit.Select(a => $"\"{FileTools.NormalizeDirectory(a)}\"")));
-                var info = new ProcessStartInfo
-                {
-                    Arguments = "/C choice /C Y /N /D Y /T 3 & Del " + string.Join(" ", _assembliesToDeleteAtExit),
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    CreateNoWindow = true,
-                    FileName = "cmd.exe"
-                };
-                Process.Start(info);
-            };
-
+            AppDomain.CurrentDomain.ProcessExit += (sender, args) => RemoveCopiedAssemblies();
         }
 
         /// <summary>
@@ -178,10 +162,15 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
             foreach (var assemblyResolveDirectory in FileLocations.AssemblyResolveDirectories)
             {
-                var prefferedLocation = $@"{assemblyResolveDirectory}\{assemblyName}.dll";
-                if (File.Exists(prefferedLocation))
+                var preferredLocation = $@"{assemblyResolveDirectory}\{assemblyName}.dll";
+                if (File.Exists(preferredLocation))
                 {
-                    return Assembly.Load(assemblyName);
+                    Log.Verbose().WriteLine("Loading {0} from preferred location {1} via the assembly name.", assemblyName, preferredLocation);
+                    var result = Assembly.Load(AssemblyName.GetAssemblyName(preferredLocation));
+                    if (result != null)
+                    {
+                        return result;
+                    }
                 }
             }
 
@@ -201,7 +190,11 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                             Log.Warn().WriteLine("Creating a copy of {0} to {1}, solving loading issues.", filename, newLocation);
                             File.Copy(filename, newLocation);
                             _assembliesToDeleteAtExit.Add(newLocation);
-                            return Assembly.Load(assemblyName);
+                            var result = Assembly.Load(AssemblyName.GetAssemblyName(newLocation));
+                            if (result != null)
+                            {
+                                return result;
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -210,6 +203,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     }
                 }
             }
+            Log.Verbose().WriteLine("Loading {0} from {1}.", assemblyName, filename);
             return Assembly.LoadFrom(filename);
         }
 
@@ -222,6 +216,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         private Assembly AssemblyResolve(object sender, ResolveEventArgs resolveEventArgs)
         {
             var assemblyName = new AssemblyName(resolveEventArgs.Name);
+            Log.Verbose().WriteLine("Resolving {0}", assemblyName.FullName);
             if (_resolving.Contains(assemblyName.Name))
             {
                 Log.Warn().WriteLine("Ignoring recursive resolve event for {0}", assemblyName.Name);
@@ -240,7 +235,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
             if (LoadedAssemblies.TryGetValue(assemblyName.Name, out var assemblyResult))
             {
-                Log.Info().WriteLine("Returned {0} from cache.", assemblyName.Name);
+                Log.Verbose().WriteLine("Returned {0} from cache.", assemblyName.Name);
                 return assemblyResult;
             }
 
@@ -251,6 +246,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 var assemblyFile = FileLocations.Scan(ScanDirectories, assemblyName.Name + ".dll").FirstOrDefault();
                 if (assemblyFile != null)
                 {
+                    Log.Verbose().WriteLine("Located {0} at {1}.", assemblyName.Name, assemblyFile);
                     assemblyResult = LoadOrLoadFrom(assemblyFile);
                 }
 
@@ -296,7 +292,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             // Do not load again if already loaded
             if (LoadedAssemblies.TryGetValue(assemblyName, out var cachedAssembly))
             {
-                Log.Info().WriteLine("Returned {0} from cache.", assemblyName);
+                Log.Verbose().WriteLine("Returned {0} from cache.", assemblyName);
                 return cachedAssembly;
             }
             foreach (var assemblyWithResources in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value))
@@ -411,6 +407,27 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         }
 
         /// <summary>
+        /// Helper method to clean up
+        /// </summary>
+        private void RemoveCopiedAssemblies()
+        {
+            if (_assembliesToDeleteAtExit.Count == 0)
+            {
+                return;
+            }
+            Log.Verbose().WriteLine("Removing cached assembly files {0}", string.Join(" ", _assembliesToDeleteAtExit.Select(a => $"\"{FileTools.NormalizeDirectory(a)}\"")));
+            var info = new ProcessStartInfo
+            {
+                Arguments = "/C choice /C Y /N /D Y /T 3 & Del " + string.Join(" ", _assembliesToDeleteAtExit),
+                WindowStyle = ProcessWindowStyle.Hidden,
+                CreateNoWindow = true,
+                FileName = "cmd.exe"
+            };
+            _assembliesToDeleteAtExit.Clear();
+            Process.Start(info);
+        }
+
+        /// <summary>
         /// Remove event registrations
         /// </summary>
         public void Dispose()
@@ -419,6 +436,8 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             AppDomain.CurrentDomain.AssemblyLoad -= AssemblyLoad;
             // Register assembly resolving
             AppDomain.CurrentDomain.AssemblyResolve -= AssemblyResolve;
+
+            RemoveCopiedAssemblies();
         }
     }
 }
