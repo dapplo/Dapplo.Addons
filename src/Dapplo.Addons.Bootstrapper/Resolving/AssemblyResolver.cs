@@ -280,10 +280,12 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 _assembliesToDeleteAtExit.Add(assemblyFileName);
                 Log.Verbose().WriteLine("Loading {0} from temporary assembly file {1}", assemblyName, assemblyFileName);
 
-                if (assemblyFileName.StartsWith(FileLocations.StartupDirectory))
+                // Best case, we can load it now by name
+                if (Path.GetDirectoryName(assemblyFileName).Equals(FileLocations.StartupDirectory, StringComparison.InvariantCultureIgnoreCase))
                 {
                     return Assembly.Load(assemblyName);
                 }
+                // We need to load it with a file path, which can cause issues
                 return Assembly.LoadFrom(assemblyFileName);
             }
             catch (Exception ex)

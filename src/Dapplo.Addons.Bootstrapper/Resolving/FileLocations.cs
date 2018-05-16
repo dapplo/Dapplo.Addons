@@ -49,7 +49,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         ///     Get the startup location, which is either the location of the entry assemby, or the executing assembly
         /// </summary>
         /// <returns>string with the directory of where the running code/applicationName was started</returns>
-        public static string StartupDirectory => AppDomain.CurrentDomain.BaseDirectory;
+        public static string StartupDirectory => FileTools.NormalizeDirectory(AppDomain.CurrentDomain.BaseDirectory);
 
         /// <summary>
         ///     Get the roaming AppData directory
