@@ -45,8 +45,6 @@ namespace Dapplo.Addons.Bootstrapper
     {
         private static readonly LogSource Log = new LogSource();
         private readonly ResourceMutex _resourceMutex;
-        private readonly AssemblyResolver _resolver = new AssemblyResolver();
-        private readonly IList<string> _scanDirectories = new List<string>();
         private readonly IList<IDisposable> _disposables = new List<IDisposable>();
         private bool _isStartedUp;
         private bool _isShutDown;
@@ -56,6 +54,11 @@ namespace Dapplo.Addons.Bootstrapper
         /// The current instance
         /// </summary>
         public static ApplicationBootstrapper Instance { get; private set; }
+
+        /// <summary>
+        /// The used assembly resolver
+        /// </summary>
+        public AssemblyResolver Resolver { get; }
 
         /// <summary>
         /// Provides access to the builder, as long as it can be modified.
@@ -85,8 +88,8 @@ namespace Dapplo.Addons.Bootstrapper
         /// <summary>
         /// An IEnumerable with the loaded assemblies, but filtered to the ones not from the .NET Framework (where possible) 
         /// </summary>
-        public IEnumerable<Assembly> LoadedAssemblies => _resolver.LoadedAssemblies
-            .Where(pair => !_resolver.AssembliesToIgnore.IsMatch(pair.Key) && !pair.Value.IsDynamic)
+        public IEnumerable<Assembly> LoadedAssemblies => Resolver.LoadedAssemblies
+            .Where(pair => !Resolver.AssembliesToIgnore.IsMatch(pair.Key) && !pair.Value.IsDynamic)
             .Select(pair => pair.Value);
 
         /// <summary>
@@ -107,6 +110,8 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 _resourceMutex = ResourceMutex.Create(mutexId, applicationName, global);
             }
+
+            Resolver = new AssemblyResolver(applicationName);
         }
 
         /// <summary>
@@ -135,15 +140,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <param name="scanDirectory">string</param>
         public ApplicationBootstrapper AddScanDirectory(string scanDirectory)
         {
-            if (string.IsNullOrEmpty(scanDirectory))
-            {
-                throw new ArgumentNullException(nameof(scanDirectory));
-            }
-            scanDirectory = FileTools.NormalizeDirectory(scanDirectory);
-            if (!_scanDirectories.Contains(scanDirectory))
-            {
-                _scanDirectories.Add(scanDirectory);
-            }
+            Resolver.AddScanDirectory(scanDirectory);
             return this;
         }
 
@@ -159,8 +156,7 @@ namespace Dapplo.Addons.Bootstrapper
                 {
                     continue;
                 }
-
-                AddScanDirectory(scanDirectory);
+                Resolver.AddScanDirectory(scanDirectory);
             }
             return this;
         }
@@ -179,13 +175,13 @@ namespace Dapplo.Addons.Bootstrapper
             }
 
             var fileRegex = FileTools.FilenameToRegex(pattern, extensions ?? new[] { ".dll" });
-            LoadAssemblies(FileLocations.Scan(_scanDirectories, fileRegex).Select(tuple => tuple.Item1));
+            LoadAssemblies(FileLocations.Scan(Resolver.ScanDirectories, fileRegex).Select(tuple => tuple.Item1));
 
             if (allowEmbedded)
             {
-                foreach (var assemblyName in _resolver.EmbeddedAssemblyNames().Where(assemblyName => fileRegex.IsMatch(assemblyName)))
+                foreach (var assemblyName in Resolver.EmbeddedAssemblyNames().Where(assemblyName => fileRegex.IsMatch(assemblyName + ".dll")))
                 {
-                    _resolver.LoadEmbeddedAssembly(assemblyName);
+                    Resolver.LoadEmbeddedAssembly(assemblyName);
                 }
             }
 
@@ -211,7 +207,7 @@ namespace Dapplo.Addons.Bootstrapper
             foreach (var assemblyFile in assemblyFiles)
             {
                 Log.Debug().WriteLine("Loading {0}", assemblyFile);
-                if (_resolver.LoadAssembly(assemblyFile) != null)
+                if (Resolver.LoadAssembly(assemblyFile) != null)
                 {
                     Log.Debug().WriteLine("Loaded {0}", assemblyFile);
                 }
@@ -241,7 +237,7 @@ namespace Dapplo.Addons.Bootstrapper
             // Provide the startup & shutdown functionality
             _builder.RegisterType<ServiceHandler>().AsSelf().SingleInstance();
             // Provide the IResourceProvider
-            _builder.RegisterInstance(_resolver.Resources).As<IResourceProvider>().ExternallyOwned();
+            _builder.RegisterInstance(Resolver.Resources).As<IResourceProvider>().ExternallyOwned();
             return this;
         }
 
@@ -263,12 +259,12 @@ namespace Dapplo.Addons.Bootstrapper
             int countBefore;
             do
             {
-                countBefore = _resolver.LoadedAssemblies.Count;
+                countBefore = Resolver.LoadedAssemblies.Count;
 
-                var assembliesToProcess = _resolver.LoadedAssemblies.Keys.ToList()
+                var assembliesToProcess = Resolver.LoadedAssemblies.Keys.ToList()
                     .Where(key => processedAssemblies.Add(key))
-                    .Where(key => !_resolver.AssembliesToIgnore.IsMatch(key))
-                    .Where(key => !_resolver.LoadedAssemblies[key].IsDynamic).ToList();
+                    .Where(key => !Resolver.AssembliesToIgnore.IsMatch(key))
+                    .Where(key => !Resolver.LoadedAssemblies[key].IsDynamic).ToList();
                 if (!assembliesToProcess.Any())
                 {
                     break;
@@ -282,7 +278,7 @@ namespace Dapplo.Addons.Bootstrapper
                 {
                     try
                     {
-                        _builder.RegisterAssemblyModules(_resolver.LoadedAssemblies[key]);
+                        _builder.RegisterAssemblyModules(Resolver.LoadedAssemblies[key]);
                     }
                     catch (Exception ex)
                     {
@@ -290,7 +286,7 @@ namespace Dapplo.Addons.Bootstrapper
                     }
                 }
                 
-            } while (_resolver.LoadedAssemblies.Count > countBefore);          
+            } while (Resolver.LoadedAssemblies.Count > countBefore);          
 
             // Now build the container
             Container = _builder.Build();
@@ -356,7 +352,7 @@ namespace Dapplo.Addons.Bootstrapper
 
             Scope?.Dispose();
             Container?.Dispose();
-            _resolver.Dispose();
+            Resolver.Dispose();
         }
     }
 }

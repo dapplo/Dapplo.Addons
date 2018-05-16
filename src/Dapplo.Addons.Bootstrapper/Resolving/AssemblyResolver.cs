@@ -44,7 +44,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         private static readonly LogSource Log = new LogSource();
         private static readonly Regex AssemblyResourceNameRegex = new Regex(@"^(costura\.)*(?<assembly>.*)\.dll(\.compressed|\*.gz)*$", RegexOptions.Compiled);
         private string _applicationName;
-        private ISet<AssemblyName> _resolving = new HashSet<AssemblyName>();
+        private readonly ISet<AssemblyName> _resolving = new HashSet<AssemblyName>();
         private readonly IList<string> _assembliesToDeleteAtExit = new List<string>();
 
         /// <summary>
@@ -68,8 +68,14 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public bool UseDiskCache { get; set; } = true;
 
         /// <summary>
+        /// The directories (normalized) to scan for DLL files
+        /// </summary>
+        public ISet<string> ScanDirectories { get; } = new HashSet<string>();
+
+        /// <summary>
         /// The constructor of the Assembly Resolver
         /// </summary>
+        /// <param name="applicationName">string</param>
         public AssemblyResolver(string applicationName = null)
         {
             _applicationName = applicationName;
@@ -101,6 +107,24 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 Process.Start(info);
             };
 
+        }
+
+        /// <summary>
+        /// Add an additional scan directory
+        /// </summary>
+        /// <param name="scanDirectory">string</param>
+        public AssemblyResolver AddScanDirectory(string scanDirectory)
+        {
+            if (string.IsNullOrEmpty(scanDirectory))
+            {
+                return this;
+            }
+            scanDirectory = FileTools.NormalizeDirectory(scanDirectory);
+            if (!ScanDirectories.Contains(scanDirectory))
+            {
+                ScanDirectories.Add(scanDirectory);
+            }
+            return this;
         }
 
         /// <summary>
@@ -139,7 +163,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// </summary>
         /// <param name="filename">string</param>
         /// <param name="allowCopy">bool </param>
-        /// <returns></returns>
+        /// <returns>Assembly</returns>
         private Assembly LoadOrLoadFrom(string filename, bool allowCopy = true)
         {
             var assemblyName = Path.GetFileNameWithoutExtension(filename) ?? throw new ArgumentNullException(nameof(filename));
@@ -149,11 +173,13 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 Log.Info().WriteLine("Returned {0} from cache.", assemblyName);
                 return assembly;
             }
+            var directoryToLoadFrom = Path.GetDirectoryName(filename) ?? string.Empty;
+            AddScanDirectory(directoryToLoadFrom);
 
             foreach (var assemblyResolveDirectory in FileLocations.AssemblyResolveDirectories)
             {
-                var bestLocation = $@"{assemblyResolveDirectory}\{assemblyName}.dll";
-                if (File.Exists(bestLocation))
+                var prefferedLocation = $@"{assemblyResolveDirectory}\{assemblyName}.dll";
+                if (File.Exists(prefferedLocation))
                 {
                     return Assembly.Load(assemblyName);
                 }
@@ -161,7 +187,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
             if (allowCopy && UseDiskCache)
             {
-                var directoryToLoadFrom = Path.GetDirectoryName(filename) ?? string.Empty;
                 if (!directoryToLoadFrom.Equals(FileLocations.StartupDirectory, StringComparison.InvariantCultureIgnoreCase))
                 {
                     foreach (var assemblyResolveDirectory in FileLocations.AssemblyResolveDirectories)
@@ -213,21 +238,35 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 return null;
             }
 
-            if (LoadedAssemblies.TryGetValue(assemblyName.Name, out var assembly))
+            if (LoadedAssemblies.TryGetValue(assemblyName.Name, out var assemblyResult))
             {
                 Log.Info().WriteLine("Returned {0} from cache.", assemblyName.Name);
-                return assembly;
+            }
+            else
+            {
+                try
+                {
+                    _resolving.Add(assemblyName);
+                    // Check files before embedded
+                    var assemblyFile = FileLocations.Scan(ScanDirectories, assemblyName.Name + ".dll").FirstOrDefault();
+                    if (assemblyFile != null)
+                    {
+                        assemblyResult = LoadOrLoadFrom(assemblyFile);
+                    }
+
+                    if (assemblyResult == null)
+                    {
+                        assemblyResult = LoadEmbeddedAssembly(assemblyName.Name);
+                    }
+                }
+                finally
+                {
+                    _resolving.Remove(assemblyName);
+                }
+
             }
 
-            try
-            {
-                _resolving.Add(assemblyName);
-                return LoadEmbeddedAssembly(assemblyName.Name);
-            }
-            finally
-            {
-                _resolving.Remove(assemblyName);
-            }
+            return assemblyResult;
         }
 
         /// <summary>
