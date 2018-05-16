@@ -169,6 +169,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                         var newLocation = $@"{assemblyResolveDirectory}\{assemblyName}.dll";
                         try
                         {
+                            if (!Directory.Exists(assemblyResolveDirectory))
+                            {
+                                Directory.CreateDirectory(assemblyResolveDirectory);
+                            }
                             Log.Warn().WriteLine("Creating a copy of {0} to {1}, solving loading issues.", filename, newLocation);
                             File.Copy(filename, newLocation);
                             _assembliesToDeleteAtExit.Add(newLocation);
