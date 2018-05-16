@@ -114,7 +114,7 @@ namespace Dapplo.Addons.Tests
                 bootstrapper.AddScanDirectories(scanDirectories);
 
                 // Add all file starting with Dapplo and ending on .dll
-                bootstrapper.FindAndLoadAssemblies("Dapplo*.dll");
+                bootstrapper.FindAndLoadAssemblies("Dapplo*");
 
                 bootstrapper.RegisterForDisposal(SimpleDisposable.Create(() => isDisposed = true));
 

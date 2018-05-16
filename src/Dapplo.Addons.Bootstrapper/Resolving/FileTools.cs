@@ -27,6 +27,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -56,7 +57,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         ///     concrete fix.
         /// </param>
         /// <returns>Regex representing the filename pattern</returns>
-        public static Regex FilenameToRegex(string filename, IEnumerable<string> extensions, bool ignoreCase = true, string prefix = @"^(.*\\)*")
+        public static Regex FilenameToRegex(string filename, IEnumerable<string> extensions = null, bool ignoreCase = true, string prefix = @"^(.*\\)*")
         {
             if (filename == null)
             {
@@ -65,7 +66,12 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
             if (extensions == null)
             {
-                throw new ArgumentNullException(nameof(extensions));
+                if (!Path.HasExtension(filename))
+                {
+                    throw new ArgumentNullException(nameof(extensions), "Specify an extension in the filename, or in the extensions param.");
+                }
+                extensions = new[] { Path.GetExtension(filename) };
+                filename = Path.GetFileNameWithoutExtension(filename);
             }
             // 1: Escape all dots
             // 2: Replace all ? with a single dot
@@ -100,7 +106,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <param name="filepath">string with a filename or path</param>
         /// <param name="extensions">IEnumerable with extensions to remove</param>
         /// <returns>string</returns>
-        public static string RemoveExtensions(string filepath, IEnumerable<string> extensions = null)
+        public static string RemoveExtensions(string filepath, IEnumerable<string> extensions)
         {
             if (extensions == null)
             {

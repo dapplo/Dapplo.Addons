@@ -27,7 +27,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
@@ -120,20 +119,21 @@ namespace Dapplo.Addons.Bootstrapper
         /// Add the disposable to a list, everything in there is disposed when the bootstrapper is disposed.
         /// </summary>
         /// <param name="disposable">IDisposable</param>
-        public void RegisterForDisposal(IDisposable disposable)
+        public ApplicationBootstrapper RegisterForDisposal(IDisposable disposable)
         {
             if (disposable == null)
             {
                 throw new ArgumentNullException(nameof(disposable));
             }
             _disposables.Add(disposable);
+            return this;
         }
 
         /// <summary>
         /// Add an additional scan directory
         /// </summary>
         /// <param name="scanDirectory">string</param>
-        public void AddScanDirectory(string scanDirectory)
+        public ApplicationBootstrapper AddScanDirectory(string scanDirectory)
         {
             if (string.IsNullOrEmpty(scanDirectory))
             {
@@ -144,13 +144,14 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 _scanDirectories.Add(scanDirectory);
             }
+            return this;
         }
 
         /// <summary>
         /// Add additional scan directories
         /// </summary>
         /// <param name="scanDirectories">IEnumerable</param>
-        public void AddScanDirectories(IEnumerable<string> scanDirectories)
+        public ApplicationBootstrapper AddScanDirectories(IEnumerable<string> scanDirectories)
         {
             foreach (var scanDirectory in scanDirectories)
             {
@@ -161,35 +162,51 @@ namespace Dapplo.Addons.Bootstrapper
 
                 AddScanDirectory(scanDirectory);
             }
+            return this;
         }
 
         /// <summary>
         /// Find a certain assembly in the available scan directories and load this
         /// </summary>
-        /// <param name="pattern">string</param>
-        public void FindAndLoadAssemblies(string pattern)
+        /// <param name="pattern">string with the pattern for the files</param>
+        /// <param name="extensions">IEnumerable with the extensions to process, default is .dll</param>
+        /// <param name="allowEmbedded">bool which specifies if the </param>
+        public ApplicationBootstrapper FindAndLoadAssemblies(string pattern, IEnumerable<string> extensions = null, bool allowEmbedded = true)
         {
             if (string.IsNullOrEmpty(pattern))
             {
                 throw new ArgumentNullException(nameof(pattern));
             }
-            LoadAssemblies(FileLocations.Scan(_scanDirectories, pattern));
+
+            var fileRegex = FileTools.FilenameToRegex(pattern, extensions ?? new[] { ".dll" });
+            LoadAssemblies(FileLocations.Scan(_scanDirectories, fileRegex).Select(tuple => tuple.Item1));
+
+            if (allowEmbedded)
+            {
+                foreach (var assemblyName in _resolver.EmbeddedAssemblyNames().Where(assemblyName => fileRegex.IsMatch(assemblyName)))
+                {
+                    _resolver.LoadEmbeddedAssembly(assemblyName);
+                }
+            }
+
+            return this;
         }
 
         /// <summary>
         /// Load the specified assembly files
         /// </summary>
         /// <param name="assemblyFiles">string array with assembly files</param>
-        public void LoadAssemblies(params string[] assemblyFiles)
+        public ApplicationBootstrapper LoadAssemblies(params string[] assemblyFiles)
         {
             LoadAssemblies((IEnumerable<string>)assemblyFiles);
+            return this;
         }
 
         /// <summary>
         /// Load the specified assembly files
         /// </summary>
         /// <param name="assemblyFiles">IEnumerable of string</param>
-        public void LoadAssemblies(IEnumerable<string> assemblyFiles)
+        public ApplicationBootstrapper LoadAssemblies(IEnumerable<string> assemblyFiles)
         {
             foreach (var assemblyFile in assemblyFiles)
             {
@@ -199,17 +216,18 @@ namespace Dapplo.Addons.Bootstrapper
                     Log.Debug().WriteLine("Loaded {0}", assemblyFile);
                 }
             }
+            return this;
         }
 
         /// <summary>
         /// Configure the Bootstrapper
         /// </summary>
-        public virtual void Configure()
+        public virtual ApplicationBootstrapper Configure()
         {
             // It's no problem when the builder is already created, skip recreating!
             if (_builder != null)
             {
-                return;
+                return this;
             }
             Log.Verbose().WriteLine("Configuring");
 
@@ -224,6 +242,7 @@ namespace Dapplo.Addons.Bootstrapper
             _builder.RegisterType<ServiceHandler>().AsSelf().SingleInstance();
             // Provide the IResourceProvider
             _builder.RegisterInstance(_resolver.Resources).As<IResourceProvider>().ExternallyOwned();
+            return this;
         }
 
         /// <summary>

@@ -75,7 +75,7 @@ namespace Dapplo.Addons.Tests
                 bootstrapper.AddScanDirectories(scanDirectories);
 
                 // Add all file starting with Dapplo and ending on .dll
-                bootstrapper.FindAndLoadAssemblies("Dapplo.Addons.TestAddonWithCostura.dll");
+                bootstrapper.FindAndLoadAssemblies("Dapplo.Addons.TestAddonWithCostura");
 
                 var jiraAssembly = Assembly.Load("Dapplo.Jira");
                 Assert.NotNull(jiraAssembly);

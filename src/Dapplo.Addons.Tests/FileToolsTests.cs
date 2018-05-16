@@ -36,43 +36,32 @@ using Xunit.Abstractions;
 
 namespace Dapplo.Addons.Tests
 {
-    public class FileLocationsTests
+    public class FileToolsTests
     {
-        public FileLocationsTests(ITestOutputHelper testOutputHelper)
+        public FileToolsTests(ITestOutputHelper testOutputHelper)
         {
             LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
         }
-
+        
         [Fact]
-        public void TestRoamingAppData()
+        public void TestFilenameToRegex_OneExtension()
         {
-            var roamingAppDataDirectory = FileLocations.RoamingAppDataDirectory("Dapplo");
-            Assert.EndsWith(@"AppData\Roaming\Dapplo", roamingAppDataDirectory);
-        }
-
-        [Fact]
-        public void TestScan()
-        {
-            var startupDirectory = FileLocations.StartupDirectory;
-            var files = FileLocations.Scan(new[] {startupDirectory}, "*.xml");
-            Assert.Contains(files, file => file.EndsWith("Dapplo.Utils.xml"));
-        }
-
-        [Fact]
-        public void TestScanFilePatternToRegex()
-        {
-            var startupDirectory = FileLocations.StartupDirectory;
             var regex = FileTools.FilenameToRegex("*", new[] {".xml"});
-            var files = FileLocations.Scan(new[] { startupDirectory }, regex);
-            Assert.Contains(files, file => file.Item1.EndsWith("Dapplo.Utils.xml"));
+            Assert.Equal(@"^(.*\\)*[^\\]*\.xml$", regex.ToString());
         }
 
         [Fact]
-        public void TestScanRegex()
+        public void TestFilenameToRegex_MultipleExtensions()
         {
-            var startupDirectory = FileLocations.StartupDirectory;
-            var files = FileLocations.Scan(new[] {startupDirectory}, new Regex(@".*\.xml"));
-            Assert.Contains(files, file => file.Item1.EndsWith("Dapplo.Utils.xml"));
+            var regex = FileTools.FilenameToRegex("*", new[] { ".xml" , ".txt"});
+            Assert.Equal(@"^(.*\\)*[^\\]*(\.xml|\.txt)$", regex.ToString());
+        }
+
+        [Fact]
+        public void TestFilenameToRegex_ExtensionInPattern()
+        {
+            var regex = FileTools.FilenameToRegex("*.xml");
+            Assert.Equal(@"^(.*\\)*[^\\]*\.xml$", regex.ToString());
         }
     }
 }

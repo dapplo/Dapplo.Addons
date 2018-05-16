@@ -41,7 +41,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     public class AssemblyResolver : IDisposable
     {
         private static readonly LogSource Log = new LogSource();
-
+        private static readonly Regex AssemblyResourceNameRegex = new Regex(@"^(costura\.)*(?<assembly>.*)\.dll(\.compressed|\*.gz)*$", RegexOptions.Compiled);
         /// <summary>
         /// A regex with all the assemblies which we should ignore
         /// </summary>
@@ -131,25 +131,66 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 return assembly;
             }
 
-            var assemblyRegex = new Regex(@"^(costura\.)*" + assemblyName.Name.Replace(".", @"\.") + @"\.dll(\.compressed|\*.gz)*$", RegexOptions.IgnoreCase);
+            return LoadEmbeddedAssembly(assemblyName.Name);
+        }
+
+        /// <summary>
+        /// Get a list of all embedded assemblies
+        /// </summary>
+        /// <returns>IEnumerable with a tutple containing the name of the resource and of the assemblie</returns>
+        public IEnumerable<string> EmbeddedAssemblyNames()
+        {
             foreach (var loadedAssembly in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value))
             {
                 var resources = Resources.GetCachedManifestResourceNames(loadedAssembly);
                 foreach (var resource in resources)
                 {
-                    if (!assemblyRegex.IsMatch(resource))
+                    var resourceMatch = AssemblyResourceNameRegex.Match(resource);
+                    if (resourceMatch.Success)
+                    {
+                        yield return resourceMatch.Groups["assembly"].Value;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// This loads an assembly which is embedded (manually or by costura) in one of the already loaded assemblies
+        /// </summary>
+        /// <param name="assemblyName">Simple name of the assembly</param>
+        /// <returns>Assembly or null when not found</returns>
+        public Assembly LoadEmbeddedAssembly(string assemblyName)
+        {
+            // Do not load again if already loaded
+            if (LoadedAssemblies.TryGetValue(assemblyName, out var assembly))
+            {
+                Log.Info().WriteLine("Returned {0} from cache.", assemblyName);
+                return assembly;
+            }
+            foreach (var loadedAssembly in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value))
+            {
+                var resources = Resources.GetCachedManifestResourceNames(loadedAssembly);
+                foreach (var resource in resources)
+                {
+                    var resourceMatch = AssemblyResourceNameRegex.Match(resource);
+                    if (!resourceMatch.Success)
+                    {
+                        continue;
+                    }
+
+                    if (!string.Equals(assemblyName, resourceMatch.Groups["assembly"].Value, StringComparison.InvariantCultureIgnoreCase))
                     {
                         continue;
                     }
                     // Match
                     using (var stream = Resources.GetEmbeddedResourceAsStream(loadedAssembly, resource, false))
                     {
-                        Log.Verbose().WriteLine("Resolved {0} from {1}", assemblyName.Name, loadedAssembly.GetName().Name);
+                        Log.Verbose().WriteLine("Resolved {0} from {1}", assemblyName, loadedAssembly.GetName().Name);
                         return Assembly.Load(stream.ToByteArray());
                     }
                 }
             }
-            Log.Warn().WriteLine("Couldn't resolve {0}", assemblyName.Name);
+            Log.Warn().WriteLine("Couldn't locate {0}", assemblyName);
             return null;
         }
 
@@ -162,7 +203,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         {
             var assembly = args.LoadedAssembly;
             var assemblyName = assembly.GetName().Name;
-
+            Log.Verbose().WriteLine("Loaded {0}", assemblyName);
             LoadedAssemblies[assemblyName] = assembly;
         }
 
