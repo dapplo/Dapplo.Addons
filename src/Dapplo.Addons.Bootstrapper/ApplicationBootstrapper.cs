@@ -139,7 +139,7 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 throw new ArgumentNullException(nameof(scanDirectory));
             }
-            scanDirectory = FileLocations.NormalizeDirectory(scanDirectory);
+            scanDirectory = FileTools.NormalizeDirectory(scanDirectory);
             if (!_scanDirectories.Contains(scanDirectory))
             {
                 _scanDirectories.Add(scanDirectory);

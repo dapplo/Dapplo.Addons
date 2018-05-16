@@ -26,6 +26,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -42,6 +43,9 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     {
         private static readonly LogSource Log = new LogSource();
         private static readonly Regex AssemblyResourceNameRegex = new Regex(@"^(costura\.)*(?<assembly>.*)\.dll(\.compressed|\*.gz)*$", RegexOptions.Compiled);
+        private string _applicationName;
+        private readonly IList<string> _assembliesToDeleteAtExit = new List<string>();
+
         /// <summary>
         /// A regex with all the assemblies which we should ignore
         /// </summary>
@@ -58,10 +62,16 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public ManifestResources Resources { get; }
 
         /// <summary>
+        /// Specify if embedded assemblies need to be written to disk before using, this solves some compatiblity issues
+        /// </summary>
+        public bool WriteEmbeddedAssembliesToDisk { get; set; } = true;
+
+        /// <summary>
         /// The constructor of the Assembly Resolver
         /// </summary>
-        public AssemblyResolver()
+        public AssemblyResolver(string applicationName = null)
         {
+            _applicationName = applicationName;
             Resources = new ManifestResources(assemblyName => LoadedAssemblies.ContainsKey(assemblyName) ? LoadedAssemblies[assemblyName] : null);
 
             foreach (var loadedAssembly in AppDomain.CurrentDomain.GetAssemblies())
@@ -162,14 +172,14 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public Assembly LoadEmbeddedAssembly(string assemblyName)
         {
             // Do not load again if already loaded
-            if (LoadedAssemblies.TryGetValue(assemblyName, out var assembly))
+            if (LoadedAssemblies.TryGetValue(assemblyName, out var cachedAssembly))
             {
                 Log.Info().WriteLine("Returned {0} from cache.", assemblyName);
-                return assembly;
+                return cachedAssembly;
             }
-            foreach (var loadedAssembly in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value))
+            foreach (var assemblyWithResources in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value))
             {
-                var resources = Resources.GetCachedManifestResourceNames(loadedAssembly);
+                var resources = Resources.GetCachedManifestResourceNames(assemblyWithResources);
                 foreach (var resource in resources)
                 {
                     var resourceMatch = AssemblyResourceNameRegex.Match(resource);
@@ -183,15 +193,104 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                         continue;
                     }
                     // Match
-                    using (var stream = Resources.GetEmbeddedResourceAsStream(loadedAssembly, resource, false))
+                    Log.Verbose().WriteLine("Resolved {0} from {1}", assemblyName, assemblyWithResources.GetName().Name);
+
+                    // Check if we work with temporary files
+                    if (WriteEmbeddedAssembliesToDisk)
                     {
-                        Log.Verbose().WriteLine("Resolved {0} from {1}", assemblyName, loadedAssembly.GetName().Name);
+                        var loadedAssembly = LoadEmbeddedAssemblyViaTmpFile(assemblyWithResources, resource, assemblyName);
+                        if (loadedAssembly != null)
+                        {
+                            return loadedAssembly;
+                        }
+                    }
+
+                    Log.Verbose().WriteLine("Loading {0} internally", assemblyName);
+                    using (var stream = Resources.GetEmbeddedResourceAsStream(assemblyWithResources, resource, false))
+                    {
                         return Assembly.Load(stream.ToByteArray());
                     }
                 }
             }
             Log.Warn().WriteLine("Couldn't locate {0}", assemblyName);
             return null;
+        }
+
+        /// <summary>
+        /// This is a workaround where an embedded assembly is written to a tmp file, which solves some issues
+        /// </summary>
+        /// <param name="containingAssembly">Assembly which contains the resource</param>
+        /// <param name="resource">string with the resource</param>
+        /// <param name="assemblyName">string with name of the assembly</param>
+        /// <returns></returns>
+        private Assembly LoadEmbeddedAssemblyViaTmpFile(Assembly containingAssembly, string resource, string assemblyName)
+        {
+            try
+            {
+                var assemblyFileName = $@"{FileLocations.StartupDirectory}\{assemblyName}.dll";
+                using (var stream = Resources.GetEmbeddedResourceAsStream(containingAssembly, resource, false))
+                {
+                    var bytes = stream.ToByteArray();
+                    try
+                    {
+                        using (var fileStream = new FileStream(assemblyFileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
+                        {
+                            fileStream.Write(bytes, 0, bytes.Length);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // Redirecting to APPDATA local
+                        if (string.IsNullOrEmpty(_applicationName))
+                        {
+                            using (var process = Process.GetCurrentProcess())
+                            {
+                                _applicationName = process.ProcessName;
+                            }
+                        }
+
+                        var appdataDirectory = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\{_applicationName}";
+                        if (!Directory.Exists(appdataDirectory))
+                        {
+                            Directory.CreateDirectory(appdataDirectory);
+                        }
+
+                        assemblyFileName = $@"{appdataDirectory}\{assemblyName}.dll";
+                        File.WriteAllBytes(assemblyFileName, bytes);
+                    }
+                }
+
+                // Register delete on exit
+                if (_assembliesToDeleteAtExit.Count == 0)
+                {
+                    AppDomain.CurrentDomain.ProcessExit += (sender, args) =>
+                    {
+                        Log.Debug().WriteLine("Removing cached assembly files {0}", string.Join(" ", _assembliesToDeleteAtExit.Select(a => $"\"{FileTools.NormalizeDirectory(a)}\"")));
+                        var info = new ProcessStartInfo
+                        {
+                            Arguments = "/C choice /C Y /N /D Y /T 3 & Del " + string.Join(" ", _assembliesToDeleteAtExit),
+                            WindowStyle = ProcessWindowStyle.Hidden,
+                            CreateNoWindow = true,
+                            FileName = "cmd.exe"
+                        };
+                        Process.Start(info);
+                    };
+                }
+
+                _assembliesToDeleteAtExit.Add(assemblyFileName);
+                Log.Verbose().WriteLine("Loading {0} from temporary assembly file {1}", assemblyName, assemblyFileName);
+
+                if (assemblyFileName.StartsWith(FileLocations.StartupDirectory))
+                {
+                    return Assembly.Load(assemblyName);
+                }
+                return Assembly.LoadFrom(assemblyFileName);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn().WriteLine(ex, "Couldn't load assembly via a file {0}", assemblyName);
+                return null;
+            }
         }
 
         /// <summary>

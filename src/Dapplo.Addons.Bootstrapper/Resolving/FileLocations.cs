@@ -136,7 +136,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             // If the path is rooted, it's absolute
             if (Path.IsPathRooted(directory))
             {
-                directories.Add(NormalizeDirectory(directory));
+                directories.Add(FileTools.NormalizeDirectory(directory));
             }
             else
             {
@@ -150,27 +150,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 }
             }
             return directories.Where(dir => !string.IsNullOrEmpty(dir) && Directory.Exists(dir)).OrderBy(dir => dir);
-        }
-
-        /// <summary>
-        ///     A simple helper to normalize a directory name
-        /// </summary>
-        /// <param name="directory"></param>
-        /// <returns>normalized directory name</returns>
-        public static string NormalizeDirectory(string directory)
-        {
-            if (directory.Contains(":"))
-            {
-                try
-                {
-                    return Path.GetFullPath(new Uri(directory, UriKind.Absolute).LocalPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error().WriteLine(ex, "Couldn't get the fullpath of {0}", directory);
-                }
-            }
-            return Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
 
         /// <summary>

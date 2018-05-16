@@ -31,6 +31,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Dapplo.Log;
 
 #endregion
 
@@ -41,6 +42,29 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     /// </summary>
     public static class FileTools
     {
+        private static readonly LogSource Log = new LogSource();
+
+        /// <summary>
+        ///     A simple helper to normalize a directory name
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <returns>normalized directory name</returns>
+        public static string NormalizeDirectory(string directory)
+        {
+            if (directory.Contains(":"))
+            {
+                try
+                {
+                    return Path.GetFullPath(new Uri(directory, UriKind.Absolute).LocalPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error().WriteLine(ex, "Couldn't get the fullpath of {0}", directory);
+                }
+            }
+            return Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        }
+
         /// <summary>
         ///     Create a regex to find the specified file with wildcards.
         /// </summary>
