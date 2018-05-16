@@ -44,7 +44,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         private static readonly LogSource Log = new LogSource();
         private static readonly Regex AssemblyResourceNameRegex = new Regex(@"^(costura\.)*(?<assembly>.*)\.dll(\.compressed|\*.gz)*$", RegexOptions.Compiled);
         private string _applicationName;
-        private readonly ISet<AssemblyName> _resolving = new HashSet<AssemblyName>();
+        private readonly ISet<string> _resolving = new HashSet<string>();
         private readonly IList<string> _assembliesToDeleteAtExit = new List<string>();
 
         /// <summary>
@@ -222,7 +222,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         private Assembly AssemblyResolve(object sender, ResolveEventArgs resolveEventArgs)
         {
             var assemblyName = new AssemblyName(resolveEventArgs.Name);
-            if (_resolving.Contains(assemblyName))
+            if (_resolving.Contains(assemblyName.Name))
             {
                 Log.Warn().WriteLine("Ignoring recursive resolve event for {0}", assemblyName.Name);
                 return null;
@@ -241,32 +241,29 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             if (LoadedAssemblies.TryGetValue(assemblyName.Name, out var assemblyResult))
             {
                 Log.Info().WriteLine("Returned {0} from cache.", assemblyName.Name);
+                return assemblyResult;
             }
-            else
+
+            try
             {
-                try
+                _resolving.Add(assemblyName.Name);
+                // Check files before embedded
+                var assemblyFile = FileLocations.Scan(ScanDirectories, assemblyName.Name + ".dll").FirstOrDefault();
+                if (assemblyFile != null)
                 {
-                    _resolving.Add(assemblyName);
-                    // Check files before embedded
-                    var assemblyFile = FileLocations.Scan(ScanDirectories, assemblyName.Name + ".dll").FirstOrDefault();
-                    if (assemblyFile != null)
-                    {
-                        assemblyResult = LoadOrLoadFrom(assemblyFile);
-                    }
-
-                    if (assemblyResult == null)
-                    {
-                        assemblyResult = LoadEmbeddedAssembly(assemblyName.Name);
-                    }
-                }
-                finally
-                {
-                    _resolving.Remove(assemblyName);
+                    assemblyResult = LoadOrLoadFrom(assemblyFile);
                 }
 
+                if (assemblyResult == null)
+                {
+                    assemblyResult = LoadEmbeddedAssembly(assemblyName.Name);
+                }
+                return assemblyResult;
             }
-
-            return assemblyResult;
+            finally
+            {
+                _resolving.Remove(assemblyName.Name);
+            }
         }
 
         /// <summary>
