@@ -33,14 +33,22 @@ using System.Threading.Tasks;
 
 namespace Dapplo.Addons.TestAddon
 {
+    /// <summary>
+    /// Just another addon
+    /// </summary>
     public class AnotherAddon : IStartupAsync, IShutdownAsync
     {
+        // ReSharper disable once NotAccessedField.Local
+        private readonly IThisIsConfiguration _myConfig;
+
         public AnotherAddon(IThisIsConfiguration myConfig, IThisIsSubConfiguration mysubConfig, bool throwStartupException = false)
         {
             if (!string.Equals("Dapplo", mysubConfig.Company))
             {
                 throw new NotSupportedException();
             }
+
+            _myConfig = myConfig;
 
             ThrowStartupException = throwStartupException;
         }

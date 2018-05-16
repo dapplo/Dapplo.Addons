@@ -68,6 +68,11 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public bool UseDiskCache { get; set; } = true;
 
         /// <summary>
+        /// Specify if embedded assemblies written to disk before using will be removed again when the process exits
+        /// </summary>
+        public bool CleanupAfterExit { get; set; } = true;
+
+        /// <summary>
         /// The directories (normalized) to scan for DLL files
         /// </summary>
         public ISet<string> ScanDirectories { get; } = new HashSet<string>();
@@ -187,6 +192,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                             {
                                 Directory.CreateDirectory(assemblyResolveDirectory);
                             }
+                            if (File.Exists(newLocation))
+                            {
+                                continue;
+                            }
                             Log.Warn().WriteLine("Creating a copy of {0} to {1}, solving loading issues.", filename, newLocation);
                             File.Copy(filename, newLocation);
                             _assembliesToDeleteAtExit.Add(newLocation);
@@ -270,7 +279,16 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         {
             foreach (var loadedAssembly in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value))
             {
-                var resources = Resources.GetCachedManifestResourceNames(loadedAssembly);
+                string[] resources;
+                try
+                {
+                    resources = Resources.GetCachedManifestResourceNames(loadedAssembly);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn().WriteLine(ex, "Couldn't retrieve resources from {0}", loadedAssembly.GetName().Name);
+                    continue;
+                }
                 foreach (var resource in resources)
                 {
                     var resourceMatch = AssemblyResourceNameRegex.Match(resource);
@@ -297,7 +315,16 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             }
             foreach (var assemblyWithResources in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value))
             {
-                var resources = Resources.GetCachedManifestResourceNames(assemblyWithResources);
+                string[] resources;
+                try
+                {
+                    resources = Resources.GetCachedManifestResourceNames(assemblyWithResources);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn().WriteLine(ex, "Couldn't retrieve resources from {0}", assemblyWithResources.GetName().Name);
+                    continue;
+                }
                 foreach (var resource in resources)
                 {
                     var resourceMatch = AssemblyResourceNameRegex.Match(resource);
@@ -351,6 +378,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     var bytes = stream.ToByteArray();
                     try
                     {
+                        Log.Verbose().WriteLine("Creating temporary assembly file {0}", assemblyFileName);
                         using (var fileStream = new FileStream(assemblyFileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
                         {
                             fileStream.Write(bytes, 0, bytes.Length);
@@ -374,7 +402,11 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                         }
 
                         assemblyFileName = $@"{appdataDirectory}\{assemblyName}.dll";
-                        File.WriteAllBytes(assemblyFileName, bytes);
+                        Log.Verbose().WriteLine("Creating temporary assembly file {0}", assemblyFileName);
+                        using (var fileStream = new FileStream(assemblyFileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
+                        {
+                            fileStream.Write(bytes, 0, bytes.Length);
+                        }
                     }
                 }
 
@@ -411,7 +443,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// </summary>
         private void RemoveCopiedAssemblies()
         {
-            if (_assembliesToDeleteAtExit.Count == 0)
+            if (!CleanupAfterExit ||_assembliesToDeleteAtExit.Count == 0)
             {
                 return;
             }

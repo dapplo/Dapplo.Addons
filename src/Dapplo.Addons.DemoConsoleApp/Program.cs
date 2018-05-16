@@ -43,7 +43,7 @@ namespace Dapplo.Addons.DemoConsoleApp
                 {
                     Log.Debug().WriteLine("Available assembly {0}", resource);
                 }
-                var jiraAssembly = Assembly.Load("Svg");
+                Assembly.Load("Svg");
             }
 
             return 0;
