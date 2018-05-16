@@ -44,6 +44,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         private static readonly LogSource Log = new LogSource();
         private static readonly Regex AssemblyResourceNameRegex = new Regex(@"^(costura\.)*(?<assembly>.*)\.dll(\.compressed|\*.gz)*$", RegexOptions.Compiled);
         private string _applicationName;
+        private ISet<AssemblyName> _resolving = new HashSet<AssemblyName>();
         private readonly IList<string> _assembliesToDeleteAtExit = new List<string>();
 
         /// <summary>
@@ -125,6 +126,12 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         private Assembly AssemblyResolve(object sender, ResolveEventArgs resolveEventArgs)
         {
             var assemblyName = new AssemblyName(resolveEventArgs.Name);
+            if (_resolving.Contains(assemblyName))
+            {
+                Log.Warn().WriteLine("Ignoring recursive resolve event for {0}", assemblyName.Name);
+                return null;
+            }
+
             if (assemblyName.Name.EndsWith(".resources"))
             {
                 // Ignore to prevent resolving logic which doesn't find anything anyway
@@ -141,7 +148,15 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 return assembly;
             }
 
-            return LoadEmbeddedAssembly(assemblyName.Name);
+            try
+            {
+                _resolving.Add(assemblyName);
+                return LoadEmbeddedAssembly(assemblyName.Name);
+            }
+            finally
+            {
+                _resolving.Remove(assemblyName);
+            }
         }
 
         /// <summary>
@@ -260,7 +275,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     }
                 }
 
-                // Register delete on exit
+                // Register delete on exit, by calling a command
                 if (_assembliesToDeleteAtExit.Count == 0)
                 {
                     AppDomain.CurrentDomain.ProcessExit += (sender, args) =>
@@ -281,7 +296,8 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 Log.Verbose().WriteLine("Loading {0} from temporary assembly file {1}", assemblyName, assemblyFileName);
 
                 // Best case, we can load it now by name
-                if (Path.GetDirectoryName(assemblyFileName).Equals(FileLocations.StartupDirectory, StringComparison.InvariantCultureIgnoreCase))
+                var storageLocation = Path.GetDirectoryName(assemblyFileName) ?? string.Empty;
+                if (storageLocation.Equals(FileLocations.StartupDirectory, StringComparison.InvariantCultureIgnoreCase))
                 {
                     return Assembly.Load(assemblyName);
                 }
