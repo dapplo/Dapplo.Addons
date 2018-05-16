@@ -33,6 +33,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Dapplo.Addons.Bootstrapper.Extensions;
 using Dapplo.Log;
+using System.Xml.Linq;
 
 #endregion
 
@@ -45,11 +46,37 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     {
         private static readonly LogSource Log = new LogSource();
 
+
         /// <summary>
         ///     Get the startup location, which is either the location of the entry assemby, or the executing assembly
         /// </summary>
         /// <returns>string with the directory of where the running code/applicationName was started</returns>
-        public static string StartupDirectory => FileTools.NormalizeDirectory(AppDomain.CurrentDomain.BaseDirectory);
+        public static string StartupDirectory { get; } = FileTools.NormalizeDirectory(AppDomain.CurrentDomain.BaseDirectory);
+
+        /// <summary>
+        /// Returns the directories where assembly resolving is made
+        /// </summary>
+        public static IEnumerable<string> AssemblyResolveDirectories { get; } = new[] {StartupDirectory}.Concat(ProbingPath?.Split(';').Select(path => Path.Combine(StartupDirectory, path)) ?? Enumerable.Empty<string>()).Concat(AppDomain.CurrentDomain.SetupInformation.PrivateBinPath?.Split(';').Select(path => Path.Combine(StartupDirectory, path)) ?? Enumerable.Empty<string>());
+
+        /// <summary>
+        /// Retrieve the assembly probing path from the configuration
+        /// </summary>
+        private static string ProbingPath {
+            get {
+                var configFile = XElement.Load(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile);
+                var probingElement = (
+                        from runtime
+                            in configFile.Descendants("runtime")
+                        from assemblyBinding
+                            in runtime.Elements(XName.Get("assemblyBinding", "urn:schemas-microsoft-com:asm.v1"))
+                        from probing
+                            in assemblyBinding.Elements(XName.Get("probing", "urn:schemas-microsoft-com:asm.v1"))
+                        select probing)
+                    .FirstOrDefault();
+
+                return probingElement?.Attribute("privatePath")?.Value;
+            }
+        }
 
         /// <summary>
         ///     Get the roaming AppData directory

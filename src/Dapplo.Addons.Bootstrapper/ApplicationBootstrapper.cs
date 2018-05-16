@@ -211,7 +211,7 @@ namespace Dapplo.Addons.Bootstrapper
             foreach (var assemblyFile in assemblyFiles)
             {
                 Log.Debug().WriteLine("Loading {0}", assemblyFile);
-                if (_resolver.LoadAssembly(assemblyFile))
+                if (_resolver.LoadAssembly(assemblyFile) != null)
                 {
                     Log.Debug().WriteLine("Loaded {0}", assemblyFile);
                 }

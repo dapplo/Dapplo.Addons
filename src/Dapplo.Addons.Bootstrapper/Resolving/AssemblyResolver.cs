@@ -65,7 +65,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <summary>
         /// Specify if embedded assemblies need to be written to disk before using, this solves some compatiblity issues
         /// </summary>
-        public bool WriteEmbeddedAssembliesToDisk { get; set; } = true;
+        public bool UseDiskCache { get; set; } = true;
 
         /// <summary>
         /// The constructor of the Assembly Resolver
@@ -84,6 +84,23 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             AppDomain.CurrentDomain.AssemblyLoad += AssemblyLoad;
             // Register assembly resolving
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolve;
+            AppDomain.CurrentDomain.ProcessExit += (sender, args) =>
+            {
+                if (_assembliesToDeleteAtExit.Count == 0)
+                {
+                    return;
+                }
+                Log.Debug().WriteLine("Removing cached assembly files {0}", string.Join(" ", _assembliesToDeleteAtExit.Select(a => $"\"{FileTools.NormalizeDirectory(a)}\"")));
+                var info = new ProcessStartInfo
+                {
+                    Arguments = "/C choice /C Y /N /D Y /T 3 & Del " + string.Join(" ", _assembliesToDeleteAtExit),
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    CreateNoWindow = true,
+                    FileName = "cmd.exe"
+                };
+                Process.Start(info);
+            };
+
         }
 
         /// <summary>
@@ -91,30 +108,80 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// </summary>
         /// <param name="filename">string</param>
         /// <returns>bool</returns>
-        public bool LoadAssembly(string filename)
+        public Assembly LoadAssembly(string filename)
         {
             var assemblyName = Path.GetFileNameWithoutExtension(filename);
             if (string.IsNullOrEmpty(assemblyName))
             {
-                return false;
+                return null;
             }
             if (LoadedAssemblies.ContainsKey(assemblyName))
             {
                 Log.Debug().WriteLine("Skipping {0} as the assembly was already loaded.", filename);
-                return false;
+                return null;
             }
 
+            // Use local file if possible
             try
             {
-                Assembly.LoadFrom(filename);
-                return true;
+                return LoadOrLoadFrom(filename);
             }
             catch (Exception ex)
             {
                 Log.Error().WriteLine(ex, "Couldn't load assembly from file {0}", filename);
             }
 
-            return false;
+            return null;
+        }
+
+        /// <summary>
+        /// Use Assembly.Load or Assembly.LoadFrom
+        /// </summary>
+        /// <param name="filename">string</param>
+        /// <param name="allowCopy">bool </param>
+        /// <returns></returns>
+        private Assembly LoadOrLoadFrom(string filename, bool allowCopy = true)
+        {
+            var assemblyName = Path.GetFileNameWithoutExtension(filename) ?? throw new ArgumentNullException(nameof(filename));
+
+            if (LoadedAssemblies.TryGetValue(assemblyName, out var assembly))
+            {
+                Log.Info().WriteLine("Returned {0} from cache.", assemblyName);
+                return assembly;
+            }
+
+            foreach (var assemblyResolveDirectory in FileLocations.AssemblyResolveDirectories)
+            {
+                var bestLocation = $@"{assemblyResolveDirectory}\{assemblyName}.dll";
+                if (File.Exists(bestLocation))
+                {
+                    return Assembly.Load(assemblyName);
+                }
+            }
+
+            if (allowCopy && UseDiskCache)
+            {
+                var directoryToLoadFrom = Path.GetDirectoryName(filename) ?? string.Empty;
+                if (!directoryToLoadFrom.Equals(FileLocations.StartupDirectory, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    foreach (var assemblyResolveDirectory in FileLocations.AssemblyResolveDirectories)
+                    {
+                        var newLocation = $@"{assemblyResolveDirectory}\{assemblyName}.dll";
+                        try
+                        {
+                            Log.Warn().WriteLine("Creating a copy of {0} to {1}, solving loading issues.", filename, newLocation);
+                            File.Copy(filename, newLocation);
+                            _assembliesToDeleteAtExit.Add(newLocation);
+                            return Assembly.Load(assemblyName);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warn().WriteLine(ex, "Couldn't create a copy of {0} to {1}.", filename, newLocation);
+                        }
+                    }
+                }
+            }
+            return Assembly.LoadFrom(filename);
         }
 
         /// <summary>
@@ -211,7 +278,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     Log.Verbose().WriteLine("Resolved {0} from {1}", assemblyName, assemblyWithResources.GetName().Name);
 
                     // Check if we work with temporary files
-                    if (WriteEmbeddedAssembliesToDisk)
+                    if (UseDiskCache)
                     {
                         var loadedAssembly = LoadEmbeddedAssemblyViaTmpFile(assemblyWithResources, resource, assemblyName);
                         if (loadedAssembly != null)
@@ -275,34 +342,13 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     }
                 }
 
-                // Register delete on exit, by calling a command
-                if (_assembliesToDeleteAtExit.Count == 0)
-                {
-                    AppDomain.CurrentDomain.ProcessExit += (sender, args) =>
-                    {
-                        Log.Debug().WriteLine("Removing cached assembly files {0}", string.Join(" ", _assembliesToDeleteAtExit.Select(a => $"\"{FileTools.NormalizeDirectory(a)}\"")));
-                        var info = new ProcessStartInfo
-                        {
-                            Arguments = "/C choice /C Y /N /D Y /T 3 & Del " + string.Join(" ", _assembliesToDeleteAtExit),
-                            WindowStyle = ProcessWindowStyle.Hidden,
-                            CreateNoWindow = true,
-                            FileName = "cmd.exe"
-                        };
-                        Process.Start(info);
-                    };
-                }
-
+                // Register delete on exit, this is done by calling a command
                 _assembliesToDeleteAtExit.Add(assemblyFileName);
+
                 Log.Verbose().WriteLine("Loading {0} from temporary assembly file {1}", assemblyName, assemblyFileName);
 
-                // Best case, we can load it now by name
-                var storageLocation = Path.GetDirectoryName(assemblyFileName) ?? string.Empty;
-                if (storageLocation.Equals(FileLocations.StartupDirectory, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return Assembly.Load(assemblyName);
-                }
-                // We need to load it with a file path, which can cause issues
-                return Assembly.LoadFrom(assemblyFileName);
+                // Best case, we can load it now by name, let the LoadOrLoadFrom decide
+                return LoadOrLoadFrom(assemblyFileName, false);
             }
             catch (Exception ex)
             {
