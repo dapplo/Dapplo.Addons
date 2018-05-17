@@ -175,7 +175,7 @@ namespace Dapplo.Addons.Bootstrapper
             }
 
             var fileRegex = FileTools.FilenameToRegex(pattern, extensions ?? new[] { ".dll" });
-            LoadAssemblies(FileLocations.Scan(Resolver.ScanDirectories, fileRegex).Select(tuple => tuple.Item1));
+            LoadAssemblies(FileLocations.Scan(Resolver.ScanDirectories, fileRegex).Select(tuple => tuple.Item1).ToList());
 
             if (!allowEmbedded)
             {
