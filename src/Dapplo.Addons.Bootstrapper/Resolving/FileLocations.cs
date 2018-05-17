@@ -54,9 +54,20 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public static string StartupDirectory { get; } = FileTools.NormalizeDirectory(AppDomain.CurrentDomain.BaseDirectory);
 
         /// <summary>
+        ///     Get the base location from where assembly resolving is made
+        /// </summary>
+        /// <returns>string with the directory of where the running code/applicationName was started</returns>
+        public static string AssemblyResolveBaseDirectory { get; } = FileTools.NormalizeDirectory(AppDomain.CurrentDomain.BaseDirectory);
+
+        /// <summary>
         /// Returns the directories where assembly resolving is made
         /// </summary>
         public static IEnumerable<string> AssemblyResolveDirectories { get; } = new[] {StartupDirectory}.Concat(ProbingPath?.Split(';').Select(path => Path.Combine(StartupDirectory, path)) ?? Enumerable.Empty<string>()).Concat(AppDomain.CurrentDomain.SetupInformation.PrivateBinPath?.Split(';').Select(path => Path.Combine(StartupDirectory, path)) ?? Enumerable.Empty<string>());
+
+        /// <summary>
+        /// Returns the directory where the addon assemblies are stored, this is the location specified by 
+        /// </summary>
+        public static string AddonsLocation { get; } = ProbingPath?.Split(';').FirstOrDefault(path => path.StartsWith("Addons")) ?? AssemblyResolveBaseDirectory;
 
         /// <summary>
         /// Retrieve the assembly probing path from the configuration

@@ -73,9 +73,9 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public bool CleanupAfterExit { get; set; } = true;
 
         /// <summary>
-        /// The directories (normalized) to scan for DLL files
+        /// The directories (normalized) to scan for addon files
         /// </summary>
-        public ISet<string> ScanDirectories { get; } = new HashSet<string>();
+        public ISet<string> ScanDirectories { get; } = new HashSet<string>(FileLocations.AssemblyResolveDirectories);
 
         /// <summary>
         /// The constructor of the Assembly Resolver
@@ -168,48 +168,43 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             foreach (var assemblyResolveDirectory in FileLocations.AssemblyResolveDirectories)
             {
                 var preferredLocation = $@"{assemblyResolveDirectory}\{assemblyName}.dll";
-                if (File.Exists(preferredLocation))
+                if (!File.Exists(preferredLocation))
                 {
-                    Log.Verbose().WriteLine("Loading {0} from preferred location {1} via the assembly name.", assemblyName, preferredLocation);
-                    var result = Assembly.Load(AssemblyName.GetAssemblyName(preferredLocation));
-                    if (result != null)
-                    {
-                        return result;
-                    }
+                    continue;
+                }
+
+                Log.Verbose().WriteLine("Loading {0} from preferred location {1} via the assembly name.", assemblyName, preferredLocation);
+                var result = Assembly.Load(AssemblyName.GetAssemblyName(preferredLocation));
+                if (result != null)
+                {
+                    return result;
                 }
             }
 
-            if (allowCopy && UseDiskCache)
+            if (allowCopy && UseDiskCache && FileLocations.AddonsLocation != null)
             {
-                if (!directoryToLoadFrom.Equals(FileLocations.StartupDirectory, StringComparison.InvariantCultureIgnoreCase))
+                var newLocation = $@"{FileLocations.AddonsLocation}\{assemblyName}.dll";
+                try
                 {
-                    foreach (var assemblyResolveDirectory in FileLocations.AssemblyResolveDirectories)
+                    if (!Directory.Exists(FileLocations.AddonsLocation))
                     {
-                        var newLocation = $@"{assemblyResolveDirectory}\{assemblyName}.dll";
-                        try
+                        Directory.CreateDirectory(FileLocations.AddonsLocation);
+                    }
+                    if (!File.Exists(newLocation))
+                    {
+                        Log.Warn().WriteLine("Creating a copy of {0} to {1}, solving loading issues.", filename, newLocation);
+                        File.Copy(filename, newLocation);
+                        _assembliesToDeleteAtExit.Add(newLocation);
+                        var result = Assembly.Load(AssemblyName.GetAssemblyName(newLocation));
+                        if (result != null)
                         {
-                            if (!Directory.Exists(assemblyResolveDirectory))
-                            {
-                                Directory.CreateDirectory(assemblyResolveDirectory);
-                            }
-                            if (File.Exists(newLocation))
-                            {
-                                continue;
-                            }
-                            Log.Warn().WriteLine("Creating a copy of {0} to {1}, solving loading issues.", filename, newLocation);
-                            File.Copy(filename, newLocation);
-                            _assembliesToDeleteAtExit.Add(newLocation);
-                            var result = Assembly.Load(AssemblyName.GetAssemblyName(newLocation));
-                            if (result != null)
-                            {
-                                return result;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Log.Warn().WriteLine(ex, "Couldn't create a copy of {0} to {1}.", filename, newLocation);
+                            return result;
                         }
                     }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn().WriteLine(ex, "Couldn't create a copy of {0} to {1}.", filename, newLocation);
                 }
             }
             Log.Verbose().WriteLine("Loading {0} from {1}.", assemblyName, filename);
@@ -372,7 +367,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         {
             try
             {
-                var assemblyFileName = $@"{FileLocations.StartupDirectory}\{assemblyName}.dll";
+                var assemblyFileName = $@"{FileLocations.AddonsLocation}\{assemblyName}.dll";
                 using (var stream = Resources.GetEmbeddedResourceAsStream(containingAssembly, resource, false))
                 {
                     var bytes = stream.ToByteArray();
