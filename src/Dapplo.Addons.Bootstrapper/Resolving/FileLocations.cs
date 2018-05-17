@@ -67,7 +67,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <summary>
         /// Returns the directory where the addon assemblies are stored, this is the location specified by 
         /// </summary>
-        public static string AddonsLocation { get; } = ProbingPath?.Split(';').FirstOrDefault(path => path.StartsWith("Addons")) ?? AssemblyResolveBaseDirectory;
+        public static string AddonsLocation { get; } = ProbingPath?.Split(';').Where(path => path.StartsWith("Addons")).Select(FileTools.NormalizeDirectory).FirstOrDefault() ?? AssemblyResolveBaseDirectory;
 
         /// <summary>
         /// Retrieve the assembly probing path from the configuration
