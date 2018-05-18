@@ -30,7 +30,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
-using Autofac.Extras.AttributeMetadata;
 using Dapplo.Addons.Bootstrapper.Handler;
 using Dapplo.Addons.Bootstrapper.Internal;
 using Dapplo.Addons.Bootstrapper.Resolving;
@@ -140,6 +139,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <param name="scanDirectory">string</param>
         public ApplicationBootstrapper AddScanDirectory(string scanDirectory)
         {
+            Log.Verbose().WriteLine("Added scan directory {0}", scanDirectory);
             Resolver.AddScanDirectory(scanDirectory);
             return this;
         }
@@ -173,6 +173,7 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 throw new ArgumentNullException(nameof(pattern));
             }
+            Log.Verbose().WriteLine("Scanning for assemblies {0}", pattern);
 
             var fileRegex = FileTools.FilenameToRegex(pattern, extensions ?? new[] { ".dll" });
             LoadAssemblies(FileLocations.Scan(Resolver.ScanDirectories, fileRegex).Select(tuple => tuple.Item1).ToList());
@@ -208,11 +209,7 @@ namespace Dapplo.Addons.Bootstrapper
         {
             foreach (var assemblyFile in assemblyFiles)
             {
-                Log.Debug().WriteLine("Loading {0}", assemblyFile);
-                if (Resolver.LoadAssembly(assemblyFile) != null)
-                {
-                    Log.Debug().WriteLine("Loaded {0}", assemblyFile);
-                }
+                Resolver.TryLoadOrLoadFrom(assemblyFile, out var assembly);
             }
             return this;
         }
@@ -232,12 +229,6 @@ namespace Dapplo.Addons.Bootstrapper
             _builder = new ContainerBuilder();
             _builder.Properties["applicationName"] = ApplicationName;
 
-            // Enable logging
-            //_builder.RegisterModule<LogRequestModule>();
-            // Make sure Attributes are allowed
-            _builder.RegisterModule<AttributedMetadataModule>();
-            // Provide the startup & shutdown functionality
-            _builder.RegisterType<ServiceHandler>().AsSelf().SingleInstance();
             // Provide the IResourceProvider
             _builder.RegisterInstance(Resolver.Resources).As<IResourceProvider>().ExternallyOwned();
             return this;
@@ -269,14 +260,15 @@ namespace Dapplo.Addons.Bootstrapper
                     // Ignore well know assemblies we don't care about
                     .Where(pair => !Resolver.AssembliesToIgnore.IsMatch(pair.Key))
                     // Only scan the assemblies which reference Dapplo.Addons
-                    .Where(pair => pair.Value.GetReferencedAssemblies().Any(assemblyName => string.Equals("Dapplo.Addons", assemblyName.Name, StringComparison.OrdinalIgnoreCase)))
+                    .Where(pair => pair.Value.GetReferencedAssemblies()
+                        .Any(assemblyName => string.Equals("Autofac", assemblyName.Name, StringComparison.OrdinalIgnoreCase) || string.Equals("Dapplo.Addons", assemblyName.Name, StringComparison.OrdinalIgnoreCase)))
                     .Where(pair => processedAssemblies.Add(pair.Key));
 
                 foreach (var assemblyToProcess in assembliesToProcess)
                 {
                     try
                     {
-                        Log.Debug().WriteLine("Processing assembli< {0}", assemblyToProcess.Key);
+                        Log.Debug().WriteLine("Processing assembly {0}", assemblyToProcess.Key);
                         _builder.RegisterAssemblyModules(assemblyToProcess.Value);
                     }
                     catch (Exception ex)
@@ -288,7 +280,15 @@ namespace Dapplo.Addons.Bootstrapper
             } while (Resolver.LoadedAssemblies.Count > countBefore);          
 
             // Now build the container
-            Container = _builder.Build();
+            try
+            {
+                Container = _builder.Build();
+            }
+            catch (Exception ex)
+            {
+                Log.Error().WriteLine(ex, "Coudn't create the container.");
+                throw;
+            }
 
             // Inform that the container was created
             OnContainerCreated?.Invoke(Container);

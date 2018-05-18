@@ -50,7 +50,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <summary>
         /// A regex with all the assemblies which we should ignore
         /// </summary>
-        public Regex AssembliesToIgnore { get; } = new Regex(@"^(microsoft\..*|mscorlib|UIAutomationProvider|PresentationFramework|PresentationCore|WindowsBase|system.*|.*resources)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public Regex AssembliesToIgnore { get; } = new Regex(@"^(autofac.*|microsoft\..*|mscorlib|UIAutomationProvider|PresentationFramework|PresentationCore|WindowsBase|system.*|.*resources)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// A dictionary with all the loaded assemblies, for caching and analysing
@@ -134,7 +134,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <param name="assembly">Assembly returned or null if it couldn't be loaded</param>
         /// <param name="allowCopy">bool which specifies if it's allowed to make a copy of the file to improve compatibility</param>
         /// <returns>bool true if the assembly was loaded, false if it was already in the cache or a loading problem occured</returns>
-        private bool TryLoadOrLoadFrom(string filename, out Assembly assembly, bool allowCopy = true)
+        internal bool TryLoadOrLoadFrom(string filename, out Assembly assembly, bool allowCopy = true)
         {
             // Get a simple assembly name via the filename
             var simpleAssemblyName = Path.GetFileNameWithoutExtension(filename) ?? throw new ArgumentNullException(nameof(filename));

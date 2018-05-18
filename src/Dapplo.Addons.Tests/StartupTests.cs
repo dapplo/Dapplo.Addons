@@ -50,8 +50,8 @@ namespace Dapplo.Addons.Tests
             using (var bootstrapper = new ApplicationBootstrapper("StartupTest"))
             {
                 bootstrapper.Configure();
+                bootstrapper.Builder.RegisterModule<LogRequestModule>();
 
-                bootstrapper.Builder.RegisterType<ServiceHandler>();
                 bootstrapper.Builder.Register(context => new FirstStartupAction
                 {
                     MyStartAction = () => didFirstRun = true

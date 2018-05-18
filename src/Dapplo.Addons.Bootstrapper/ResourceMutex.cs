@@ -99,7 +99,6 @@ namespace Dapplo.Addons.Bootstrapper
 
                 // 1) Create Mutex
                 _applicationMutex = new Mutex(true, _mutexId, out var createdNew, mutexsecurity);
-                _applicationMutex.SetAccessControl(mutexsecurity);
                 // 2) if the mutex wasn't created new get the right to it, this returns false if it's already locked
                 if (!createdNew)
                 {

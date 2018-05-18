@@ -94,9 +94,6 @@ namespace Dapplo.Addons.Tests
             {
                 bootstrapper.Configure();
 
-                // Enable logging
-                bootstrapper.Builder.RegisterModule<LogRequestModule>();
-
                 // Makes the startup break
                 bootstrapper.Builder.Register(context => true);
 
@@ -156,7 +153,7 @@ namespace Dapplo.Addons.Tests
             using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
             {
                 bootstrapper.Configure();
-
+                bootstrapper.Builder.RegisterModule<LogRequestModule>();
                 var scanDirectories = new List<string>
                 {
                     FileLocations.StartupDirectory,

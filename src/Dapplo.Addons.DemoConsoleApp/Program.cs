@@ -34,8 +34,6 @@ namespace Dapplo.Addons.DemoConsoleApp
                     .FindAndLoadAssemblies("Dapplo.HttpExtensions")
                     .FindAndLoadAssemblies("Dapplo.Addons.TestAddonWithCostura");
 
-
-
                 await bootstrapper.InitializeAsync().ConfigureAwait(false);
 
                 // Find all, currently, available assemblies
