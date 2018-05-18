@@ -263,28 +263,25 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 countBefore = Resolver.LoadedAssemblies.Count;
 
-                var assembliesToProcess = Resolver.LoadedAssemblies.Keys.ToList()
-                    .Where(key => processedAssemblies.Add(key))
-                    .Where(key => !Resolver.AssembliesToIgnore.IsMatch(key))
-                    .Where(key => !Resolver.LoadedAssemblies[key].IsDynamic).ToList();
-                if (!assembliesToProcess.Any())
-                {
-                    break;
-                }
-                if (Log.IsDebugEnabled())
-                {
-                    Log.Debug().WriteLine("Processing assemblies {0}", string.Join(",", assembliesToProcess));
-                }
+                var assembliesToProcess = Resolver.LoadedAssemblies.ToList()
+                    // Skip dynamic assemblies
+                    .Where(pair => !pair.Value.IsDynamic)
+                    // Ignore well know assemblies we don't care about
+                    .Where(pair => !Resolver.AssembliesToIgnore.IsMatch(pair.Key))
+                    // Only scan the assemblies which reference Dapplo.Addons
+                    .Where(pair => pair.Value.GetReferencedAssemblies().Any(assemblyName => string.Equals("Dapplo.Addons", assemblyName.Name, StringComparison.OrdinalIgnoreCase)))
+                    .Where(pair => processedAssemblies.Add(pair.Key));
 
-                foreach (var key in assembliesToProcess)
+                foreach (var assemblyToProcess in assembliesToProcess)
                 {
                     try
                     {
-                        _builder.RegisterAssemblyModules(Resolver.LoadedAssemblies[key]);
+                        Log.Debug().WriteLine("Processing assembli< {0}", assemblyToProcess.Key);
+                        _builder.RegisterAssemblyModules(assemblyToProcess.Value);
                     }
                     catch (Exception ex)
                     {
-                        Log.Warn().WriteLine(ex, "Couldn't read modules in {0}", key);
+                        Log.Warn().WriteLine(ex, "Couldn't read modules in {0}", assemblyToProcess.Key);
                     }
                 }
                 

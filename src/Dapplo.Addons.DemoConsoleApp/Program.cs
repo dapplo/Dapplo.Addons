@@ -41,7 +41,7 @@ namespace Dapplo.Addons.DemoConsoleApp
                 // Find all, currently, available assemblies
                 foreach (var resource in bootstrapper.Resolver.EmbeddedAssemblyNames())
                 {
-                    Log.Debug().WriteLine("Available assembly {0}", resource);
+                    Log.Debug().WriteLine("Available embedded assembly {0}", resource);
                 }
                 Assembly.Load("Svg");
             }

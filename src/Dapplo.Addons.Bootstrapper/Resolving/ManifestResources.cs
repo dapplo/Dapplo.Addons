@@ -62,7 +62,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <summary>
         /// Mapping between Assemblies and the contained resources files
         /// </summary>
-        public IDictionary<Assembly, string[]> AssemblyResourceNames { get; } = new ConcurrentDictionary<Assembly, string[]>();
+        public IDictionary<string, string[]> AssemblyResourceNames { get; } = new ConcurrentDictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Get the ManifestResourceNames for the specified assembly from cache or directly.
@@ -71,15 +71,16 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <returns>string array with resources names</returns>
         public string[] GetCachedManifestResourceNames(Assembly possibleResourceAssembly)
         {
+            var assemblyName = possibleResourceAssembly.GetName().Name;
             // Get the resources from the cache
-            if (AssemblyResourceNames.TryGetValue(possibleResourceAssembly, out var manifestResourceNames))
+            if (AssemblyResourceNames.TryGetValue(assemblyName, out var manifestResourceNames))
             {
                 return manifestResourceNames;
             }
 
             // If there was no cache, create it by retrieving the ManifestResourceNames for non dynamic assemblies
             manifestResourceNames = possibleResourceAssembly.IsDynamic ? new string[]{}: possibleResourceAssembly.GetManifestResourceNames();
-            AssemblyResourceNames.Add(possibleResourceAssembly, manifestResourceNames);
+            AssemblyResourceNames.Add(assemblyName, manifestResourceNames);
             if (Log.IsVerboseEnabled() && manifestResourceNames.Length > 0)
             {
                 Log.Verbose().WriteLine("Assembly {0} contains the following resources: {1}", possibleResourceAssembly.FullName, string.Join(", ", manifestResourceNames));
