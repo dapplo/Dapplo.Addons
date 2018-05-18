@@ -40,7 +40,7 @@ namespace Dapplo.Addons.Bootstrapper
     /// <summary>
     /// This is a bootstrapper for Autofac
     /// </summary>
-    public class ApplicationBootstrapper : IDisposable
+    public class ApplicationBootstrapper : IApplicationBootstrapper
     {
         private static readonly LogSource Log = new LogSource();
         private readonly ResourceMutex _resourceMutex;
@@ -83,6 +83,11 @@ namespace Dapplo.Addons.Bootstrapper
         /// The name of the application
         /// </summary>
         public string ApplicationName { get; }
+
+        /// <summary>
+        /// Log all autofac activations, must be set before the container is build
+        /// </summary>
+        public bool EnableActivationLogging { get; set; }
 
         /// <summary>
         /// An IEnumerable with the loaded assemblies, but filtered to the ones not from the .NET Framework (where possible) 
@@ -209,7 +214,7 @@ namespace Dapplo.Addons.Bootstrapper
         {
             foreach (var assemblyFile in assemblyFiles)
             {
-                Resolver.TryLoadOrLoadFrom(assemblyFile, out var assembly);
+                Resolver.TryLoadOrLoadFrom(assemblyFile, out _);
             }
             return this;
         }
@@ -227,8 +232,7 @@ namespace Dapplo.Addons.Bootstrapper
             Log.Verbose().WriteLine("Configuring");
 
             _builder = new ContainerBuilder();
-            _builder.Properties["applicationName"] = ApplicationName;
-
+            _builder.Properties[nameof(ApplicationName)] = ApplicationName;
             // Provide the IResourceProvider
             _builder.RegisterInstance(Resolver.Resources).As<IResourceProvider>().ExternallyOwned();
             return this;
@@ -246,6 +250,7 @@ namespace Dapplo.Addons.Bootstrapper
             Log.Verbose().WriteLine("Initializing");
 
             Configure();
+            _builder.Properties[nameof(EnableActivationLogging)] = EnableActivationLogging.ToString();
 
             // Process all assemblies, while doing this more might be loaded, so process those again
             var processedAssemblies = new HashSet<string>();

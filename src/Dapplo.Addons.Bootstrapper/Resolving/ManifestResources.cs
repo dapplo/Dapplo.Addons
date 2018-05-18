@@ -115,9 +115,9 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// Get a resource as stream
         /// </summary>
         /// <param name="type">Type, used as the base to find the resource</param>
-        /// <param name="names">string array, used to specify the location and name of the resource</param>
+        /// <param name="segments">string array, used to specify the location and name of the resource</param>
         /// <returns>Stream</returns>
-        public Stream ResourceAsStream(Type type, params string [] names)
+        public Stream ResourceAsStream(Type type, params string [] segments)
         {
             var assemblyName = type.Assembly.GetName().Name;
             var assembly = _findAssembly(assemblyName);
@@ -126,10 +126,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 return null;
             }
 
-            var name = string.Join(".", names);
+            var name = string.Join(".", segments);
             try
             {
-                return assembly.GetManifestResourceStream(type, name);
+                return ResourceStreamWithDecompression(assembly, name, type);
             }
             catch (Exception ex)
             {
@@ -171,7 +171,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <param name="assembly">Assembly to look into</param>
         /// <param name="ignoreCase">true, which is default, to ignore the case when comparing</param>
         /// <returns>Stream for the filePath, or null if not found</returns>
-        public Stream GetEmbeddedResourceAsStream(Assembly assembly, string filePath, bool ignoreCase = true)
+        public Stream ResourceAsStream(Assembly assembly, string filePath, bool ignoreCase = true)
         {
             if (assembly == null)
             {
@@ -193,25 +193,35 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 {
                     Log.Verbose().WriteLine("Requested stream for path {0}, using resource {1} from assembly {2}", filePath, resourceName, assembly.FullName);
                 }
-                var resultStream = assembly.GetManifestResourceStream(resourceName);
-                if (resultStream != null && resourceName.EndsWith(".gz"))
-                {
-                    resultStream = new GZipStream(resultStream, CompressionMode.Decompress);
-                }
-
-                if (resultStream != null && resourceName.EndsWith(".compressed", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    resultStream = new DeflateStream(resultStream, CompressionMode.Decompress);
-                }
-
-                if (resultStream == null)
-                {
-                    Log.Warn().WriteLine("Couldn't get the resource stream for {0} from assembly {1}", resourceName, assembly.FullName);
-                }
-                return resultStream;
+                return ResourceStreamWithDecompression(assembly, resourceName);
             }
             Log.Warn().WriteLine("Couldn't find the resource stream for path {0}, using regex pattern {1} from assembly {2}", filePath, filePathRegex, assembly.FullName);
             return null;
+        }
+
+        /// <summary>
+        /// Wrapper for retrieving the stream, and wrapping it in a GZipStream or DeflateStream
+        /// </summary>
+        /// <param name="assembly">Assembly</param>
+        /// <param name="resourceName">string</param>
+        /// <param name="baseType"></param>
+        /// <returns>Stream</returns>
+        private Stream ResourceStreamWithDecompression(Assembly assembly, string resourceName, Type baseType = null)
+        {
+            var resultStream = baseType == null ? assembly.GetManifestResourceStream(resourceName) : assembly.GetManifestResourceStream(baseType, resourceName);
+            if (resultStream != null)
+            {
+                if (resourceName.EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
+                {
+                    resultStream = new GZipStream(resultStream, CompressionMode.Decompress);
+                }
+                else if(resourceName.EndsWith(".compressed", StringComparison.OrdinalIgnoreCase))
+                {
+                    resultStream = new DeflateStream(resultStream, CompressionMode.Decompress);
+                }
+            }
+
+            return resultStream;
         }
 
         /// <summary>
@@ -248,7 +258,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// </summary>
         /// <param name="packUri">Uri</param>
         /// <returns>Stream</returns>
-        public Stream GetEmbeddedResourceAsStream(Uri packUri)
+        public Stream ResourceAsStream(Uri packUri)
         {
             var match = packUri.PackUriMatch();
 
@@ -259,7 +269,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 throw new ArgumentException($"Pack uri references unknown assembly {assemblyName}.", nameof(packUri));
             }
             var path = match.Groups["path"].Value;
-            return GetEmbeddedResourceAsStream(assembly, path);
+            return ResourceAsStream(assembly, path);
         }
 
         /// <summary>
@@ -308,7 +318,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             foreach (var resourcesFile in resourceNames.Where(x => x.EndsWith(".g.resources")))
             {
                 Log.Verbose().WriteLine("Resource not directly found, trying {0}", resourcesFile);
-                using (var resourceStream = GetEmbeddedResourceAsStream(assembly, resourcesFile))
+                using (var resourceStream = ResourceAsStream(assembly, resourcesFile))
                 {
                     if (resourceStream == null)
                     {
@@ -337,18 +347,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public IEnumerable<string> FindEmbeddedResources(Assembly assembly, string regexPattern, RegexOptions regexOptions = RegexOptions.IgnoreCase)
         {
             return FindEmbeddedResources(assembly, new Regex(regexPattern, regexOptions));
-        }
-
-        /// <summary>
-        ///     Scan the manifest of the Assembly of the supplied Type with a regex pattern for embedded resources
-        /// </summary>
-        /// <param name="type">Type is used to get the assembly </param>
-        /// <param name="regexPattern">Regex pattern to scan for</param>
-        /// <param name="regexOptions">RegexOptions.IgnoreCase as default</param>
-        /// <returns>IEnumerable with matching resource names</returns>
-        public IEnumerable<string> FindEmbeddedResources(Type type, string regexPattern, RegexOptions regexOptions = RegexOptions.IgnoreCase)
-        {
-            return FindEmbeddedResources(type.Assembly, regexPattern, regexOptions);
         }
     }
 }

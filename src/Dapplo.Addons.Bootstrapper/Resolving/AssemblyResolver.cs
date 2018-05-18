@@ -39,7 +39,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     /// <summary>
     /// This class supports the resolving of assemblies
     /// </summary>
-    public class AssemblyResolver : IDisposable
+    public class AssemblyResolver : IDisposable, IAssemblyResolver
     {
         private static readonly LogSource Log = new LogSource();
         private static readonly Regex AssemblyResourceNameRegex = new Regex(@"^(costura\.)*(?<assembly>.*)\.dll(\.compressed|\*.gz)*$", RegexOptions.Compiled);
@@ -60,7 +60,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <summary>
         /// Gives access to the resources in assemblies
         /// </summary>
-        public ManifestResources Resources { get; }
+        public IResourceProvider Resources { get; }
 
         /// <summary>
         /// Specify if embedded assemblies need to be written to disk before using, this solves some compatiblity issues
@@ -102,7 +102,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// Add an additional scan directory
         /// </summary>
         /// <param name="scanDirectory">string</param>
-        public AssemblyResolver AddScanDirectory(string scanDirectory)
+        public IAssemblyResolver AddScanDirectory(string scanDirectory)
         {
             if (string.IsNullOrEmpty(scanDirectory))
             {
@@ -346,7 +346,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     }
 
                     Log.Verbose().WriteLine("Loading {0} internally", assemblyName);
-                    using (var stream = Resources.GetEmbeddedResourceAsStream(assemblyWithResources, resource, false))
+                    using (var stream = Resources.ResourceAsStream(assemblyWithResources, resource, false))
                     {
                         return Assembly.Load(stream.ToByteArray());
                     }
@@ -366,12 +366,16 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         private Assembly LoadEmbeddedAssemblyViaTmpFile(Assembly containingAssembly, string resource, string assemblyName)
         {
             var assemblyFileName = $@"{FileLocations.AddonsLocation}\{assemblyName}.dll";
-            using (var stream = Resources.GetEmbeddedResourceAsStream(containingAssembly, resource, false))
+            using (var stream = Resources.ResourceAsStream(containingAssembly, resource, false))
             {
                 var bytes = stream.ToByteArray();
                 try
                 {
                     Log.Verbose().WriteLine("Creating temporary assembly file {0}", assemblyFileName);
+                    if (!Directory.Exists(FileLocations.AddonsLocation))
+                    {
+                        Directory.CreateDirectory(FileLocations.AddonsLocation);
+                    }
                     using (var fileStream = new FileStream(assemblyFileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
                     {
                         fileStream.Write(bytes, 0, bytes.Length);

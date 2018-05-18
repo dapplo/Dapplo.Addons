@@ -23,6 +23,7 @@
 
 #endregion
 
+using System;
 using Autofac;
 using Autofac.Core;
 using Dapplo.Log;
@@ -30,9 +31,9 @@ using Dapplo.Log;
 namespace Dapplo.Addons.Bootstrapper
 {
     /// <summary>
-    /// A module to enable logs
+    /// A module to enable activation logs
     /// </summary>
-    public class LogRequestModule : Module
+    public class EnableActivationLoggingModule : Module
     {
         private static readonly LogSource Log = new LogSource();
         private int _depth;
@@ -44,15 +45,19 @@ namespace Dapplo.Addons.Bootstrapper
         /// <param name="registration">IComponentRegistration</param>
         protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry, IComponentRegistration registration)
         {
+            if (!string.Equals(bool.TrueString, componentRegistry.Properties[nameof(IApplicationBootstrapper.EnableActivationLogging)] as string, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
             registration.Preparing += RegistrationOnPreparing;
             registration.Activating += RegistrationOnActivating;
             registration.Activated += RegistrationOnActivated;
-            base.AttachToComponentRegistration(componentRegistry, registration);
         }
 
         private void RegistrationOnActivated(object sender, IActivatedEventArgs<object> e)
         {
-            Log.Debug().WriteLine("{0}Activated {1}", GetPrefix(), e.Component.Activator.LimitType);
+            Log.Verbose().WriteLine("{0}Activated {1}", GetPrefix(), e.Component.Activator.LimitType);
         }
 
         private string GetPrefix()
@@ -62,14 +67,14 @@ namespace Dapplo.Addons.Bootstrapper
 
         private void RegistrationOnPreparing(object sender, PreparingEventArgs preparingEventArgs)
         {
-            Log.Debug().WriteLine("{0}Resolving  {1}", GetPrefix(), preparingEventArgs.Component.Activator.LimitType);
+            Log.Verbose().WriteLine("{0}Resolving  {1}", GetPrefix(), preparingEventArgs.Component.Activator.LimitType);
             _depth++;
         }
 
         private void RegistrationOnActivating(object sender, ActivatingEventArgs<object> activatingEventArgs)
         {
             _depth--;
-            Log.Debug().WriteLine("{0}Activating {1}", GetPrefix(), activatingEventArgs.Component.Activator.LimitType);
+            Log.Verbose().WriteLine("{0}Activating {1}", GetPrefix(), activatingEventArgs.Component.Activator.LimitType);
         }
     }
 }

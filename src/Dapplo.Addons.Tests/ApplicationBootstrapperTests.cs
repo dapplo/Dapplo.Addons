@@ -153,7 +153,10 @@ namespace Dapplo.Addons.Tests
             using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
             {
                 bootstrapper.Configure();
-                bootstrapper.Builder.RegisterModule<LogRequestModule>();
+#if DEBUG
+                bootstrapper.EnableActivationLogging = true;
+#endif
+
                 var scanDirectories = new List<string>
                 {
                     FileLocations.StartupDirectory,

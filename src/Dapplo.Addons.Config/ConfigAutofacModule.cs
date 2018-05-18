@@ -44,7 +44,7 @@ namespace Dapplo.Addons.Config
                 .As<IService>()
                 .SingleInstance();
 
-            var applicationName = builder.Properties["applicationName"] as string;
+            var applicationName = builder.Properties[nameof(IApplicationBootstrapper.ApplicationName)] as string;
 
             _applicationIniConfig = IniConfig.Current;
             if (_applicationIniConfig == null)

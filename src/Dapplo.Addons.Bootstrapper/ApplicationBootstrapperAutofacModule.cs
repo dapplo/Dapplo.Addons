@@ -37,10 +37,6 @@ namespace Dapplo.Addons.Bootstrapper
         /// <inheritdoc />
         protected override void Load(ContainerBuilder builder)
         {
-            // Enable logging
-#if DEBUG
-            builder.RegisterModule<LogRequestModule>();
-#endif
             // Make sure Attributes are allowed
             builder.RegisterModule<AttributedMetadataModule>();
             // Provide the startup & shutdown functionality

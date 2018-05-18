@@ -67,7 +67,7 @@ namespace Dapplo.Addons.Tests
             resource = _resolver.Resources.Find(GetType(), "TestFiles", @"embedded-dapplo.png");
             Assert.NotNull(resource);
 
-            var resources = _resolver.Resources.FindEmbeddedResources(GetType(), @"dapplo.png");
+            var resources = _resolver.Resources.FindEmbeddedResources(GetType().Assembly, @"dapplo.png");
             Assert.True(resources.Any());
         }
 
@@ -77,7 +77,7 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void Test_GetEmbeddedResourceAsStream()
         {
-            using (var stream = _resolver.Resources.GetEmbeddedResourceAsStream(GetType().Assembly, @"TestFiles\embedded-dapplo.png"))
+            using (var stream = _resolver.Resources.ResourceAsStream(GetType().Assembly, @"TestFiles\embedded-dapplo.png"))
             {
                 var bitmap = Image.FromStream(stream);
                 Assert.NotNull(bitmap);
@@ -96,7 +96,7 @@ namespace Dapplo.Addons.Tests
                 Log.Info().WriteLine("Resource: {0}", manifestResourceName);
             }
 
-            using (var stream = _resolver.Resources.GetEmbeddedResourceAsStream(GetType().Assembly, @"TestFiles\embedded-dapplo.png.gz"))
+            using (var stream = _resolver.Resources.ResourceAsStream(GetType().Assembly, @"TestFiles\embedded-dapplo.png.gz"))
             {
                 using (var bitmap = Image.FromStream(stream))
                 {
@@ -116,7 +116,7 @@ namespace Dapplo.Addons.Tests
 
             Assert.True(_resolver.Resources.EmbeddedResourceExists(packUri));
 
-            using (var stream = _resolver.Resources.GetEmbeddedResourceAsStream(packUri))
+            using (var stream = _resolver.Resources.ResourceAsStream(packUri))
             {
                 using (var bitmap = Image.FromStream(stream))
                 {
