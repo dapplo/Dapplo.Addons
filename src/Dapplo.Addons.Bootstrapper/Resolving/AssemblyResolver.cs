@@ -45,8 +45,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         private static readonly Regex AssemblyResourceNameRegex = new Regex(@"^(costura\.)*(?<assembly>.*)\.dll(\.compressed|\*.gz)*$", RegexOptions.Compiled);
         private string _applicationName;
         private readonly ISet<string> _resolving = new HashSet<string>();
-        private readonly IList<string> _assembliesToDeleteAtExit = new List<string>();
-
+        private readonly ISet<string> _assembliesToDeleteAtExit = new HashSet<string>();
         /// <summary>
         /// A regex with all the assemblies which we should ignore
         /// </summary>

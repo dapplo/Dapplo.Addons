@@ -79,7 +79,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
             // If there was no cache, create it by retrieving the ManifestResourceNames for non dynamic assemblies
             manifestResourceNames = possibleResourceAssembly.IsDynamic ? new string[]{}: possibleResourceAssembly.GetManifestResourceNames();
-            AssemblyResourceNames.Add(possibleResourceAssembly, manifestResourceNames);
+            AssemblyResourceNames[possibleResourceAssembly] = manifestResourceNames;
             if (Log.IsVerboseEnabled() && manifestResourceNames.Length > 0)
             {
                 Log.Verbose().WriteLine("Assembly {0} contains the following resources: {1}", possibleResourceAssembly.FullName, string.Join(", ", manifestResourceNames));
