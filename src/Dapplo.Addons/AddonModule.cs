@@ -23,7 +23,10 @@
 
 #endregion
 
-using Autofac;
+using System;
+using System.Globalization;
+using System.Reflection;
+using Module = Autofac.Module;
 
 namespace Dapplo.Addons
 {
@@ -32,5 +35,22 @@ namespace Dapplo.Addons
     /// </summary>
     public abstract class AddonModule : Module
     {
+        /// <summary>
+        /// Gets the assembly in which the concrete module type is located. To avoid bugs whereby deriving from a module will
+        /// change the target assembly, this property can only be used by modules that inherit directly from
+        /// <see cref="AddonModule"/>.
+        /// </summary>
+        protected override Assembly ThisAssembly
+        {
+            get
+            {
+                var thisType = GetType();
+                var baseType = thisType.GetTypeInfo().BaseType;
+                if (baseType != typeof(AddonModule))
+                    throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "Module.ThisAssembly is only available in modules that inherit directly from AddonModule. It can't be used in '{0}' which inherits from '{1}'.", thisType, baseType));
+
+                return thisType.GetTypeInfo().Assembly;
+            }
+        }
     }
 }
