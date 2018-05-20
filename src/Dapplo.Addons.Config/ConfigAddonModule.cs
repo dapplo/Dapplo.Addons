@@ -32,7 +32,7 @@ namespace Dapplo.Addons.Config
     /// <summary>
     /// Configure the Ini and Language functionality
     /// </summary>
-    public class ConfigAutofacModule : Module
+    public class ConfigAddonModule : AddonModule
     {
         private IniConfig _applicationIniConfig;
         private LanguageLoader _languageLoader;
@@ -44,7 +44,7 @@ namespace Dapplo.Addons.Config
                 .As<IService>()
                 .SingleInstance();
 
-            var applicationName = builder.Properties["applicationName"] as string;
+            var applicationName = builder.Properties[nameof(IApplicationBootstrapper.ApplicationName)] as string;
 
             _applicationIniConfig = IniConfig.Current;
             if (_applicationIniConfig == null)

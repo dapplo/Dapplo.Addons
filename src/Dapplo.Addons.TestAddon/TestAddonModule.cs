@@ -2,7 +2,7 @@
 
 namespace Dapplo.Addons.TestAddon
 {
-    public class TestAddonautofacModule : Module
+    public class TestAddonModule : AddonModule
     {
         protected override void Load(ContainerBuilder builder)
         {

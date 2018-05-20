@@ -12,6 +12,7 @@
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -50,6 +51,9 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddonModule.cs" />
+    <Compile Include="IApplicationBootstrapper.cs" />
+    <Compile Include="IAssemblyResolver.cs" />
     <Compile Include="IResourceProvider.cs" />
     <Compile Include="IShutdownAsync.cs" />
     <Compile Include="IStartupAsync.cs" />

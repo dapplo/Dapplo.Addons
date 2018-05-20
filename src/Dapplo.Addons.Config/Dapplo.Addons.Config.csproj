@@ -67,7 +67,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConfigAutofacModule.cs" />
+    <Compile Include="ConfigAddonModule.cs" />
     <Compile Include="IniSectionRegistrationSource.cs" />
     <Compile Include="IniSectionService.cs" />
     <Compile Include="LanguageRegistrationSource.cs" />

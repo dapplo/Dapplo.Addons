@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
+using Autofac;
 using Dapplo.Addons.Bootstrapper;
+using Dapplo.Addons.Bootstrapper.Handler;
 using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Log;
 using Dapplo.Log.Loggers;
@@ -17,6 +19,9 @@ namespace Dapplo.Addons.DemoConsoleApp
 
             using (var bootstrapper = new ApplicationBootstrapper("DemoConsoleApp"))
             {
+#if DEBUG
+                bootstrapper.EnableActivationLogging = true;
+#endif
                 bootstrapper.Configure();
 
                 var scanDirectories = new List<string>
@@ -34,14 +39,13 @@ namespace Dapplo.Addons.DemoConsoleApp
                     .FindAndLoadAssemblies("Dapplo.HttpExtensions")
                     .FindAndLoadAssemblies("Dapplo.Addons.TestAddonWithCostura");
 
-
-
                 await bootstrapper.InitializeAsync().ConfigureAwait(false);
 
+                bootstrapper.Container.Resolve<ServiceHandler>();
                 // Find all, currently, available assemblies
                 foreach (var resource in bootstrapper.Resolver.EmbeddedAssemblyNames())
                 {
-                    Log.Debug().WriteLine("Available assembly {0}", resource);
+                    Log.Debug().WriteLine("Available embedded assembly {0}", resource);
                 }
                 Assembly.Load("Svg");
             }

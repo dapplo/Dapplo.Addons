@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
 using Dapplo.Addons.Bootstrapper;
-using Dapplo.Addons.Bootstrapper.Handler;
 using Dapplo.Addons.Tests.Entities;
 using Dapplo.Addons.Tests.TestModules;
 using Xunit;
@@ -51,7 +50,6 @@ namespace Dapplo.Addons.Tests
             {
                 bootstrapper.Configure();
 
-                bootstrapper.Builder.RegisterType<ServiceHandler>();
                 bootstrapper.Builder.Register(context => new FirstStartupAction
                 {
                     MyStartAction = () => didFirstRun = true
