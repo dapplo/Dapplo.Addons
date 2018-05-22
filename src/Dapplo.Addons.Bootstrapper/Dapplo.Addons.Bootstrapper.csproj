@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="ApplicationBootstrapper.cs" />
     <Compile Include="ApplicationBootstrapperAutofacModule.cs" />
+    <Compile Include="ApplicationConfig.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\PackUriExtensions.cs" />
     <Compile Include="Extensions\StreamExtensions.cs" />

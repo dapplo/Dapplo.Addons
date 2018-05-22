@@ -86,6 +86,7 @@
     <Compile Include="AssemblyResolveTests.cs" />
     <Compile Include="ApplicationBootstrapperTests.cs" />
     <Compile Include="Entities\Orders.cs" />
+    <Compile Include="ApplicationConfigTests.cs" />
     <Compile Include="FileToolsTests.cs" />
     <Compile Include="ManifestResourcesTests.cs" />
     <Compile Include="Entities\DependencyTaker.cs" />
