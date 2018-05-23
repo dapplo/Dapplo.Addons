@@ -1,17 +1,15 @@
 ﻿#region Usings
 
 using System;
-using System.ComponentModel.Composition;
-
+using Dapplo.Addons.Tests.Entities;
 #endregion
 
 namespace Dapplo.Addons.Tests.TestModules
 {
-    [StartupAction(StartupOrder = 1000)]
-    public class FirstStartupAction : IStartupAction
+    [ServiceOrder(Orders.First)]
+    public class FirstStartupAction : IStartup
     {
-        [Import("FirstAction", AllowDefault = true)]
-        private Action MyStartAction { get; set; }
+        public Action MyStartAction { get; set; }
 
         public void Start()
         {

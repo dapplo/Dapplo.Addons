@@ -59,6 +59,15 @@ namespace Dapplo.Addons.Tests
         }
 
         [Fact]
+        public void TestScanFilePatternToRegex()
+        {
+            var startupDirectory = FileLocations.StartupDirectory;
+            var regex = FileTools.FilenameToRegex("*", new[] {".xml"});
+            var files = FileLocations.Scan(new[] { startupDirectory }, regex);
+            Assert.Contains(files, file => file.Item1.EndsWith("Dapplo.Utils.xml"));
+        }
+
+        [Fact]
         public void TestScanRegex()
         {
             var startupDirectory = FileLocations.StartupDirectory;

@@ -25,6 +25,9 @@
 
 #region Usings
 
+using System.Collections.Generic;
+using System.Reflection;
+using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Addons.Tests.TestAssembly;
 using Dapplo.Log;
@@ -55,20 +58,48 @@ namespace Dapplo.Addons.Tests
             Assert.Equal(nameof(ExternalClass.HelloWord), helloWorld);
         }
 
-        /// <summary>
-        /// </summary>
         [Fact]
-        public void Test_AssemblyNameToRegex()
+        public void TestCostura()
         {
-            const string fileNoMatch = @"C:\Project\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
-            const string fileMatch = @"C:\Project\blub\bin\Debug\Dapplo.something.dll";
-            var regex = FileTools.FilenameToRegex("Dapplo.Something*", AssemblyResolver.Extensions);
-            Assert.DoesNotMatch(regex, fileNoMatch);
-            Assert.Matches(regex, fileMatch);
+            var applicationConfig = ApplicationConfig.Create()
+                .WithApplicationName("TestCostura")
+                .WithScanDirectories(
+                    FileLocations.StartupDirectory,
+#if DEBUG
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug"
+#else
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release"
+#endif
+                    )
+                // Add Dapplo.Addons.TestAddonWithCostura
+                .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura");
+            using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
+            {
+                var jiraAssembly = Assembly.Load("Dapplo.Jira");
+                Assert.NotNull(jiraAssembly);
+            }
+        }
 
-            var regex2 = FileTools.FilenameToRegex("Something*", AssemblyResolver.Extensions);
-            Assert.DoesNotMatch(regex2, fileNoMatch);
-            Assert.DoesNotMatch(regex2, fileMatch);
+        [Fact]
+        public void TestCostura_Nested()
+        {
+            var applicationConfig = ApplicationConfig.Create()
+                .WithApplicationName("TestCostura_Nested")
+                .WithScanDirectories(
+                    FileLocations.StartupDirectory,
+#if DEBUG
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug"
+#else
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release"
+#endif
+                )
+                // Add Dapplo.Addons.TestAddonWithCostura
+                .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura");
+            using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
+            {
+                var jiraAssembly = Assembly.Load("Svg");
+                Assert.NotNull(jiraAssembly);
+            }
         }
     }
 }

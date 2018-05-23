@@ -23,120 +23,280 @@
 
 #endregion
 
-#region Usings
-
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Autofac;
+using Dapplo.Addons.Bootstrapper.Handler;
+using Dapplo.Addons.Bootstrapper.Internal;
+using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Log;
-
-#endregion
 
 namespace Dapplo.Addons.Bootstrapper
 {
     /// <summary>
-    ///     This bootstrapper is made especially to host dapplo "apps".
-    ///     You can protect your application from starting multiple instances by specifying a Mutex-ID
+    /// This is a bootstrapper for Autofac
     /// </summary>
-    public class ApplicationBootstrapper : StartupShutdownBootstrapper, IApplicationBootstrapper
+    public class ApplicationBootstrapper : IApplicationBootstrapper
     {
         private static readonly LogSource Log = new LogSource();
         private readonly ResourceMutex _resourceMutex;
+        private readonly IList<IDisposable> _disposables = new List<IDisposable>();
+        private readonly ApplicationConfig _applicationConfig;
+        private bool _isStartedUp;
+        private bool _isShutDown;
+        private ContainerBuilder _builder;
 
         /// <summary>
-        ///     Returns the application name for this bootstrapper
+        /// The current instance
         /// </summary>
-        public string ApplicationName { get; }
+        public static ApplicationBootstrapper Instance { get; private set; }
 
         /// <summary>
-        ///     Create the application bootstrapper, for the specified application name
-        ///     The mutex is created and locked in the contructor, and some of your application logic might depend on this.
+        /// The used assembly resolver
         /// </summary>
-        /// <param name="applicationName">Name of your application</param>
-        /// <param name="mutexId">
-        ///     string with an ID for your mutex, preferably a Guid. If the mutex can't be locked, the
-        ///     bootstapper will not  be able to "bootstrap".
-        /// </param>
-        /// <param name="global">Is the mutex a global or local block (false means only in this Windows session)</param>
-        public ApplicationBootstrapper(string applicationName, string mutexId = null, bool global = false)
+        public AssemblyResolver Resolver { get; }
+
+        /// <summary>
+        /// Provides access to the builder, as long as it can be modified.
+        /// </summary>
+        public ContainerBuilder Builder => Container == null ?_builder : null;
+
+        /// <summary>
+        /// Provides the Autofac container
+        /// </summary>
+        public IContainer Container { get; private set; }
+
+        /// <summary>
+        /// Signals when the container is created
+        /// </summary>
+        public Action<IContainer> OnContainerCreated { get; set; }
+
+        /// <summary>
+        /// Provides the Autofac primary lifetime scope
+        /// </summary>
+        public ILifetimeScope Scope { get; private set; }
+
+        /// <summary>
+        /// The name of the application
+        /// </summary>
+        public string ApplicationName => _applicationConfig.ApplicationName;
+
+        /// <summary>
+        /// Log all autofac activations, must be set before the container is build
+        /// </summary>
+        public bool EnableActivationLogging { get; set; }
+
+        /// <summary>
+        /// An IEnumerable with the loaded assemblies, but filtered to the ones not from the .NET Framework (where possible) 
+        /// </summary>
+        public IEnumerable<Assembly> LoadedAssemblies => Resolver.LoadedAssemblies
+            .Where(pair => !Resolver.AssembliesToIgnore.IsMatch(pair.Key) && !pair.Value.IsDynamic)
+            .Select(pair => pair.Value);
+
+        /// <summary>
+        /// Create the application bootstrapper
+        /// </summary>
+        /// <param name="applicationConfig">ApplicationConfig with the complete configuration</param>
+        public ApplicationBootstrapper(ApplicationConfig applicationConfig)
         {
-            ApplicationName = applicationName ?? throw new ArgumentNullException(nameof(applicationName));
-            if (mutexId != null)
+            _applicationConfig = applicationConfig ?? throw new ArgumentNullException(nameof(applicationConfig));
+            Instance = this;
+            if (Thread.CurrentThread.Name == null)
             {
-                _resourceMutex = ResourceMutex.Create(mutexId, applicationName, global);
+                Thread.CurrentThread.Name = applicationConfig.ApplicationName;
+            }
+            if (applicationConfig.HasMutex)
+            {
+                _resourceMutex = ResourceMutex.Create(applicationConfig.Mutex, applicationConfig.ApplicationName, applicationConfig.UseGlobalMutex);
+            }
+
+            Resolver = new AssemblyResolver(applicationConfig);
+
+            foreach (var wantedAssemblyName in _applicationConfig.AssemblyNames)
+            {
+                if (Resolver.AvailableAssemblies.TryGetValue(wantedAssemblyName, out var assemblyLocationInformation))
+                {
+                    Resolver.LoadAssembly(assemblyLocationInformation);
+                }
+                else
+                {
+                    throw new DllNotFoundException($"Assembly {wantedAssemblyName} not found!");
+                }
+            }
+
+            // Start loading!
+            foreach (var availableAssembly in Resolver.AvailableAssemblies.Values.Where(information => applicationConfig.AssemblyNamePatterns.Any(regex => regex.IsMatch(information.Name))))
+            {
+                Resolver.LoadAssembly(availableAssembly);
             }
         }
 
         /// <summary>
-        ///     Returns if the Mutex is locked, in other words if this ApplicationBootstrapper can continue
+        ///     Returns if the Mutex is locked, in other words if the Bootstrapper can continue
         ///     This also returns true if no mutex is used
         /// </summary>
-        public bool IsMutexLocked => _resourceMutex == null || _resourceMutex.IsLocked;
+        public bool IsAlreadyRunning => _resourceMutex != null && !_resourceMutex.IsLocked;
 
         /// <summary>
-        ///     Initialize the application bootstrapper, this makes sure the configuration and languages can be loaded
+        /// Add the disposable to a list, everything in there is disposed when the bootstrapper is disposed.
         /// </summary>
-        /// <returns>bool with value of IsInitialized</returns>
-        public override async Task<bool> InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
+        /// <param name="disposable">IDisposable</param>
+        public ApplicationBootstrapper RegisterForDisposal(IDisposable disposable)
         {
-            Log.Verbose().WriteLine("Trying to initialize application {0}", ApplicationName);
-            await base.InitializeAsync(cancellationToken).ConfigureAwait(false);
-            // Export this bootstrapper as IApplicationBootstrapper
-            Export<IApplicationBootstrapper>(this);
-
-            return IsInitialized;
-        }
-
-        /// <inheritdoc />
-        public override async Task<bool> StopAsync(CancellationToken cancellationToken = new CancellationToken())
-        {
-            var result = await base.StopAsync(cancellationToken);
-
-            // As soon as we stopped, the mutex can be released.
-            _resourceMutex?.Dispose();
-            return result;
+            if (disposable == null)
+            {
+                throw new ArgumentNullException(nameof(disposable));
+            }
+            _disposables.Add(disposable);
+            return this;
         }
 
         /// <summary>
-        ///     Override the run to prevent starting when the mutex isn't locked
+        /// Configure the Bootstrapper
         /// </summary>
-        public override Task<bool> RunAsync(CancellationToken cancellationToken = new CancellationToken())
+        public virtual ApplicationBootstrapper Configure()
         {
-            if (_resourceMutex == null || _resourceMutex.IsLocked)
+            // It's no problem when the builder is already created, skip recreating!
+            if (_builder != null)
             {
-                return base.RunAsync(cancellationToken);
+                return this;
             }
-            Log.Error().WriteLine("Can't Run {0} due to missing mutex lock", ApplicationName);
-            return Task.FromResult(false);
+            Log.Verbose().WriteLine("Configuring");
+
+            _builder = new ContainerBuilder();
+            _builder.Properties[nameof(ApplicationName)] = ApplicationName;
+            // Provide the IResourceProvider
+            _builder.RegisterInstance(Resolver.Resources).As<IResourceProvider>().ExternallyOwned();
+            return this;
         }
-
-        #region IDisposable Support
-
-        // To detect redundant calls
-        private bool _disposedValue;
 
         /// <summary>
-        ///     Implementation of the dispose pattern
+        /// Initialize the bootstrapper
         /// </summary>
-        /// <param name="disposing">bool</param>
-        protected override void Dispose(bool disposing)
+        public virtual Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
         {
-            // Call other stuff first, the mutex should protect untill everything is shutdown
-            base.Dispose(disposing);
+            if (Container != null)
+            {
+                throw new NotSupportedException("Initialize can only be called once.");
+            }
+            Log.Verbose().WriteLine("Initializing");
 
-            // Handle our own stuff, currently only the mutex (if any)
-            if (_disposedValue)
+            Configure();
+            _builder.Properties[nameof(EnableActivationLogging)] = EnableActivationLogging.ToString();
+
+            // Process all assemblies, while doing this more might be loaded, so process those again
+            var processedAssemblies = new HashSet<string>();
+            int countBefore;
+            do
             {
-                return;
-            }
-            if (disposing)
+                countBefore = Resolver.LoadedAssemblies.Count;
+
+                var assembliesToProcess = Resolver.LoadedAssemblies.ToList()
+                    // Skip dynamic assemblies
+                    .Where(pair => !pair.Value.IsDynamic)
+                    // Ignore well know assemblies we don't care about
+                    .Where(pair => !Resolver.AssembliesToIgnore.IsMatch(pair.Key))
+                    // Only scan the assemblies which reference Dapplo.Addons
+                    .Where(pair => pair.Value.GetReferencedAssemblies()
+                        .Any(assemblyName => string.Equals("Dapplo.Addons", assemblyName.Name, StringComparison.OrdinalIgnoreCase)))
+                    .Where(pair => processedAssemblies.Add(pair.Key));
+
+                foreach (var assemblyToProcess in assembliesToProcess)
+                {
+                    try
+                    {
+                        if (Log.IsDebugEnabled())
+                        {
+                            Log.Debug().WriteLine("Processing assembly {0}", assemblyToProcess.Key);
+                        }
+
+                        _builder.RegisterAssemblyModules(assemblyToProcess.Value);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warn().WriteLine(ex, "Couldn't read modules in {0}", assemblyToProcess.Key);
+                    }
+                }
+                
+            } while (Resolver.LoadedAssemblies.Count > countBefore);          
+
+            // Now build the container
+            try
             {
-                // dispose managed state (managed objects) here.
+                Container = _builder.Build();
             }
-            _disposedValue = true;
-            _resourceMutex?.Dispose();
+            catch (Exception ex)
+            {
+                Log.Error().WriteLine(ex, "Coudn't create the container.");
+                throw;
+            }
+
+            // Inform that the container was created
+            OnContainerCreated?.Invoke(Container);
+
+            // And the scope
+            Scope = Container.BeginLifetimeScope();
+
+            return Task.FromResult(true);
         }
 
-        #endregion
+        /// <summary>
+        /// Start the IStartupModules
+        /// </summary>
+        /// <param name="cancellationToken">CancellationToken</param>
+        public async Task StartupAsync(CancellationToken cancellationToken = default)
+        {
+            if (Container == null)
+            {
+                await InitializeAsync(cancellationToken);
+            }
+            _isStartedUp = true;
+            await Scope.Resolve<ServiceHandler>().StartupAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Shutdown the IShutdownModules
+        /// </summary>
+        /// <param name="cancellationToken">CancellationToken</param>
+        public Task ShutdownAsync(CancellationToken cancellationToken = default)
+        {
+            if (!_isStartedUp)
+            {
+                throw new NotSupportedException("Start before shutdown!");
+            }
+            _isShutDown = true;
+            return Scope.Resolve<ServiceHandler>().ShutdownAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Dispose the scope and container
+        /// </summary>
+        public void Dispose()
+        {
+            // When startup was called, but shutdown not, do this now
+            if (_isStartedUp && !_isShutDown)
+            {
+                // Auto shutdown
+                using (new NoSynchronizationContextScope())
+                {
+                    ShutdownAsync().Wait();
+                }
+            }
+
+            var reversedDisposables = _disposables.Reverse().ToList();
+            _disposables.Clear();
+            foreach (var disposable in reversedDisposables)
+            {
+                disposable?.Dispose();
+            }
+
+            Scope?.Dispose();
+            Container?.Dispose();
+            Resolver.Dispose();
+        }
     }
 }

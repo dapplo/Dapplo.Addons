@@ -26,12 +26,11 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Autofac;
 using Dapplo.Addons.Bootstrapper;
-using Dapplo.Addons.TestAddon;
+using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Ini;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
@@ -47,7 +46,6 @@ namespace Dapplo.Addons.Tests
     public sealed class ApplicationBootstrapperTests : IDisposable
     {
         private const string ApplicationName = "Dapplo";
-        private readonly IniConfig _iniConfig = new IniConfig(ApplicationName, ApplicationName);
 
         public ApplicationBootstrapperTests(ITestOutputHelper testOutputHelper)
         {
@@ -56,7 +54,6 @@ namespace Dapplo.Addons.Tests
 
         public void Dispose()
         {
-            _iniConfig.Dispose();
             IniConfig.Delete(ApplicationName, ApplicationName);
         }
 
@@ -91,56 +88,61 @@ namespace Dapplo.Addons.Tests
         {
             bool isDisposed = false;
             SetEntryAssembly(GetType().Assembly);
-            // Fix startup issues due to unloaded configuration
-            await _iniConfig.LoadIfNeededAsync();
-            _iniConfig.Get<IThisIsConfiguration>();
-            using (var bootstrapper = new ApplicationBootstrapper(ApplicationName))
-            {
-                Assert.Equal(bootstrapper, BootstrapperLocator.CurrentBootstrapper);
-                // Add test project, without having a direct reference
+
+            var applicationConfig = ApplicationConfig.Create()
+                .WithApplicationName(ApplicationName)
+                .WithScanDirectories(
+                    FileLocations.StartupDirectory,
 #if DEBUG
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug");
+                    @"..\..\..\Dapplo.Addons.TestAddon\bin\Debug",
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug"
 #else
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release");
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release");
+                    @"..\..\..\Dapplo.Addons.TestAddon\bin\Release",
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release"
 #endif
+                )
+                // Add all file starting with Dapplo and ending on .dll
+                .WithAssemblyPatterns("Dapplo*");
+
+            using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
+            {
+                bootstrapper.Configure();
+
+                // Makes the startup break
+                bootstrapper.Builder.Register(context => true);
+
+
                 bootstrapper.RegisterForDisposal(SimpleDisposable.Create(() => isDisposed = true));
-                // Add all file starting with Dapplo and ending on .dll or .dll.gz
-                bootstrapper.FindAndLoadAssemblies("Dapplo*");
 
                 // Initialize, so we can export
                 Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");
-
-                bootstrapper.Export<IServiceProvider>(_iniConfig);
-
-                // Only for improved Code coverage
-                bootstrapper.Export(typeof(IniConfig), _iniConfig, new Dictionary<string, object>());
-
-                bootstrapper.Export(true);
+                
                 // Start the composition, and IStartupActions
-                await Assert.ThrowsAsync<StartupException>(async () => await bootstrapper.RunAsync().ConfigureAwait(false));
-
-                // Only for improved Code coverage
-                Assert.NotNull(bootstrapper.GetExport<IniConfig, IStartupMetadata>().Value);
+                await Assert.ThrowsAsync<StartupException>(async () => await bootstrapper.StartupAsync().ConfigureAwait(false));
             }
-            Assert.True(isDisposed);
             // Dispose automatically calls IShutdownActions
+            Assert.True(isDisposed);
         }
 
         [Fact]
         public void TestConstructorAndCleanup()
         {
-            var bootstrapper = new ApplicationBootstrapper("Test");
+            var applicationConfig = ApplicationConfig.Create()
+                .WithApplicationName(ApplicationName);
+
+            var bootstrapper = new ApplicationBootstrapper(applicationConfig);
             bootstrapper.Dispose();
         }
 
         [Fact]
         public void TestConstructorWithMutexAndCleanup()
         {
-            using (var bootstrapper = new ApplicationBootstrapper("Test", Guid.NewGuid().ToString()))
+            var applicationConfig = ApplicationConfig.Create()
+                .WithApplicationName("Test")
+                .WithMutex(Guid.NewGuid().ToString());
+            using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
-                Assert.True(bootstrapper.IsMutexLocked);
+                Assert.False(bootstrapper.IsAlreadyRunning);
             }
         }
 
@@ -153,54 +155,33 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public async Task TestStartupShutdown()
         {
-            // Fix startup issues due to unloaded configuration
-            await _iniConfig.LoadIfNeededAsync();
-            _iniConfig.Get<IThisIsConfiguration>();
+            SetEntryAssembly(GetType().Assembly);
 
-            using (IApplicationBootstrapper bootstrapper = new ApplicationBootstrapper(ApplicationName))
-            {
-                Assert.Equal(bootstrapper, BootstrapperLocator.CurrentBootstrapper);
-                // Add test project, without having a direct reference
+            var applicationConfig = ApplicationConfig.Create()
+                .WithApplicationName(ApplicationName)
+                .WithScanDirectories(
+                    FileLocations.StartupDirectory,
 #if DEBUG
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Debug");
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug");
+                    @"..\..\..\Dapplo.Addons.TestAddon\bin\Debug",
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug"
 #else
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddon\bin\Release");
-                bootstrapper.AddScanDirectory(@"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release");
+                    @"..\..\..\Dapplo.Addons.TestAddon\bin\Release",
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release"
 #endif
-                // Add all file starting with Dapplo and ending on .dll or .dll.gz
-                bootstrapper.FindAndLoadAssemblies("Dapplo*");
-
+                )
+                // Add all assemblies starting with Dapplo
+                .WithAssemblyPatterns("Dapplo*");
+            using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
+            {
+                bootstrapper.Configure();
+#if DEBUG
+                bootstrapper.EnableActivationLogging = true;
+#endif
                 // Test if our test addon was loaded
-                Assert.Contains(bootstrapper.KnownFiles, addon => addon.EndsWith("TestAddon.dll"));
-
-                // Initialize, so we can export
-                Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");
-
-                bootstrapper.Export<IServiceProvider>(_iniConfig);
-
-                // test Export, this should work before Run as some of the addons might need some stuff.
-
-                var part = bootstrapper.Export(this);
+                Assert.Contains(bootstrapper.LoadedAssemblies, addon => addon.GetName().Name.EndsWith("TestAddon"));
 
                 // Start the composition, and IStartupActions
-                Assert.True(await bootstrapper.RunAsync().ConfigureAwait(false), "Couldn't run");
-
-                // test import
-                Assert.NotNull(bootstrapper.GetExport<ApplicationBootstrapperTests>().Value);
-
-                // test release
-                bootstrapper.Release(part);
-                Assert.False(bootstrapper.GetExports<ApplicationBootstrapperTests>().Any());
-
-                // Test localization of a test addon, with the type specified. This is possible due to Export[typeof(SomeAddon)]
-                Assert.Equal(6, bootstrapper.GetExports<IStartupModule>().Count());
-
-                // Test localization of a IStartupAction with meta-data, which is exported via [StartupAction(DoNotAwait = true)]
-                var hasAwaitStartFalse = bootstrapper.GetExports<IStartupModule, IStartupMetadata>().Any(x => x.Metadata.AwaitStart == false);
-                Assert.True(hasAwaitStartFalse);
-
-                Assert.True(bootstrapper.GetExports(typeof(IStartupModule)).Any());
+                Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Couldn't run");
             }
             // Dispose automatically calls IShutdownActions
         }

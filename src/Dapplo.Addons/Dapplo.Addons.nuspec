@@ -8,11 +8,16 @@
         <projectUrl>http://www.dapplo.net/blocks/Dapplo.Addons</projectUrl>
         <iconUrl>http://www.dapplo.net/favicon.ico</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>Interfaces for addons loaded by Dapplo.Addons.Container</description>
-		<summary>Interfaces for addons loaded by Dapplo.Addons.Container</summary>
+        <description>Interfaces for addons loaded by Dapplo.Addons.Bootstrapper</description>
+		<summary>Interfaces for addons loaded by Dapplo.Addons.Bootstrapper</summary>
         <language>en-us</language>
 		<copyright>$author$</copyright>
-		<tags>MEF addon</tags>
+		<tags>autofac addon</tags>
+		<dependencies>
+			<dependency id="Autofac" version="4.8.1.0" />
+			<dependency id="Autofac.Extras.AttributeMetadata" version="4.0.1.0" />
+			<dependency id="Autofac.Mef" version="4.0.0.0" />
+		</dependencies>
 		<frameworkAssemblies>
 			<frameworkAssembly assemblyName="System.ComponentModel.Composition" targetFramework="net45" />
 		</frameworkAssemblies>

@@ -35,7 +35,7 @@ namespace Dapplo.Addons.Tests.Entities
     /// <summary>
     ///     Used in testing the statup actions
     /// </summary>
-    public class TestAsyncStartupAction : IAsyncStartupAction
+    public class TestAsyncStartupAction : IStartupAsync
     {
         private readonly int _delay;
 

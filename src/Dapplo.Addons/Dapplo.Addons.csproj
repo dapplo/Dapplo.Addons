@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{66106BEB-D338-4887-AF47-125ABB31555F}</ProjectGuid>
+    <ProjectGuid>{BD6B2425-92E5-48C4-82BD-C2AAFE454DF2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Dapplo.Addons</RootNamespace>
@@ -12,6 +12,7 @@
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -35,54 +36,37 @@
     <DocumentationFile>bin\Release\Dapplo.Addons.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CommonServiceLocator, Version=2.0.3.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
-      <HintPath>..\packages\CommonServiceLocator.2.0.3\lib\net45\CommonServiceLocator.dll</HintPath>
+    <Reference Include="Autofac, Version=4.8.1.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autofac.4.8.1\lib\net45\Autofac.dll</HintPath>
     </Reference>
-    <Reference Include="Dapplo.Log, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Log.1.2.1\lib\net45\Dapplo.Log.dll</HintPath>
+    <Reference Include="Autofac.Extras.AttributeMetadata, Version=4.0.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autofac.Extras.AttributeMetadata.4.0.1\lib\net45\Autofac.Extras.AttributeMetadata.dll</HintPath>
+    </Reference>
+    <Reference Include="Autofac.Integration.Mef, Version=4.0.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autofac.Mef.4.0.0\lib\net45\Autofac.Integration.Mef.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Runtime.Caching" />
-    <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BootstrapperLocator.cs" />
-    <Compile Include="IStartupShutdownBootstrapper.cs" />
+    <Compile Include="AddonModule.cs" />
     <Compile Include="IApplicationBootstrapper.cs" />
-    <Compile Include="IDependencyProvider.cs" />
-    <Compile Include="IServiceExporter.cs" />
-    <Compile Include="IServiceRepository.cs" />
-    <Compile Include="IModule.cs" />
-    <Compile Include="IBootstrapper.cs" />
-    <Compile Include="IMefServiceLocator.cs" />
-    <Compile Include="IAsyncShutdownAction.cs" />
-    <Compile Include="IStartupModule.cs" />
-    <Compile Include="IShutdownModule.cs" />
-    <Compile Include="IShutdownAction.cs" />
-    <Compile Include="IShutdownMetadata.cs" />
-    <Compile Include="IAsyncStartupAction.cs" />
-    <Compile Include="IStartupAction.cs" />
-    <Compile Include="IStartupMetadata.cs" />
+    <Compile Include="IAssemblyResolver.cs" />
+    <Compile Include="IResourceProvider.cs" />
+    <Compile Include="IShutdownAsync.cs" />
+    <Compile Include="IStartupAsync.cs" />
+    <Compile Include="IShutdown.cs" />
+    <Compile Include="IStartup.cs" />
+    <Compile Include="IService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ModuleAttribute.cs" />
-    <Compile Include="ShutdownActionAttribute.cs" />
-    <Compile Include="StartupActionAttribute.cs" />
+    <Compile Include="ServiceOrderAttribute.cs" />
     <Compile Include="StartupException.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

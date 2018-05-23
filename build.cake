@@ -33,6 +33,8 @@ var isRelease = Argument<bool>("isRelease", string.Compare("[release]", Environm
 // Used to store the version, which is needed during the build and the packaging
 var version = EnvironmentVariable("APPVEYOR_BUILD_VERSION") ?? "1.0.0";
 
+var branch = EnvironmentVariable("APPVEYOR_REPO_BRANCH");
+
 Task("Default")
     .IsDependentOn("Publish");
 
@@ -121,6 +123,7 @@ Task("CreateAndUploadCoverageReport")
 });
 
 Task("UploadCoverageReport")
+	.WithCriteria(() => !isPullRequest)
     .WithCriteria(() => FileExists("./artifacts/coverage.xml"))
     .WithCriteria(() => !string.IsNullOrEmpty(coverallsRepoToken))
     .Does(() =>
@@ -238,7 +241,7 @@ Task("AssemblyVersion")
         var assemblyInfo = ParseAssemblyInfo(assemblyInfoFile.FullPath);
         CreateAssemblyInfo(assemblyInfoFile.FullPath, new AssemblyInfoSettings {
             Version = version,
-            InformationalVersion = version,
+            InformationalVersion = version + (branch == "master" ? "" : "-beta"),
             FileVersion = version,
 
             CLSCompliant = assemblyInfo.ClsCompliant,

@@ -6,663 +6,540 @@
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
 // 
-// This file is part of Dapplo.Addons
+// This file is part of Dapplo.CaliburnMicro
 // 
-// Dapplo.Addons is free software: you can redistribute it and/or modify
+// Dapplo.CaliburnMicro is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 // 
-// Dapplo.Addons is distributed in the hope that it will be useful,
+// Dapplo.CaliburnMicro is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Lesser General Public License for more details.
 // 
 // You should have a copy of the GNU Lesser General Public License
-// along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+// along with Dapplo.CaliburnMicro. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
 #endregion
-
-#region Usings
 
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Dapplo.Addons.Bootstrapper.Extensions;
 using Dapplo.Addons.Bootstrapper.Internal;
 using Dapplo.Log;
 
-#endregion
-
 namespace Dapplo.Addons.Bootstrapper.Resolving
 {
     /// <summary>
-    ///     This is a static Assembly resolver and Assembly loader
-    ///     It takes care of caching and prevents that an Assembly is loaded twice (which would cause issues!)
+    /// This class supports the resolving of assemblies
     /// </summary>
-    public static class AssemblyResolver
+    public class AssemblyResolver : IDisposable, IAssemblyResolver
     {
+        private readonly ApplicationConfig _applicationConfig;
         private static readonly LogSource Log = new LogSource();
-        private static readonly ISet<string> AppDomainRegistrations = new HashSet<string>();
-        // The assembly names in this set are not found in the CosturaAssemblies
-        private static readonly ISet<string> NotLocatedInCosturaAssemblies = new HashSet<string>();
-        private static readonly ISet<string> ResolveDirectories = new HashSet<string>();
-        private static readonly ConcurrentDictionary<string, Assembly> AssembliesByName = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
-        private static readonly ConcurrentDictionary<string, Assembly> AssembliesByPath = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
+        private readonly Regex _assemblyResourceNameRegex;
+        private readonly Regex _assemblyFilenameRegex;
+        private readonly ISet<string> _resolving = new HashSet<string>();
+        private readonly ISet<string> _assembliesToDeleteAtExit = new HashSet<string>();
 
         /// <summary>
-        ///     Setup and Register some of the default assemblies in the assembly cache
+        /// A regex with all the assemblies which we should ignore
         /// </summary>
-        static AssemblyResolver()
+        public Regex AssembliesToIgnore { get; } = new Regex(@"^(autofac.*|microsoft\..*|mscorlib|UIAutomationProvider|PresentationFramework|PresentationCore|WindowsBase|system.*|.*resources)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        /// <summary>
+        /// A dictionary with all the loaded assemblies, for caching and analysing
+        /// </summary>
+        public IDictionary<string, AssemblyLocationInformation> AvailableAssemblies { get; } = new ConcurrentDictionary<string, AssemblyLocationInformation>(StringComparer.OrdinalIgnoreCase);
+
+
+        /// <summary>
+        /// A dictionary with all the loaded assemblies, for caching and analysing
+        /// </summary>
+        public IDictionary<string, Assembly> LoadedAssemblies { get; } = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Gives access to the resources in assemblies
+        /// </summary>
+        public IResourceProvider Resources { get; }
+
+        /// <summary>
+        /// Specify if embedded assemblies written to disk before using will be removed again when the process exits
+        /// </summary>
+        public bool CleanupAfterExit { get; set; } = true;
+
+        /// <summary>
+        /// The constructor of the Assembly Resolver
+        /// </summary>
+        /// <param name="applicationConfig">ApplicationConfig</param>
+        public AssemblyResolver(ApplicationConfig applicationConfig)
         {
-            Assembly.GetCallingAssembly().Register();
-            Assembly.GetEntryAssembly().Register();
-            Assembly.GetExecutingAssembly().Register();
-            AddDirectory(".");
+            _applicationConfig = applicationConfig;
+
+            // setup the regex
+            var regexExtensions = string.Join("|", applicationConfig.Extensions.Select(e => e.Replace(".", @"\.")));
+            _assemblyResourceNameRegex = new Regex($@"^(costura\.)*(?<assembly>.*)({regexExtensions})$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            _assemblyFilenameRegex = new Regex($@".*\\(?<assembly>.*)({regexExtensions})$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            Resources = new ManifestResources(simpleAssemblyName => LoadedAssemblies.ContainsKey(simpleAssemblyName) ? LoadedAssemblies[simpleAssemblyName] : null);
+
+            foreach (var loadedAssembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                LoadedAssemblies[loadedAssembly.GetName().Name] = loadedAssembly;
+            }
+
+            // Register assembly loading
+            AppDomain.CurrentDomain.AssemblyLoad += AssemblyLoad;
+            // Register assembly resolving
+            AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolve;
+            AppDomain.CurrentDomain.ProcessExit += (sender, args) => RemoveCopiedAssemblies();
+
+            ScanForAssemblies();
         }
 
         /// <summary>
-        ///     The extensions used for finding assemblies, you can add your own.
-        ///     Extensions can end on .gz when such a file/resource is used it will automatically be decompresed
+        /// Do the one time scan of all the assemblies
         /// </summary>
-        public static IEnumerable<string> Extensions { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {"dll", "dll.gz", "dll.compressed"};
-
-        /// <summary>
-        ///     Directories which this AssemblyResolver uses to find assemblies
-        /// </summary>
-        public static IEnumerable<string> Directories {
-            get
+        private void ScanForAssemblies()
+        {
+            var assemblies = new HashSet<AssemblyLocationInformation>();
+            if (_applicationConfig.ScanForEmbeddedAssemblies)
             {
-                lock (ResolveDirectories)
+                foreach (var loadedAssembly in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value).ToList())
                 {
-                    return ResolveDirectories.ToList();
-                }
-            }
-        }
-
-        /// <summary>
-        ///     IEnumerable with all cached assemblies
-        /// </summary>
-        public static IEnumerable<Assembly> AssemblyCache => AssembliesByName.Values;
-
-        /// <summary>
-        ///     Defines if the resolving is first loading internal files, if nothing was found check the file system
-        ///     There might be security reasons for not doing this.
-        /// </summary>
-        public static bool ResolveEmbeddedBeforeFiles { get; set; } = true;
-
-        /// <summary>
-        ///     Defines if before loading an assembly from a resource, the Assembly names from the cache are checked against the
-        ///     resource name.
-        ///     This speeds up the loading, BUT might have a problem that an assembly "x.y.z.dll" is skipped as "y.z.dll" was
-        ///     already loaded.
-        /// </summary>
-        public static bool CheckEmbeddedResourceNameAgainstCache { get; set; } = true;
-
-        /// <summary>
-        ///     Add the specified directory, by converting it to an absolute directory
-        /// </summary>
-        /// <param name="directory">Directory to add for resolving</param>
-        public static void AddDirectory(string directory)
-        {
-            lock (ResolveDirectories)
-            {
-                foreach (var absoluteDirectory in FileLocations.DirectoriesFor(directory))
-                {
-                    ResolveDirectories.Add(absoluteDirectory);
-                }
-            }
-        }
-
-        /// <summary>
-        ///     Extension to register an assembly to the AssemblyResolver, this is used for resolving embedded assemblies
-        /// </summary>
-        /// <param name="assembly">Assembly</param>
-        /// <param name="filepath">Path to assembly, or null if it isn't loaded from the file system</param>
-        public static void Register(this Assembly assembly, string filepath = null)
-        {
-            if (assembly == null)
-            {
-                Log.Verbose().WriteLine("Register was callled with null.");
-                return;
-            }
-            var assemblyName = assembly.GetName().Name;
-            if (AssembliesByName.TryAdd(assemblyName, assembly))
-            {
-                Log.Verbose().WriteLine("Registering Assembly {0}", assemblyName);
-            }
-            filepath = filepath ?? assembly.GetLocation();
-            if (string.IsNullOrEmpty(filepath))
-            {
-                return;
-            }
-            // Make sure the name is always the same.
-            filepath = FileTools.RemoveExtensions(Path.GetFullPath(filepath), Extensions) + ".dll";
-            if (!AssembliesByPath.TryAdd(filepath, assembly))
-            {
-                return;
-            }
-            Log.Verbose().WriteLine("Registering Assembly {0} to file {1}", assemblyName, filepath);
-        }
-
-        /// <summary>
-        ///     Register the AssemblyResolve event for the specified AppDomain
-        ///     This can be called multiple times, it detect this.
-        /// </summary>
-        /// <returns>IDisposable, when disposing this the event registration is removed</returns>
-        public static IDisposable RegisterAssemblyResolve(this AppDomain appDomain)
-        {
-            lock (AppDomainRegistrations)
-            {
-                if (!AppDomainRegistrations.Contains(appDomain.FriendlyName))
-                {
-                    AppDomainRegistrations.Add(appDomain.FriendlyName);
-                    appDomain.AssemblyResolve += ResolveEventHandler;
-                    appDomain.AssemblyLoad += AssemblyLoadHandler;
-                    if (Log.IsVerboseEnabled())
+                    string[] resources;
+                    try
                     {
-                        Log.Verbose().WriteLine("Registered Assembly-Resolving functionality to AppDomain {0}", appDomain.FriendlyName);
+                        resources = Resources.GetCachedManifestResourceNames(loadedAssembly);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warn().WriteLine(ex, "Couldn't retrieve resources from {0}", loadedAssembly.GetName().Name);
+                        continue;
+                    }
+                    foreach (var resource in resources)
+                    {
+                        var resourceMatch = _assemblyResourceNameRegex.Match(resource);
+                        if (resourceMatch.Success)
+                        {
+                            assemblies.Add(new AssemblyLocationInformation(resourceMatch.Groups["assembly"].Value, loadedAssembly, resource));
+                        }
                     }
                 }
-                return SimpleDisposable.Create(() => UnregisterAssemblyResolve(appDomain));
+            }
+
+            foreach (var fileLocation in FileLocations.Scan(_applicationConfig.ScanDirectories, _assemblyFilenameRegex, SearchOption.TopDirectoryOnly))
+            {
+                assemblies.Add(new AssemblyLocationInformation(fileLocation.Item2.Groups["assembly"].Value, fileLocation.Item1));
+            }
+
+            // Reduce step 1) Take from the double assemblies only those which are embedded & on the file system in the probing path
+            foreach (var assemblyGroup in assemblies.GroupBy(information => information.Name).ToList())
+            {
+                var groupList = assemblyGroup.ToList();
+                if (groupList.Count <=1)
+                {
+                    continue;
+                }
+
+                // Remove filesystem assemblies from the list which are not in the AssemblyResolveDirectories
+                var unneededAssemblies = groupList.Where(info => !info.IsEmbedded && !info.IsOnProbingPath).ToList();
+                if (groupList.Count - unneededAssemblies.Count < 1)
+                {
+                    continue;
+                }
+
+                foreach (var unneededAssemblyInformation in unneededAssemblies)
+                {
+                    assemblies.Remove(unneededAssemblyInformation);
+                }
+            }
+
+            // Reduce step 2)
+            foreach (var assemblyGroup in assemblies.GroupBy(information => information.Name).ToList())
+            {
+                var groupList = assemblyGroup.ToList();
+                if (groupList.Count <=1)
+                {
+                    continue;
+                }
+                // Remove assemblies which are older
+                foreach (var unneededAssemblyInformation in groupList.OrderBy(info => info.FileDate).Skip(1).ToList())
+                {
+                    assemblies.Remove(unneededAssemblyInformation);
+                }
+            }
+
+            // Create the assembly locations
+            foreach (var assemblyLocationInformation in assemblies)
+            {
+                AvailableAssemblies[assemblyLocationInformation.Name] = assemblyLocationInformation;
             }
         }
 
         /// <summary>
-        /// Used to track which assemblies are loaded, and register costura assemblies
+        /// Load an assembly from the specified location
         /// </summary>
-        /// <param name="sender">object sender</param>
-        /// <param name="assemblyLoadEventArgs">AssemblyLoadEventArgs</param>
-        private static void AssemblyLoadHandler(object sender, AssemblyLoadEventArgs assemblyLoadEventArgs)
+        /// <param name="assemblyLocationInformation">AssemblyLocationInformation</param>
+        /// <returns>Assembly</returns>
+        public Assembly LoadAssembly(AssemblyLocationInformation assemblyLocationInformation)
         {
+            // Check if the simple name can be found in the cache
+            if (LoadedAssemblies.TryGetValue(assemblyLocationInformation.Name, out var assembly))
+            {
+                Log.Info().WriteLine("Returned {0} from cache.", assemblyLocationInformation.Name);
+                return assembly;
+            }
+
+            if (assemblyLocationInformation.IsEmbedded)
+            {
+                // Check if we can work with temporary files
+                if (_applicationConfig.CopyEmbeddedAssembliesToFileSystem)
+                {
+                    assembly = LoadEmbeddedAssemblyViaTmpFile(assemblyLocationInformation);
+                    if (assembly != null)
+                    {
+                        return assembly;
+                    }
+                }
+
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Loading {0} internally", assemblyLocationInformation.Name);
+                }
+                using (var stream = Resources.ResourceAsStream(assemblyLocationInformation.ContainingAssembly, assemblyLocationInformation.Filename, false))
+                {
+                    return Assembly.Load(stream.ToByteArray());
+                }
+            }
+            TryLoadOrLoadFrom(assemblyLocationInformation.Filename, assemblyLocationInformation, out assembly);
+            return assembly;
+        }
+
+        /// <summary>
+        /// Try to load an assembly via Assembly.Load or Assembly.LoadFrom
+        /// </summary>
+        /// <param name="filename">string</param>
+        /// <param name="assembly">Assembly returned or null if it couldn't be loaded</param>
+        /// <param name="allowCopy">bool which specifies if it's allowed to make a copy of the file to improve compatibility</param>
+        /// <returns>bool true if the assembly was loaded, false if it was already in the cache or a loading problem occured</returns>
+        internal bool TryLoadOrLoadFrom(string filename, AssemblyLocationInformation additionalInformation, out Assembly assembly, bool allowCopy = true)
+        {
+            // Get a simple assembly name via the filename
+            var simpleAssemblyName = Path.GetFileNameWithoutExtension(filename) ?? throw new ArgumentNullException(nameof(filename));
+            if (string.IsNullOrEmpty(simpleAssemblyName))
+            {
+                assembly = null;
+                return false;
+            }
+            // Check if the simple name can be found in the cache
+            if (LoadedAssemblies.TryGetValue(simpleAssemblyName, out assembly))
+            {
+                Log.Info().WriteLine("Returned {0} from cache.", simpleAssemblyName);
+                return false;
+            }
+
+            // Get the assembly name from the file
+            var assemblyName = AssemblyName.GetAssemblyName(filename);
+            // Check the cache again
+            if (LoadedAssemblies.TryGetValue(assemblyName.Name, out assembly))
+            {
+                Log.Info().WriteLine("Returned {0} from cache.", assemblyName.Name);
+                return false;
+            }
+
+            if (allowCopy && _applicationConfig.CopyEmbeddedAssembliesToFileSystem && FileLocations.AddonsLocation != null)
+            {
+                var newLocation = $@"{FileLocations.AddonsLocation}\{assemblyName.Name}.dll";
+                try
+                {
+                    if (!Directory.Exists(FileLocations.AddonsLocation))
+                    {
+                        Directory.CreateDirectory(FileLocations.AddonsLocation);
+                    }
+
+                    bool makeCopy = true;
+                    if (File.Exists(newLocation))
+                    {
+                        if (File.GetLastWriteTime(newLocation) < additionalInformation.FileDate)
+                        {
+                            Log.Warn().WriteLine("Writing {0} over {1}, as {1} is newer.", filename, newLocation);
+                            File.Delete(newLocation);
+                        }
+                        else
+                        {
+                            // Do not copy
+                            makeCopy = false;
+                        }
+                    }
+                    if (makeCopy)
+                    {
+                        Log.Verbose().WriteLine("Creating a copy of {0} to {1}, solving loading issues.", filename, newLocation);
+                        File.Copy(filename, newLocation);
+                        _assembliesToDeleteAtExit.Add(newLocation);
+                    }
+                    assembly = Assembly.Load(assemblyName);
+                    if (assembly != null)
+                    {
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn().WriteLine(ex, "Couldn't create a copy of {0} to {1}.", filename, newLocation);
+                }
+            }
+
             if (Log.IsVerboseEnabled())
             {
-                Log.Verbose().WriteLine("Loaded assembly {0}", assemblyLoadEventArgs.LoadedAssembly.FullName);
+                Log.Verbose().WriteLine("Loading {0} from {1}.", simpleAssemblyName, filename);
             }
 
-            // Force caching the embedded resources
-            if (!assemblyLoadEventArgs.LoadedAssembly.HasResources())
+            try
             {
-                return;
+                assembly = Assembly.LoadFrom(filename);
+                return true;
             }
-
-            // as a new assembly with resources was added, clear the cache of assemblies which cannot be found in the costura embedded files
-            NotLocatedInCosturaAssemblies.Clear();
-        }
-
-        /// <summary>
-        ///     Register AssemblyResolve on the current AppDomain
-        /// </summary>
-        /// <returns>IDisposable, when disposing this the event registration is removed</returns>
-        public static IDisposable RegisterAssemblyResolve()
-        {
-            return AppDomain.CurrentDomain.RegisterAssemblyResolve();
-        }
-
-        /// <summary>
-        ///     Unregister the AssemblyResolve event for the specified AppDomain
-        ///     This can be called multiple times, it detect this.
-        /// </summary>
-        public static void UnregisterAssemblyResolve(this AppDomain appDomain)
-        {
-            lock (AppDomainRegistrations)
+            catch (Exception ex)
             {
-                if (!AppDomainRegistrations.Contains(appDomain.FriendlyName))
-                {
-                    return;
-                }
-                AppDomainRegistrations.Remove(appDomain.FriendlyName);
-                appDomain.AssemblyResolve -= ResolveEventHandler;
-                Log.Verbose().WriteLine("Unregistered Assembly-Resolving functionality from AppDomain {0}", appDomain.FriendlyName);
+                assembly = null;
+                Log.Error().WriteLine(ex, "Couldn't load assembly from file {0}", filename);
+                return false;
             }
         }
 
         /// <summary>
-        ///     Unregister AssemblyResolve from the current AppDomain
-        /// </summary>
-        public static void UnregisterAssemblyResolve()
-        {
-            AppDomain.CurrentDomain.UnregisterAssemblyResolve();
-        }
-
-        /// <summary>
-        ///     A resolver which takes care of loading DLL's which are referenced from AddOns but not found
+        /// This will try to resolve the requested assembly by looking into the cache
         /// </summary>
         /// <param name="sender">object</param>
         /// <param name="resolveEventArgs">ResolveEventArgs</param>
         /// <returns>Assembly</returns>
-        private static Assembly ResolveEventHandler(object sender, ResolveEventArgs resolveEventArgs)
+        private Assembly AssemblyResolve(object sender, ResolveEventArgs resolveEventArgs)
         {
             var assemblyName = new AssemblyName(resolveEventArgs.Name);
+            Log.Verbose().WriteLine("Resolving {0}", assemblyName.FullName);
+            if (_resolving.Contains(assemblyName.Name))
+            {
+                Log.Warn().WriteLine("Ignoring recursive resolve event for {0}", assemblyName.Name);
+                return null;
+            }
 
-            // Check if it is an resources resolve event, see http://stackoverflow.com/questions/4368201 for more info
             if (assemblyName.Name.EndsWith(".resources"))
             {
                 // Ignore to prevent resolving logic which doesn't find anything anyway
                 if (Log.IsVerboseEnabled())
                 {
-                    Log.Verbose().WriteLine("Ignoring resolve event for {0}", assemblyName.FullName);
+                    Log.Verbose().WriteLine("Ignoring resolve event for {0}", assemblyName.Name);
                 }
                 return null;
+            }
+
+            if (LoadedAssemblies.TryGetValue(assemblyName.Name, out var assemblyResult))
+            {
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Returned {0} from cache.", assemblyName.Name);
+                }
+
+                return assemblyResult;
+            }
+
+            try
+            {
+                _resolving.Add(assemblyName.Name);
+                if (!AvailableAssemblies.TryGetValue(assemblyName.Name, out var assemblyLocationInformation))
+                {
+                    return null;
+                }
+
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Found {0} at {1}.", assemblyName.Name, assemblyLocationInformation.ToString());
+                }
+
+                return LoadAssembly(assemblyLocationInformation);
+            }
+            finally
+            {
+                _resolving.Remove(assemblyName.Name);
+            }
+        }
+
+        /// <summary>
+        /// Get a list of all embedded assemblies
+        /// </summary>
+        /// <returns>IEnumerable with a containing the names of the resource and of the assemblie</returns>
+        public IEnumerable<string> EmbeddedAssemblyNames(IEnumerable<Assembly> assembliesToCheck = null)
+        {
+            foreach (var loadedAssembly in assembliesToCheck ?? LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value).ToList())
+            {
+                string[] resources;
+                try
+                {
+                    resources = Resources.GetCachedManifestResourceNames(loadedAssembly);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn().WriteLine(ex, "Couldn't retrieve resources from {0}", loadedAssembly.GetName().Name);
+                    continue;
+                }
+                foreach (var resource in resources)
+                {
+                    var resourceMatch = _assemblyResourceNameRegex.Match(resource);
+                    if (resourceMatch.Success)
+                    {
+                        yield return resourceMatch.Groups["assembly"].Value;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// This is a workaround where an embedded assembly is written to a tmp file, which solves some issues
+        /// </summary>
+        /// <param name="assemblyLocationInformation">AssemblyLocationInformation</param>
+        /// <returns>Assembly</returns>
+        private Assembly LoadEmbeddedAssemblyViaTmpFile(AssemblyLocationInformation assemblyLocationInformation)
+        {
+            var assemblyFileName = $@"{FileLocations.AddonsLocation}\{assemblyLocationInformation.Name}.dll";
+            using (var stream = Resources.ResourceAsStream(assemblyLocationInformation.ContainingAssembly, assemblyLocationInformation.Filename, false))
+            {
+                try
+                {
+                    Log.Verbose().WriteLine("Creating temporary assembly file {0}", assemblyFileName);
+                    if (!Directory.Exists(FileLocations.AddonsLocation))
+                    {
+                        Directory.CreateDirectory(FileLocations.AddonsLocation);
+                    }
+                    using (var fileStream = new FileStream(assemblyFileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
+                    {
+                        stream.CopyTo(fileStream);
+                    }
+                    _assembliesToDeleteAtExit.Add(assemblyFileName);
+
+                }
+                catch (Exception)
+                {
+                    stream.Seek(0, SeekOrigin.Begin);
+                    var appdataDirectory = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\{_applicationConfig.ApplicationName}";
+                    if (!Directory.Exists(appdataDirectory))
+                    {
+                        Directory.CreateDirectory(appdataDirectory);
+                    }
+
+                    assemblyFileName = $@"{appdataDirectory}\{assemblyLocationInformation.Name}.dll";
+                    Log.Verbose().WriteLine("Creating temporary assembly file {0}", assemblyFileName);
+                    using (var fileStream = new FileStream(assemblyFileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
+                    {
+                        stream.CopyTo(fileStream);
+                    }
+                    // Register delete on exit, this is done by calling a command
+                    _assembliesToDeleteAtExit.Add(assemblyFileName);
+                }
+            }
+
+
+            Log.Verbose().WriteLine("Loading {0} from temporary assembly file {1}", assemblyLocationInformation.Name, assemblyFileName);
+            // Best case, we can load it now by name, let the LoadOrLoadFrom decide
+            TryLoadOrLoadFrom(assemblyFileName, assemblyLocationInformation, out var assembly, false);
+            return assembly;
+        }
+
+        /// <summary>
+        /// This is called when a new assembly is loaded, we need to know this
+        /// </summary>
+        /// <param name="sender">object</param>
+        /// <param name="args">AssemblyLoadEventArgs</param>
+        private void AssemblyLoad(object sender, AssemblyLoadEventArgs args)
+        {
+            var loadedAssembly = args.LoadedAssembly;
+            var assemblyName = loadedAssembly.GetName().Name;
+            Log.Verbose().WriteLine("Loaded {0}", assemblyName);
+            LoadedAssemblies[assemblyName] = loadedAssembly;
+
+            if (!_applicationConfig.ScanForEmbeddedAssemblies)
+            {
+                return;
+            }
+
+            string[] resources;
+            try
+            {
+                resources = Resources.GetCachedManifestResourceNames(loadedAssembly);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn().WriteLine(ex, "Couldn't retrieve resources from {0}", loadedAssembly.GetName().Name);
+                return;
+            }
+            foreach (var resource in resources)
+            {
+                var resourceMatch = _assemblyResourceNameRegex.Match(resource);
+                if (!resourceMatch.Success)
+                {
+                    continue;
+                }
+
+                var embeddedAssemblyName = resourceMatch.Groups["assembly"].Value;
+                if (AvailableAssemblies.ContainsKey(embeddedAssemblyName))
+                {
+                    continue;
+                }
+
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Detected additional assembly {0} in {1}", embeddedAssemblyName, loadedAssembly.GetName().Name);
+                }
+
+                var assemblyLocation = new AssemblyLocationInformation(embeddedAssemblyName, loadedAssembly, resource);
+                AvailableAssemblies[embeddedAssemblyName] = assemblyLocation;
+            }
+        }
+
+        /// <summary>
+        /// Helper method to clean up
+        /// </summary>
+        private void RemoveCopiedAssemblies()
+        {
+            if (!CleanupAfterExit ||_assembliesToDeleteAtExit.Count == 0)
+            {
+                return;
             }
 
             if (Log.IsVerboseEnabled())
             {
-                Log.Verbose().WriteLine("Resolve event for {0}", assemblyName.FullName);
+                Log.Verbose().WriteLine("Removing cached assembly files {0}", string.Join(" ", _assembliesToDeleteAtExit.Select(a => $"\"{FileTools.NormalizeDirectory(a)}\"")));
             }
 
-            // See if we can find the assembly
-            var assembly = FindAssembly(assemblyName.Name);
-
-            if (assembly == null && assemblyName.Name.StartsWith("System."))
+            var info = new ProcessStartInfo
             {
-                if (Log.IsVerboseEnabled())
-                {
-                    Log.Verbose().WriteLine("Not scanning for embedded DLL files when the name starts with \"System.\", like: {0}", assemblyName.FullName);
-                }
-
-                return null;
-            }
-
-            // Check Costura resources
-            if (assembly == null && !NotLocatedInCosturaAssemblies.Contains(assemblyName.Name))
-            {
-                assembly = CosturaHelper.FindCosturaEmbeddedAssembly(assemblyName.Name);
-                if (assembly == null)
-                {
-                    NotLocatedInCosturaAssemblies.Add(assemblyName.Name);
-                }
-            }
-            if (assembly != null && assembly.FullName != assemblyName.FullName)
-            {
-                Log.Warn().WriteLine("Requested was {0} returned was {1}, this might cause issues but loading the same assembly would be worse.", assemblyName.FullName, assembly.FullName);
-            }
-
-            return assembly;
+                Arguments = "/C choice /C Y /N /D Y /T 3 & Del " + string.Join(" ", _assembliesToDeleteAtExit),
+                WindowStyle = ProcessWindowStyle.Hidden,
+                CreateNoWindow = true,
+                FileName = "cmd.exe"
+            };
+            _assembliesToDeleteAtExit.Clear();
+            Process.Start(info);
         }
 
         /// <summary>
-        ///     This goes over the know assemblies from this AssemblyResolver, but also checks the current AppDomain so assemblies
-        ///     are not loaded double!
+        /// Remove event registrations
         /// </summary>
-        /// <param name="assemblyName">string with the name (not full name) of the assembly</param>
-        /// <returns>Assembly</returns>
-        private static Assembly FindCachedAssemblyByAssemblyName(string assemblyName)
+        public void Dispose()
         {
-            // check if the file was already loaded, this assumes that the filename (without extension) IS the assembly name
+            // Unregister assembly loading
+            AppDomain.CurrentDomain.AssemblyLoad -= AssemblyLoad;
+            // Register assembly resolving
+            AppDomain.CurrentDomain.AssemblyResolve -= AssemblyResolve;
 
-            AssembliesByName.TryGetValue(assemblyName, out var assembly);
-            if (assembly == null)
-            {
-                // Do not scan for all the loaded assemblies when it's a system assembly
-                if (assemblyName.StartsWith("System."))
-                {
-                    return null;
-                }
-                // The assembly was not found in our own cache, find it in the current AppDomain
-                assembly = AppDomain.CurrentDomain.GetAssemblies()
-                    .FirstOrDefault(x => string.Equals(x.GetName().Name, assemblyName, StringComparison.InvariantCultureIgnoreCase));
-                if (assembly != null)
-                {
-                    if (Log.IsVerboseEnabled())
-                    {
-                        Log.Verbose().WriteLine("Using already loaded assembly {1} for requested {0}.", assemblyName, assembly.FullName);
-                    }
-
-                    // Register the assembly, so the Dapplo.Addons Bootstrapper knows it too
-                    assembly.Register();
-                }
-                else
-                {
-                    Log.Verbose().WriteLine("Couldn't find an available assembly called {0}.", assemblyName);
-                }
-            }
-            else if (Log.IsVerboseEnabled())
-            {
-                Log.Verbose().WriteLine("Using cached assembly {0}.", assembly.FullName);
-            }
-
-            return assembly;
-        }
-
-        /// <summary>
-        ///     check the caches to see if the assembly was already loaded
-        /// </summary>
-        /// <param name="filepath">string with the path where the assembly should be loaded from</param>
-        /// <returns>Assembly when it was cached, or null when it was not cached</returns>
-        private static Assembly FindCachedAssemblyByFilepath(string filepath)
-        {
-            filepath = FileTools.RemoveExtensions(Path.GetFullPath(filepath), Extensions) + ".dll";
-
-            // Dynamic assemblies don't have a location, skip them, it would cause a NotSupportedException
-            var assembly = AssembliesByName.Values
-                .FirstOrDefault(x => string.Equals(x.GetLocation(), filepath, StringComparison.InvariantCultureIgnoreCase));
-
-            // Check for assemblies by path
-            if (assembly == null)
-            {
-                AssembliesByPath.TryGetValue(filepath, out assembly);
-            }
-            if (assembly == null)
-            {
-                assembly = AssembliesByPath
-                    .Where(x => string.Equals(Path.GetFileNameWithoutExtension(x.Key), Path.GetFileNameWithoutExtension(filepath),StringComparison.InvariantCultureIgnoreCase))
-                    .Select(x => x.Value)
-                    .FirstOrDefault();
-                if (assembly != null)
-                {
-                    return assembly;
-                }
-            }
-            // The assembly wasn't found in our internal cache, now we go through the AppDomain
-            // Dynamic assemblies don't have a location, skip them, it would cause a NotSupportedException
-            assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => string.Equals(x.GetLocation(), filepath, StringComparison.InvariantCultureIgnoreCase));
-            if (assembly != null)
-            {
-                // found something, cache it for later usage
-                assembly.Register(filepath);
-            }
-            return assembly;
-        }
-
-        /// <summary>
-        ///     Simple method to load an assembly from a file path (or returned a cached version).
-        ///     If it was loaded new, it will be added to the cache
-        /// </summary>
-        /// <param name="filepath">string with the path to the file</param>
-        /// <returns>Assembly</returns>
-        [SuppressMessage("Sonar Code Smell", "S3885:Assembly.Load should be used", Justification =
-            "Assembly.Load doesn't work on paths outside of the AppDomain.CurrentDomain.BaseDirectory")]
-        public static Assembly LoadAssemblyFromFile(string filepath)
-        {
-            if (string.IsNullOrEmpty(filepath))
-            {
-                throw new ArgumentNullException(nameof(filepath));
-            }
-            var assembly = FindCachedAssemblyByFilepath(filepath);
-
-            if (assembly != null)
-            {
-                if (Log.IsVerboseEnabled())
-                {
-                    Log.Verbose().WriteLine("Returning cached assembly for {0}, as {1} was already loaded.", filepath, assembly.FullName);
-                }
-                return assembly;
-            }
-            // check if the file was already loaded, this assumes that the filename (without extension) IS the assembly name
-            var assemblyNameFromPath = FileTools.RemoveExtensions(Path.GetFileName(filepath), Extensions);
-            assembly = FindCachedAssemblyByAssemblyName(assemblyNameFromPath);
-            if (assembly != null)
-            {
-                if (Log.IsVerboseEnabled())
-                {
-                    Log.Verbose().WriteLine("Skipping loading assembly-file from {0}, as {1} was already loaded.", filepath, assembly.FullName);
-                }
-                return assembly;
-            }
-
-            Log.Verbose().WriteLine("Loading assembly from {0}", filepath);
-            if (filepath.EndsWith(".gz") || filepath.EndsWith(".compressed"))
-            {
-                using (var fileStream = new FileStream(filepath, FileMode.Open, FileAccess.ReadWrite))
-                {
-                    assembly = fileStream.ToAssembly(filepath.EndsWith(".gz") ? CompressionTypes.Gzip : CompressionTypes.Deflate);
-                    assembly.Register(filepath);
-                }
-            }
-            else
-            {
-                // Use Assembly.LoadFrom or Assembly.Load, as Assembly.LoadFile ignores the fact that an assembly was already loaded (and just loads it double).
-                if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Path.GetFileName(filepath))))
-                {
-                    assembly = Assembly.Load(Path.GetFileNameWithoutExtension(filepath));
-                }
-                else
-                {
-                    // The file is outside of the AppDomain.CurrentDomain.BaseDirectory, so we need to use LoadFrom
-                    assembly = Assembly.LoadFrom(filepath);
-                }
-
-                // Register the assembly in the cache, by name and by path
-                assembly.Register(filepath);
-            }
-
-            // Make sure the directory of the file is known to the resolver
-            // this takes care of dlls which are in the same directory as this assembly.
-            // It only makes sense if this method was called directly, but as the ResolveDirectories is a set, it doesn't hurt.
-            var assemblyDirectory = Path.GetDirectoryName(filepath);
-            if (string.IsNullOrEmpty(assemblyDirectory))
-            {
-                return assembly;
-            }
-
-            lock (ResolveDirectories)
-            {
-                Log.Verbose().WriteLine("Added {0} for resolving relative to {1}", assemblyDirectory, filepath);
-                ResolveDirectories.Add(assemblyDirectory);
-            }
-            return assembly;
-        }
-
-        /// <summary>
-        ///     Simple method to load an assembly from a stream
-        /// </summary>
-        /// <param name="assemblyStream">Stream</param>
-        /// <param name="compressionType">specify the compression type for the stream</param>
-        /// <param name="checkCache">specify if the cache needs to be checked, this costs performance</param>
-        /// <returns>Assembly or null when the stream is null</returns>
-        public static Assembly ToAssembly(this Stream assemblyStream, CompressionTypes compressionType = CompressionTypes.None, bool checkCache = false)
-        {
-            if (assemblyStream == null)
-            {
-                return null;
-            }
-
-            byte[] assemblyBytes;
-
-            switch (compressionType)
-            {
-                case CompressionTypes.Gzip:
-                    using (var stream = new GZipStream(assemblyStream, CompressionMode.Decompress, true))
-                    {
-                        assemblyBytes = stream.ToByteArray();
-                    }
-
-                    break;
-                case CompressionTypes.Deflate:
-                    using (var stream = new DeflateStream(assemblyStream, CompressionMode.Decompress, true))
-                    {
-                        assemblyBytes = stream.ToByteArray();
-                    }
-
-                    break;
-                default:
-                    assemblyBytes = assemblyStream.ToByteArray();
-                    break;
-            }
-
-            if (checkCache)
-            {
-                // Create a temp-file to write the "stream" to, so the assembly name can be read
-                string fileName = Path.GetTempPath() + Guid.NewGuid() + ".dll";
-                try
-                {
-                    using (var tmpFileStream = new FileStream(fileName, FileMode.CreateNew))
-                    {
-                        tmpFileStream.Write(assemblyBytes, 0, assemblyBytes.Length);
-                    }
-                    var assemblyName = AssemblyName.GetAssemblyName(fileName);
-                    Assembly cachedAssembly = FindCachedAssemblyByAssemblyName(assemblyName.Name);
-                    if (cachedAssembly != null)
-                    {
-                        return cachedAssembly;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Warn().WriteLine(ex, "Couldn't get assembly name, skipping cache.");
-                }
-                finally
-                {
-                    File.Delete(fileName);
-                }
-            }
-            var assembly = Assembly.Load(assemblyBytes);
-            assembly.Register();
-            return assembly;
-        }
-
-        /// <summary>
-        ///     Find the specified assemblies from a manifest resource or from the file system.
-        ///     It is possible to use wildcards but the first match will be loaded!
-        /// </summary>
-        /// <param name="assemblyNames">
-        ///     IEnumerable with the assembly names, e.g. from AssemblyName.Name, do not specify an
-        ///     extension
-        /// </param>
-        /// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
-        /// <returns>IEnumerable with Assembly</returns>
-        public static IEnumerable<Assembly> FindAssemblies(IEnumerable<string> assemblyNames, IEnumerable<string> extensions = null)
-        {
-            var extensionsList = extensions?.ToList();
-            foreach (var assemblyName in assemblyNames)
-            {
-                yield return FindAssembly(assemblyName, extensionsList);
-            }
-        }
-
-        /// <summary>
-        ///     Find the specified assembly from a manifest resource or from the file system.
-        ///     It is possible to use wildcards but the first match will be loaded!
-        /// </summary>
-        /// <param name="assemblyName">string with the assembly name, e.g. from AssemblyName.Name, do not specify an extension</param>
-        /// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
-        /// <returns>Assembly or null</returns>
-        public static Assembly FindAssembly(string assemblyName, IEnumerable<string> extensions = null)
-        {
-            Assembly assembly;
-            // Do not use the cache if a wildcard was used.
-            if (!assemblyName.Contains("*"))
-            {
-                assembly = FindCachedAssemblyByAssemblyName(assemblyName);
-                if (assembly != null)
-                {
-                    return assembly;
-                }
-            }
-
-            var extensionsList = extensions?.ToList();
-            // Loading order depends on ResolveEmbeddedBeforeFiles
-            if (ResolveEmbeddedBeforeFiles)
-            {
-                assembly = LoadEmbeddedAssembly(assemblyName, extensionsList) ?? LoadAssemblyFromFileSystem(assemblyName, extensionsList);
-            }
-            else
-            {
-                assembly = LoadAssemblyFromFileSystem(assemblyName, extensionsList) ?? LoadEmbeddedAssembly(assemblyName, extensionsList);
-            }
-
-            return assembly;
-        }
-
-        /// <summary>
-        ///     Load the specified assembly from a manifest resource, or return null
-        /// </summary>
-        /// <param name="assemblyName">string</param>
-        /// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
-        /// <returns>Assembly</returns>
-        public static Assembly LoadEmbeddedAssembly(string assemblyName, IEnumerable<string> extensions = null)
-        {
-            var assemblyRegex = FileTools.FilenameToRegex(assemblyName, extensions ?? Extensions);
-            try
-            {
-                var resourceTuple = AssemblyCache.FindEmbeddedResources(assemblyRegex).FirstOrDefault();
-                if (resourceTuple != null)
-                {
-                    return resourceTuple.Item1.LoadEmbeddedAssembly(resourceTuple.Item2);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error().WriteLine("Error loading {0} from manifest resources: {1}", assemblyName, ex.Message);
-            }
-            return null;
-        }
-
-        /// <summary>
-        ///     Load the specified assembly from an embedded (manifest) resource, or return null
-        /// </summary>
-        /// <param name="assembly">Assembly to load the resource from</param>
-        /// <param name="resourceName">Name of the embedded resource for the assembly to load</param>
-        /// <returns>Assembly</returns>
-        public static Assembly LoadEmbeddedAssembly(this Assembly assembly, string resourceName)
-        {
-            if (CheckEmbeddedResourceNameAgainstCache)
-            {
-                var possibleAssemblyName = FileTools.RemoveExtensions(resourceName, Extensions);
-
-                var cachedAssembly = FindCachedAssemblyByAssemblyName(possibleAssemblyName);
-                if (cachedAssembly != null)
-                {
-                    Log.Warn().WriteLine("Cached assembly {0} found for resource {1}, if this is not correct disable this by setting CheckEmbeddedResourceNameAgainstCache to false", cachedAssembly.FullName, resourceName);
-                    return cachedAssembly;
-                }
-            }
-            using (var stream = assembly.GetEmbeddedResourceAsStream(resourceName))
-            {
-                if (Log.IsVerboseEnabled())
-                {
-                    Log.Verbose().WriteLine("Loading assembly from resource {0} in assembly {1}", resourceName, assembly.FullName);
-                }
-                return stream.ToAssembly(CompressionTypes.None, !CheckEmbeddedResourceNameAgainstCache);
-            }
-        }
-
-        /// <summary>
-        ///     Load the specified assembly from the ResolveDirectories, or return null
-        /// </summary>
-        /// <param name="assemblyName">string with the name without path</param>
-        /// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
-        /// <returns>Assembly</returns>
-        public static Assembly LoadAssemblyFromFileSystem(string assemblyName, IEnumerable<string> extensions = null)
-        {
-            lock (ResolveDirectories)
-            {
-                return LoadAssemblyFromFileSystem(ResolveDirectories, assemblyName, extensions);
-            }
-        }
-
-        /// <summary>
-        ///     Load the specified assembly from the specified directories, or return null
-        /// </summary>
-        /// <param name="directories">IEnumerable with directories</param>
-        /// <param name="assemblyName">string with the name without path</param>
-        /// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
-        /// <returns>Assembly</returns>
-        public static Assembly LoadAssemblyFromFileSystem(IEnumerable<string> directories, string assemblyName, IEnumerable<string> extensions = null)
-        {
-            var assemblyRegex = FileTools.FilenameToRegex(assemblyName, extensions ?? Extensions);
-            var filepath = FileLocations.Scan(directories, assemblyRegex).Select(x => x.Item1).FirstOrDefault();
-            if (string.IsNullOrEmpty(filepath) || !File.Exists(filepath))
-            {
-                return null;
-            }
-
-            try
-            {
-                return LoadAssemblyFromFile(filepath);
-            }
-            catch (Exception ex)
-            {
-                // don't log with other libraries as this might cause issues / recurse resolving
-                Log.Error().WriteLine("Error loading assembly from file {0}: {1}", filepath, ex.Message);
-            }
-            return null;
+            RemoveCopiedAssemblies();
         }
     }
 }
