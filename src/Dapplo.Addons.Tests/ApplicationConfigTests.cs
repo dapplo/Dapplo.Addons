@@ -51,7 +51,7 @@ namespace Dapplo.Addons.Tests
         public void Test_ApplicationConfig_Defaults()
         {
             var config = ApplicationConfig.Create();
-            Assert.Equal("testhost.x86", config.ApplicationName);
+            Assert.NotEmpty(config.ApplicationName);
             Assert.Equal(FileLocations.AssemblyResolveDirectories, config.ScanDirectories);
             Assert.Contains(config.Extensions, s => s.Equals(".dll"));
             Assert.True(config.UseGlobalMutex);
