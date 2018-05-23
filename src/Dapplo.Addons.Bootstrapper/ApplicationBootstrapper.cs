@@ -45,6 +45,7 @@ namespace Dapplo.Addons.Bootstrapper
         private static readonly LogSource Log = new LogSource();
         private readonly ResourceMutex _resourceMutex;
         private readonly IList<IDisposable> _disposables = new List<IDisposable>();
+        private readonly ApplicationConfig _applicationConfig;
         private bool _isStartedUp;
         private bool _isShutDown;
         private ContainerBuilder _builder;
@@ -82,7 +83,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <summary>
         /// The name of the application
         /// </summary>
-        public string ApplicationName { get; }
+        public string ApplicationName => _applicationConfig.ApplicationName;
 
         /// <summary>
         /// Log all autofac activations, must be set before the container is build
@@ -99,23 +100,39 @@ namespace Dapplo.Addons.Bootstrapper
         /// <summary>
         /// Create the application bootstrapper
         /// </summary>
-        /// <param name="applicationName">string with the name of the application</param>
-        /// <param name="mutexId">optional mutex id</param>
-        /// <param name="global">is the mutex globally?</param>
-        public ApplicationBootstrapper(string applicationName, string mutexId = null, bool global = false)
+        /// <param name="applicationConfig">ApplicationConfig with the complete configuration</param>
+        public ApplicationBootstrapper(ApplicationConfig applicationConfig)
         {
+            _applicationConfig = applicationConfig ?? throw new ArgumentNullException(nameof(applicationConfig));
             Instance = this;
-            ApplicationName = applicationName ?? throw new ArgumentNullException(nameof(applicationName));
             if (Thread.CurrentThread.Name == null)
             {
-                Thread.CurrentThread.Name = applicationName;
+                Thread.CurrentThread.Name = applicationConfig.ApplicationName;
             }
-            if (mutexId != null)
+            if (applicationConfig.HasMutex)
             {
-                _resourceMutex = ResourceMutex.Create(mutexId, applicationName, global);
+                _resourceMutex = ResourceMutex.Create(applicationConfig.Mutex, applicationConfig.ApplicationName, applicationConfig.UseGlobalMutex);
             }
 
-            Resolver = new AssemblyResolver(applicationName);
+            Resolver = new AssemblyResolver(applicationConfig);
+
+            foreach (var wantedAssemblyName in _applicationConfig.AssemblyNames)
+            {
+                if (Resolver.AvailableAssemblies.TryGetValue(wantedAssemblyName, out var assemblyLocationInformation))
+                {
+                    Resolver.LoadAssembly(assemblyLocationInformation);
+                }
+                else
+                {
+                    throw new DllNotFoundException($"Assembly {wantedAssemblyName} not found!");
+                }
+            }
+
+            // Start loading!
+            foreach (var availableAssembly in Resolver.AvailableAssemblies.Values.Where(information => applicationConfig.AssemblyNamePatterns.Any(regex => regex.IsMatch(information.Name))))
+            {
+                Resolver.LoadAssembly(availableAssembly);
+            }
         }
 
         /// <summary>
@@ -135,87 +152,6 @@ namespace Dapplo.Addons.Bootstrapper
                 throw new ArgumentNullException(nameof(disposable));
             }
             _disposables.Add(disposable);
-            return this;
-        }
-
-        /// <summary>
-        /// Add an additional scan directory
-        /// </summary>
-        /// <param name="scanDirectory">string</param>
-        public ApplicationBootstrapper AddScanDirectory(string scanDirectory)
-        {
-            Log.Verbose().WriteLine("Added scan directory {0}", scanDirectory);
-            Resolver.AddScanDirectory(scanDirectory);
-            return this;
-        }
-
-        /// <summary>
-        /// Add additional scan directories
-        /// </summary>
-        /// <param name="scanDirectories">IEnumerable</param>
-        public ApplicationBootstrapper AddScanDirectories(IEnumerable<string> scanDirectories)
-        {
-            foreach (var scanDirectory in scanDirectories)
-            {
-                if (string.IsNullOrEmpty(scanDirectory))
-                {
-                    continue;
-                }
-                Resolver.AddScanDirectory(scanDirectory);
-            }
-            return this;
-        }
-
-        /// <summary>
-        /// Find a certain assembly in the available scan directories and load this
-        /// </summary>
-        /// <param name="pattern">string with the pattern for the files</param>
-        /// <param name="extensions">IEnumerable with the extensions to process, default is .dll</param>
-        /// <param name="allowEmbedded">bool which specifies if the </param>
-        public ApplicationBootstrapper FindAndLoadAssemblies(string pattern, IEnumerable<string> extensions = null, bool allowEmbedded = true)
-        {
-            if (string.IsNullOrEmpty(pattern))
-            {
-                throw new ArgumentNullException(nameof(pattern));
-            }
-            Log.Verbose().WriteLine("Scanning for assemblies {0}", pattern);
-
-            var fileRegex = FileTools.FilenameToRegex(pattern, extensions ?? new[] { ".dll" });
-            LoadAssemblies(FileLocations.Scan(Resolver.ScanDirectories, fileRegex).Select(tuple => tuple.Item1).ToList());
-
-            if (!allowEmbedded)
-            {
-                return this;
-            }
-
-            foreach (var assemblyName in Resolver.EmbeddedAssemblyNames().Where(assemblyName => fileRegex.IsMatch(assemblyName + ".dll")).ToList())
-            {
-                Resolver.LoadEmbeddedAssembly(assemblyName);
-            }
-
-            return this;
-        }
-
-        /// <summary>
-        /// Load the specified assembly files
-        /// </summary>
-        /// <param name="assemblyFiles">string array with assembly files</param>
-        public ApplicationBootstrapper LoadAssemblies(params string[] assemblyFiles)
-        {
-            LoadAssemblies((IEnumerable<string>)assemblyFiles);
-            return this;
-        }
-
-        /// <summary>
-        /// Load the specified assembly files
-        /// </summary>
-        /// <param name="assemblyFiles">IEnumerable of string</param>
-        public ApplicationBootstrapper LoadAssemblies(IEnumerable<string> assemblyFiles)
-        {
-            foreach (var assemblyFile in assemblyFiles)
-            {
-                Resolver.TryLoadOrLoadFrom(assemblyFile, out _);
-            }
             return this;
         }
 
@@ -273,7 +209,11 @@ namespace Dapplo.Addons.Bootstrapper
                 {
                     try
                     {
-                        Log.Debug().WriteLine("Processing assembly {0}", assemblyToProcess.Key);
+                        if (Log.IsDebugEnabled())
+                        {
+                            Log.Debug().WriteLine("Processing assembly {0}", assemblyToProcess.Key);
+                        }
+
                         _builder.RegisterAssemblyModules(assemblyToProcess.Value);
                     }
                     catch (Exception ex)

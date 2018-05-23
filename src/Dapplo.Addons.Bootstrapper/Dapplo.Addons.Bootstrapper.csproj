@@ -64,6 +64,7 @@
     <Compile Include="Extensions\StreamExtensions.cs" />
     <Compile Include="Handler\ServiceHandler.cs" />
     <Compile Include="IApplicationBootstrapper.cs" />
+    <Compile Include="Internal\AssemblyLocationInformation.cs" />
     <Compile Include="Internal\NoSynchronizationContextScope.cs" />
     <Compile Include="EnableActivationLoggingModule.cs" />
     <Compile Include="Resolving\AssemblyResolver.cs" />

@@ -29,6 +29,7 @@ using System;
 using System.Drawing;
 using System.IO.Packaging;
 using System.Linq;
+using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Addons.Tests.TestFiles;
 using Dapplo.Log;
@@ -43,7 +44,7 @@ namespace Dapplo.Addons.Tests
     public class ManifestResourcesTests
     {
         private static readonly LogSource Log = new LogSource();
-        private readonly AssemblyResolver _resolver = new AssemblyResolver();
+        private readonly AssemblyResolver _resolver = new AssemblyResolver(ApplicationConfig.Create());
         public ManifestResourcesTests(ITestOutputHelper testOutputHelper)
         {
             LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);

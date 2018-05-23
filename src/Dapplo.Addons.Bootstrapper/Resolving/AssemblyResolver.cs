@@ -32,6 +32,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Dapplo.Addons.Bootstrapper.Extensions;
+using Dapplo.Addons.Bootstrapper.Internal;
 using Dapplo.Log;
 
 namespace Dapplo.Addons.Bootstrapper.Resolving
@@ -41,15 +42,23 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     /// </summary>
     public class AssemblyResolver : IDisposable, IAssemblyResolver
     {
+        private readonly ApplicationConfig _applicationConfig;
         private static readonly LogSource Log = new LogSource();
-        private static readonly Regex AssemblyResourceNameRegex = new Regex(@"^(costura\.)*(?<assembly>.*)\.dll(\.compressed|\*.gz)*$", RegexOptions.Compiled);
-        private string _applicationName;
+        private readonly Regex _assemblyResourceNameRegex;
+        private readonly Regex _assemblyFilenameRegex;
         private readonly ISet<string> _resolving = new HashSet<string>();
         private readonly ISet<string> _assembliesToDeleteAtExit = new HashSet<string>();
+
         /// <summary>
         /// A regex with all the assemblies which we should ignore
         /// </summary>
         public Regex AssembliesToIgnore { get; } = new Regex(@"^(autofac.*|microsoft\..*|mscorlib|UIAutomationProvider|PresentationFramework|PresentationCore|WindowsBase|system.*|.*resources)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        /// <summary>
+        /// A dictionary with all the loaded assemblies, for caching and analysing
+        /// </summary>
+        public IDictionary<string, AssemblyLocationInformation> AvailableAssemblies { get; } = new ConcurrentDictionary<string, AssemblyLocationInformation>(StringComparer.OrdinalIgnoreCase);
+
 
         /// <summary>
         /// A dictionary with all the loaded assemblies, for caching and analysing
@@ -62,27 +71,23 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public IResourceProvider Resources { get; }
 
         /// <summary>
-        /// Specify if embedded assemblies need to be written to disk before using, this solves some compatiblity issues
-        /// </summary>
-        public bool UseDiskCache { get; set; } = true;
-
-        /// <summary>
         /// Specify if embedded assemblies written to disk before using will be removed again when the process exits
         /// </summary>
         public bool CleanupAfterExit { get; set; } = true;
 
         /// <summary>
-        /// The directories (normalized) to scan for addon files
-        /// </summary>
-        public ISet<string> ScanDirectories { get; } = new HashSet<string>(FileLocations.AssemblyResolveDirectories);
-
-        /// <summary>
         /// The constructor of the Assembly Resolver
         /// </summary>
-        /// <param name="applicationName">string</param>
-        public AssemblyResolver(string applicationName = null)
+        /// <param name="applicationConfig">ApplicationConfig</param>
+        public AssemblyResolver(ApplicationConfig applicationConfig)
         {
-            _applicationName = applicationName;
+            _applicationConfig = applicationConfig;
+
+            // setup the regex
+            var regexExtensions = string.Join("|", applicationConfig.Extensions.Select(e => e.Replace(".", @"\.")));
+            _assemblyResourceNameRegex = new Regex($@"^(costura\.)*(?<assembly>.*)({regexExtensions})$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            _assemblyFilenameRegex = new Regex($@".*\\(?<assembly>.*)({regexExtensions})$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
             Resources = new ManifestResources(simpleAssemblyName => LoadedAssemblies.ContainsKey(simpleAssemblyName) ? LoadedAssemblies[simpleAssemblyName] : null);
 
             foreach (var loadedAssembly in AppDomain.CurrentDomain.GetAssemblies())
@@ -95,34 +100,126 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             // Register assembly resolving
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolve;
             AppDomain.CurrentDomain.ProcessExit += (sender, args) => RemoveCopiedAssemblies();
+
+            ScanForAssemblies();
         }
 
         /// <summary>
-        /// Add an additional scan directory
+        /// Do the one time scan of all the assemblies
         /// </summary>
-        /// <param name="scanDirectory">string</param>
-        public IAssemblyResolver AddScanDirectory(string scanDirectory)
+        private void ScanForAssemblies()
         {
-            if (string.IsNullOrEmpty(scanDirectory))
+            var assemblies = new HashSet<AssemblyLocationInformation>();
+            if (_applicationConfig.ScanForEmbeddedAssemblies)
             {
-                return this;
+                foreach (var loadedAssembly in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value).ToList())
+                {
+                    string[] resources;
+                    try
+                    {
+                        resources = Resources.GetCachedManifestResourceNames(loadedAssembly);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warn().WriteLine(ex, "Couldn't retrieve resources from {0}", loadedAssembly.GetName().Name);
+                        continue;
+                    }
+                    foreach (var resource in resources)
+                    {
+                        var resourceMatch = _assemblyResourceNameRegex.Match(resource);
+                        if (resourceMatch.Success)
+                        {
+                            assemblies.Add(new AssemblyLocationInformation(resourceMatch.Groups["assembly"].Value, loadedAssembly, resource));
+                        }
+                    }
+                }
             }
-            scanDirectory = FileTools.NormalizeDirectory(scanDirectory);
-            if (!ScanDirectories.Contains(scanDirectory))
+
+            foreach (var fileLocation in FileLocations.Scan(_applicationConfig.ScanDirectories, _assemblyFilenameRegex, SearchOption.TopDirectoryOnly))
             {
-                ScanDirectories.Add(scanDirectory);
+                assemblies.Add(new AssemblyLocationInformation(fileLocation.Item2.Groups["assembly"].Value, fileLocation.Item1));
             }
-            return this;
+
+            // Reduce step 1) Take from the double assemblies only those which are embedded & on the file system in the probing path
+            foreach (var assemblyGroup in assemblies.GroupBy(information => information.Name).ToList())
+            {
+                var groupList = assemblyGroup.ToList();
+                if (groupList.Count <=1)
+                {
+                    continue;
+                }
+
+                // Remove filesystem assemblies from the list which are not in the AssemblyResolveDirectories
+                var unneededAssemblies = groupList.Where(info => !info.IsEmbedded && !info.IsOnProbingPath).ToList();
+                if (groupList.Count - unneededAssemblies.Count < 1)
+                {
+                    continue;
+                }
+
+                foreach (var unneededAssemblyInformation in unneededAssemblies)
+                {
+                    assemblies.Remove(unneededAssemblyInformation);
+                }
+            }
+
+            // Reduce step 2)
+            foreach (var assemblyGroup in assemblies.GroupBy(information => information.Name).ToList())
+            {
+                var groupList = assemblyGroup.ToList();
+                if (groupList.Count <=1)
+                {
+                    continue;
+                }
+                // Remove assemblies which are older
+                foreach (var unneededAssemblyInformation in groupList.OrderBy(info => info.FileDate).Skip(1).ToList())
+                {
+                    assemblies.Remove(unneededAssemblyInformation);
+                }
+            }
+
+            // Create the assembly locations
+            foreach (var assemblyLocationInformation in assemblies)
+            {
+                AvailableAssemblies[assemblyLocationInformation.Name] = assemblyLocationInformation;
+            }
         }
 
         /// <summary>
-        /// Load an assembly from the specified filename, if the assembly was already loaded skip it.
+        /// Load an assembly from the specified location
         /// </summary>
-        /// <param name="filename">string</param>
-        /// <returns>bool</returns>
-        public Assembly LoadAssembly(string filename)
+        /// <param name="assemblyLocationInformation">AssemblyLocationInformation</param>
+        /// <returns>Assembly</returns>
+        public Assembly LoadAssembly(AssemblyLocationInformation assemblyLocationInformation)
         {
-            TryLoadOrLoadFrom(filename, out var assembly);
+            // Check if the simple name can be found in the cache
+            if (LoadedAssemblies.TryGetValue(assemblyLocationInformation.Name, out var assembly))
+            {
+                Log.Info().WriteLine("Returned {0} from cache.", assemblyLocationInformation.Name);
+                return assembly;
+            }
+
+            if (assemblyLocationInformation.IsEmbedded)
+            {
+                // Check if we can work with temporary files
+                if (_applicationConfig.CopyEmbeddedAssembliesToFileSystem)
+                {
+                    assembly = LoadEmbeddedAssemblyViaTmpFile(assemblyLocationInformation);
+                    if (assembly != null)
+                    {
+                        return assembly;
+                    }
+                }
+
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Loading {0} internally", assemblyLocationInformation.Name);
+                }
+                using (var stream = Resources.ResourceAsStream(assemblyLocationInformation.ContainingAssembly, assemblyLocationInformation.Filename, false))
+                {
+                    return Assembly.Load(stream.ToByteArray());
+                }
+            }
+            TryLoadOrLoadFrom(assemblyLocationInformation.Filename, assemblyLocationInformation, out assembly);
             return assembly;
         }
 
@@ -133,7 +230,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <param name="assembly">Assembly returned or null if it couldn't be loaded</param>
         /// <param name="allowCopy">bool which specifies if it's allowed to make a copy of the file to improve compatibility</param>
         /// <returns>bool true if the assembly was loaded, false if it was already in the cache or a loading problem occured</returns>
-        internal bool TryLoadOrLoadFrom(string filename, out Assembly assembly, bool allowCopy = true)
+        internal bool TryLoadOrLoadFrom(string filename, AssemblyLocationInformation additionalInformation, out Assembly assembly, bool allowCopy = true)
         {
             // Get a simple assembly name via the filename
             var simpleAssemblyName = Path.GetFileNameWithoutExtension(filename) ?? throw new ArgumentNullException(nameof(filename));
@@ -148,6 +245,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 Log.Info().WriteLine("Returned {0} from cache.", simpleAssemblyName);
                 return false;
             }
+
             // Get the assembly name from the file
             var assemblyName = AssemblyName.GetAssemblyName(filename);
             // Check the cache again
@@ -157,26 +255,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 return false;
             }
 
-            // Add the directory of the DLL to the scan path, to find other DLLs too
-            AddScanDirectory(Path.GetDirectoryName(filename));
-
-            foreach (var assemblyResolveDirectory in FileLocations.AssemblyResolveDirectories)
-            {
-                var preferredLocation = $@"{assemblyResolveDirectory}\{assemblyName.Name}.dll";
-                if (!File.Exists(preferredLocation))
-                {
-                    continue;
-                }
-
-                Log.Verbose().WriteLine("Loading {0} from preferred location {1} via the assembly name.", assemblyName.Name, preferredLocation);
-                assembly = Assembly.Load(assemblyName);
-                if (assembly != null)
-                {
-                    return true;
-                }
-            }
-
-            if (allowCopy && UseDiskCache && FileLocations.AddonsLocation != null)
+            if (allowCopy && _applicationConfig.CopyEmbeddedAssembliesToFileSystem && FileLocations.AddonsLocation != null)
             {
                 var newLocation = $@"{FileLocations.AddonsLocation}\{assemblyName.Name}.dll";
                 try
@@ -185,16 +264,31 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     {
                         Directory.CreateDirectory(FileLocations.AddonsLocation);
                     }
-                    if (!File.Exists(newLocation))
+
+                    bool makeCopy = true;
+                    if (File.Exists(newLocation))
                     {
-                        Log.Warn().WriteLine("Creating a copy of {0} to {1}, solving loading issues.", filename, newLocation);
+                        if (File.GetLastWriteTime(newLocation) < additionalInformation.FileDate)
+                        {
+                            Log.Warn().WriteLine("Writing {0} over {1}, as {1} is newer.", filename, newLocation);
+                            File.Delete(newLocation);
+                        }
+                        else
+                        {
+                            // Do not copy
+                            makeCopy = false;
+                        }
+                    }
+                    if (makeCopy)
+                    {
+                        Log.Verbose().WriteLine("Creating a copy of {0} to {1}, solving loading issues.", filename, newLocation);
                         File.Copy(filename, newLocation);
                         _assembliesToDeleteAtExit.Add(newLocation);
-                        assembly = Assembly.Load(assemblyName);
-                        if (assembly != null)
-                        {
-                            return true;
-                        }
+                    }
+                    assembly = Assembly.Load(assemblyName);
+                    if (assembly != null)
+                    {
+                        return true;
                     }
                 }
                 catch (Exception ex)
@@ -202,7 +296,12 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     Log.Warn().WriteLine(ex, "Couldn't create a copy of {0} to {1}.", filename, newLocation);
                 }
             }
-            Log.Verbose().WriteLine("Loading {0} from {1}.", simpleAssemblyName, filename);
+
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Loading {0} from {1}.", simpleAssemblyName, filename);
+            }
+
             try
             {
                 assembly = Assembly.LoadFrom(filename);
@@ -244,20 +343,28 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
             if (LoadedAssemblies.TryGetValue(assemblyName.Name, out var assemblyResult))
             {
-                Log.Verbose().WriteLine("Returned {0} from cache.", assemblyName.Name);
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Returned {0} from cache.", assemblyName.Name);
+                }
+
                 return assemblyResult;
             }
 
             try
             {
                 _resolving.Add(assemblyName.Name);
-                // Check files before embedded
-                var assemblyFile = FileLocations.Scan(ScanDirectories, assemblyName.Name + ".dll").FirstOrDefault();
-                if (assemblyFile == null || (!TryLoadOrLoadFrom(assemblyFile, out assemblyResult) && assemblyResult == null))
+                if (!AvailableAssemblies.TryGetValue(assemblyName.Name, out var assemblyLocationInformation))
                 {
-                    assemblyResult = LoadEmbeddedAssembly(assemblyName.Name);
+                    return null;
                 }
-                return assemblyResult;
+
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Found {0} at {1}.", assemblyName.Name, assemblyLocationInformation.ToString());
+                }
+
+                return LoadAssembly(assemblyLocationInformation);
             }
             finally
             {
@@ -268,7 +375,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <summary>
         /// Get a list of all embedded assemblies
         /// </summary>
-        /// <returns>IEnumerable with a tutple containing the name of the resource and of the assemblie</returns>
+        /// <returns>IEnumerable with a containing the names of the resource and of the assemblie</returns>
         public IEnumerable<string> EmbeddedAssemblyNames(IEnumerable<Assembly> assembliesToCheck = null)
         {
             foreach (var loadedAssembly in assembliesToCheck ?? LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value).ToList())
@@ -285,7 +392,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 }
                 foreach (var resource in resources)
                 {
-                    var resourceMatch = AssemblyResourceNameRegex.Match(resource);
+                    var resourceMatch = _assemblyResourceNameRegex.Match(resource);
                     if (resourceMatch.Success)
                     {
                         yield return resourceMatch.Groups["assembly"].Value;
@@ -295,79 +402,15 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         }
 
         /// <summary>
-        /// This loads an assembly which is embedded (manually or by costura) in one of the already loaded assemblies
-        /// </summary>
-        /// <param name="assemblyName">Simple name of the assembly</param>
-        /// <returns>Assembly or null when not found</returns>
-        public Assembly LoadEmbeddedAssembly(string assemblyName)
-        {
-            // Do not load again if already loaded
-            if (LoadedAssemblies.TryGetValue(assemblyName, out var cachedAssembly))
-            {
-                Log.Verbose().WriteLine("Returned {0} from cache.", assemblyName);
-                return cachedAssembly;
-            }
-            foreach (var assemblyWithResources in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value).ToList())
-            {
-                string[] resources;
-                try
-                {
-                    resources = Resources.GetCachedManifestResourceNames(assemblyWithResources);
-                }
-                catch (Exception ex)
-                {
-                    Log.Warn().WriteLine(ex, "Couldn't retrieve resources from {0}", assemblyWithResources.GetName().Name);
-                    continue;
-                }
-                foreach (var resource in resources)
-                {
-                    var resourceMatch = AssemblyResourceNameRegex.Match(resource);
-                    if (!resourceMatch.Success)
-                    {
-                        continue;
-                    }
-
-                    if (!string.Equals(assemblyName, resourceMatch.Groups["assembly"].Value, StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        continue;
-                    }
-                    // Match
-                    Log.Verbose().WriteLine("Resolved {0} from {1}", assemblyName, assemblyWithResources.GetName().Name);
-
-                    // Check if we work with temporary files
-                    if (UseDiskCache)
-                    {
-                        var loadedAssembly = LoadEmbeddedAssemblyViaTmpFile(assemblyWithResources, resource, assemblyName);
-                        if (loadedAssembly != null)
-                        {
-                            return loadedAssembly;
-                        }
-                    }
-
-                    Log.Verbose().WriteLine("Loading {0} internally", assemblyName);
-                    using (var stream = Resources.ResourceAsStream(assemblyWithResources, resource, false))
-                    {
-                        return Assembly.Load(stream.ToByteArray());
-                    }
-                }
-            }
-            Log.Warn().WriteLine("Couldn't locate {0}", assemblyName);
-            return null;
-        }
-
-        /// <summary>
         /// This is a workaround where an embedded assembly is written to a tmp file, which solves some issues
         /// </summary>
-        /// <param name="containingAssembly">Assembly which contains the resource</param>
-        /// <param name="resource">string with the resource</param>
-        /// <param name="assemblyName">string with name of the assembly</param>
-        /// <returns></returns>
-        private Assembly LoadEmbeddedAssemblyViaTmpFile(Assembly containingAssembly, string resource, string assemblyName)
+        /// <param name="assemblyLocationInformation">AssemblyLocationInformation</param>
+        /// <returns>Assembly</returns>
+        private Assembly LoadEmbeddedAssemblyViaTmpFile(AssemblyLocationInformation assemblyLocationInformation)
         {
-            var assemblyFileName = $@"{FileLocations.AddonsLocation}\{assemblyName}.dll";
-            using (var stream = Resources.ResourceAsStream(containingAssembly, resource, false))
+            var assemblyFileName = $@"{FileLocations.AddonsLocation}\{assemblyLocationInformation.Name}.dll";
+            using (var stream = Resources.ResourceAsStream(assemblyLocationInformation.ContainingAssembly, assemblyLocationInformation.Filename, false))
             {
-                var bytes = stream.ToByteArray();
                 try
                 {
                     Log.Verbose().WriteLine("Creating temporary assembly file {0}", assemblyFileName);
@@ -377,33 +420,25 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     }
                     using (var fileStream = new FileStream(assemblyFileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
                     {
-                        fileStream.Write(bytes, 0, bytes.Length);
+                        stream.CopyTo(fileStream);
                     }
                     _assembliesToDeleteAtExit.Add(assemblyFileName);
 
                 }
                 catch (Exception)
                 {
-                    // Redirecting to APPDATA local
-                    if (string.IsNullOrEmpty(_applicationName))
-                    {
-                        using (var process = Process.GetCurrentProcess())
-                        {
-                            _applicationName = process.ProcessName;
-                        }
-                    }
-
-                    var appdataDirectory = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\{_applicationName}";
+                    stream.Seek(0, SeekOrigin.Begin);
+                    var appdataDirectory = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\{_applicationConfig.ApplicationName}";
                     if (!Directory.Exists(appdataDirectory))
                     {
                         Directory.CreateDirectory(appdataDirectory);
                     }
 
-                    assemblyFileName = $@"{appdataDirectory}\{assemblyName}.dll";
+                    assemblyFileName = $@"{appdataDirectory}\{assemblyLocationInformation.Name}.dll";
                     Log.Verbose().WriteLine("Creating temporary assembly file {0}", assemblyFileName);
                     using (var fileStream = new FileStream(assemblyFileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
                     {
-                        fileStream.Write(bytes, 0, bytes.Length);
+                        stream.CopyTo(fileStream);
                     }
                     // Register delete on exit, this is done by calling a command
                     _assembliesToDeleteAtExit.Add(assemblyFileName);
@@ -411,9 +446,9 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             }
 
 
-            Log.Verbose().WriteLine("Loading {0} from temporary assembly file {1}", assemblyName, assemblyFileName);
+            Log.Verbose().WriteLine("Loading {0} from temporary assembly file {1}", assemblyLocationInformation.Name, assemblyFileName);
             // Best case, we can load it now by name, let the LoadOrLoadFrom decide
-            TryLoadOrLoadFrom(assemblyFileName,  out var assembly, false);
+            TryLoadOrLoadFrom(assemblyFileName, assemblyLocationInformation, out var assembly, false);
             return assembly;
         }
 
@@ -424,10 +459,48 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <param name="args">AssemblyLoadEventArgs</param>
         private void AssemblyLoad(object sender, AssemblyLoadEventArgs args)
         {
-            var assembly = args.LoadedAssembly;
-            var assemblyName = assembly.GetName().Name;
+            var loadedAssembly = args.LoadedAssembly;
+            var assemblyName = loadedAssembly.GetName().Name;
             Log.Verbose().WriteLine("Loaded {0}", assemblyName);
-            LoadedAssemblies[assemblyName] = assembly;
+            LoadedAssemblies[assemblyName] = loadedAssembly;
+
+            if (!_applicationConfig.ScanForEmbeddedAssemblies)
+            {
+                return;
+            }
+
+            string[] resources;
+            try
+            {
+                resources = Resources.GetCachedManifestResourceNames(loadedAssembly);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn().WriteLine(ex, "Couldn't retrieve resources from {0}", loadedAssembly.GetName().Name);
+                return;
+            }
+            foreach (var resource in resources)
+            {
+                var resourceMatch = _assemblyResourceNameRegex.Match(resource);
+                if (!resourceMatch.Success)
+                {
+                    continue;
+                }
+
+                var embeddedAssemblyName = resourceMatch.Groups["assembly"].Value;
+                if (AvailableAssemblies.ContainsKey(embeddedAssemblyName))
+                {
+                    continue;
+                }
+
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Detected additional assembly {0} in {1}", embeddedAssemblyName, loadedAssembly.GetName().Name);
+                }
+
+                var assemblyLocation = new AssemblyLocationInformation(embeddedAssemblyName, loadedAssembly, resource);
+                AvailableAssemblies[embeddedAssemblyName] = assemblyLocation;
+            }
         }
 
         /// <summary>
@@ -439,7 +512,12 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             {
                 return;
             }
-            Log.Verbose().WriteLine("Removing cached assembly files {0}", string.Join(" ", _assembliesToDeleteAtExit.Select(a => $"\"{FileTools.NormalizeDirectory(a)}\"")));
+
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Removing cached assembly files {0}", string.Join(" ", _assembliesToDeleteAtExit.Select(a => $"\"{FileTools.NormalizeDirectory(a)}\"")));
+            }
+
             var info = new ProcessStartInfo
             {
                 Arguments = "/C choice /C Y /N /D Y /T 3 & Del " + string.Join(" ", _assembliesToDeleteAtExit),

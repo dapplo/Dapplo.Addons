@@ -49,7 +49,6 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 return;
             }
-
             registration.Preparing += RegistrationOnPreparing;
             registration.Activating += RegistrationOnActivating;
             registration.Activated += RegistrationOnActivated;
@@ -57,7 +56,10 @@ namespace Dapplo.Addons.Bootstrapper
 
         private void RegistrationOnActivated(object sender, IActivatedEventArgs<object> e)
         {
-            Log.Verbose().WriteLine("{0}Activated {1}", GetPrefix(), e.Component.Activator.LimitType);
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("{0}Activated {1}", GetPrefix(), e.Component.Activator.LimitType);
+            }
         }
 
         private string GetPrefix()
@@ -67,14 +69,21 @@ namespace Dapplo.Addons.Bootstrapper
 
         private void RegistrationOnPreparing(object sender, PreparingEventArgs preparingEventArgs)
         {
-            Log.Verbose().WriteLine("{0}Resolving  {1}", GetPrefix(), preparingEventArgs.Component.Activator.LimitType);
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("{0}Resolving  {1}", GetPrefix(), preparingEventArgs.Component.Activator.LimitType);
+            }
+
             _depth++;
         }
 
         private void RegistrationOnActivating(object sender, ActivatingEventArgs<object> activatingEventArgs)
         {
             _depth--;
-            Log.Verbose().WriteLine("{0}Activating {1}", GetPrefix(), activatingEventArgs.Component.Activator.LimitType);
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("{0}Activating {1}", GetPrefix(), activatingEventArgs.Component.Activator.LimitType);
+            }
         }
     }
 }

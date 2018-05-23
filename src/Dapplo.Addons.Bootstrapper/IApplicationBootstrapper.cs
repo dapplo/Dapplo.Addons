@@ -66,38 +66,6 @@ namespace Dapplo.Addons.Bootstrapper
         ApplicationBootstrapper RegisterForDisposal(IDisposable disposable);
 
         /// <summary>
-        /// Add an additional scan directory
-        /// </summary>
-        /// <param name="scanDirectory">string</param>
-        ApplicationBootstrapper AddScanDirectory(string scanDirectory);
-
-        /// <summary>
-        /// Add additional scan directories
-        /// </summary>
-        /// <param name="scanDirectories">IEnumerable</param>
-        ApplicationBootstrapper AddScanDirectories(IEnumerable<string> scanDirectories);
-
-        /// <summary>
-        /// Find a certain assembly in the available scan directories and load this
-        /// </summary>
-        /// <param name="pattern">string with the pattern for the files</param>
-        /// <param name="extensions">IEnumerable with the extensions to process, default is .dll</param>
-        /// <param name="allowEmbedded">bool which specifies if the </param>
-        ApplicationBootstrapper FindAndLoadAssemblies(string pattern, IEnumerable<string> extensions = null, bool allowEmbedded = true);
-
-        /// <summary>
-        /// Load the specified assembly files
-        /// </summary>
-        /// <param name="assemblyFiles">string array with assembly files</param>
-        ApplicationBootstrapper LoadAssemblies(params string[] assemblyFiles);
-
-        /// <summary>
-        /// Load the specified assembly files
-        /// </summary>
-        /// <param name="assemblyFiles">IEnumerable of string</param>
-        ApplicationBootstrapper LoadAssemblies(IEnumerable<string> assemblyFiles);
-
-        /// <summary>
         /// Configure the Bootstrapper
         /// </summary>
         ApplicationBootstrapper Configure();

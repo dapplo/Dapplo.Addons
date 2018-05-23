@@ -26,7 +26,6 @@
 #region Usings
 
 using System;
-using System.Linq;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Log;
@@ -47,19 +46,24 @@ namespace Dapplo.Addons.Tests
         {
             LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
         }
-        
+
         [Fact]
-        public void Test_ApplicationConfig_ApplicationName()
+        public void Test_ApplicationConfig_Defaults()
         {
             var config = ApplicationConfig.Create();
             Assert.Equal("testhost.x86", config.ApplicationName);
+            Assert.Equal(FileLocations.AssemblyResolveDirectories, config.ScanDirectories);
+            Assert.Contains(config.Extensions, s => s.Equals(".dll"));
+            Assert.True(config.UseGlobalMutex);
+            Assert.True(config.ScanForEmbeddedAssemblies);
+            Assert.True(config.CopyEmbeddedAssembliesToFileSystem);
         }
 
         [Fact]
-        public void Test_ApplicationConfig_ScanDirectories_InitialValue()
+        public void Test_ApplicationConfig_ApplicationName()
         {
-            var config = ApplicationConfig.Create();
-            Assert.Equal(FileLocations.AssemblyResolveDirectories, config.ScanDirectories);
+            var config = ApplicationConfig.Create().WithApplicationName("Dapplo");
+            Assert.Equal("Dapplo", config.ApplicationName);
         }
 
         [Fact]
@@ -74,6 +78,29 @@ namespace Dapplo.Addons.Tests
         {
             var config = ApplicationConfig.Create().WithAssemblyNames("Dapplo.Addons.Config");
             Assert.Contains(config.AssemblyNames, s => s.Equals("Dapplo.Addons.Config"));
+        }
+
+        [Fact]
+        public void Test_ApplicationConfig_Mutex()
+        {
+            var config = ApplicationConfig.Create().WithMutex("Dapplo.Addons.Config");
+            Assert.Equal("Dapplo.Addons.Config", config.Mutex);
+        }
+
+        [Fact]
+        public void Test_ApplicationConfig_Extensions_Add()
+        {
+            var config = ApplicationConfig.Create().WithExtensions(".gsp");
+            Assert.Equal(config.Extensions, new[]{".dll", ".dll.compressed", ".dll.gz", ".gsp" });
+        }
+
+        [Fact]
+        public void Test_ApplicationConfig_Extensions_Remove()
+        {
+            var config = ApplicationConfig.Create().WithoutExtensions(".dll", ".dll.compressed", ".dll.gz");
+            Assert.Empty(config.Extensions);
+            config = ApplicationConfig.Create().WithoutExtensions();
+            Assert.Empty(config.Extensions);
         }
     }
 }

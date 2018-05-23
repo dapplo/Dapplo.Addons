@@ -50,45 +50,15 @@ namespace Dapplo.Addons
         IResourceProvider Resources { get; }
 
         /// <summary>
-        /// Specify if embedded assemblies need to be written to disk before using, this solves some compatiblity issues
-        /// </summary>
-        bool UseDiskCache { get; set; }
-
-        /// <summary>
         /// Specify if embedded assemblies written to disk before using will be removed again when the process exits
         /// </summary>
         bool CleanupAfterExit { get; set; }
-
-        /// <summary>
-        /// The directories (normalized) to scan for addon files
-        /// </summary>
-        ISet<string> ScanDirectories { get; }
-
-        /// <summary>
-        /// Add an additional scan directory
-        /// </summary>
-        /// <param name="scanDirectory">string</param>
-        IAssemblyResolver AddScanDirectory(string scanDirectory);
-
-        /// <summary>
-        /// Load an assembly from the specified filename, if the assembly was already loaded skip it.
-        /// </summary>
-        /// <param name="filename">string</param>
-        /// <returns>bool</returns>
-        Assembly LoadAssembly(string filename);
 
         /// <summary>
         /// Get a list of all embedded assemblies
         /// </summary>
         /// <returns>IEnumerable with a tutple containing the name of the resource and of the assemblie</returns>
         IEnumerable<string> EmbeddedAssemblyNames(IEnumerable<Assembly> assembliesToCheck = null);
-
-        /// <summary>
-        /// This loads an assembly which is embedded (manually or by costura) in one of the already loaded assemblies
-        /// </summary>
-        /// <param name="assemblyName">Simple name of the assembly</param>
-        /// <returns>Assembly or null when not found</returns>
-        Assembly LoadEmbeddedAssembly(string assemblyName);
 
         /// <summary>
         /// Remove event registrations
