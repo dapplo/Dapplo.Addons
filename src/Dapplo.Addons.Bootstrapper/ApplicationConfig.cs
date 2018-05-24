@@ -76,6 +76,11 @@ namespace Dapplo.Addons.Bootstrapper
         public bool CopyEmbeddedAssembliesToFileSystem { get; private set; } = true;
 
         /// <summary>
+        /// Specifies if assemblies outside the probing path can be copied to the probing path
+        /// </summary>
+        public bool CopyAssembliesToProbingPath { get; private set; } = true;
+
+        /// <summary>
         /// The directories to scan for addons
         /// </summary>
         public IEnumerable<string> ScanDirectories => _scanDirectories;

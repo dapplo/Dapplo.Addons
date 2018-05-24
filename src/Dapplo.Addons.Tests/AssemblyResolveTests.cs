@@ -81,7 +81,7 @@ namespace Dapplo.Addons.Tests
         }
 
         [Fact]
-        public void TestCostura_Nested()
+        public void TestCostura_Nested_AssemblyLoad()
         {
             var applicationConfig = ApplicationConfig.Create()
                 .WithApplicationName("TestCostura_Nested")
@@ -98,6 +98,28 @@ namespace Dapplo.Addons.Tests
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
                 var jiraAssembly = Assembly.Load("Svg");
+                Assert.NotNull(jiraAssembly);
+            }
+        }
+
+        [Fact]
+        public void TestCostura_Nested_ResolverLoad()
+        {
+            var applicationConfig = ApplicationConfig.Create()
+                .WithApplicationName("TestCostura_Nested")
+                .WithScanDirectories(
+                    FileLocations.StartupDirectory,
+#if DEBUG
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug"
+#else
+                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release"
+#endif
+                )
+                // Add Dapplo.Addons.TestAddonWithCostura
+                .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura");
+            using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
+            {
+                var jiraAssembly = bootstrapper.Resolver.LoadAssembly("Svg");
                 Assert.NotNull(jiraAssembly);
             }
         }
