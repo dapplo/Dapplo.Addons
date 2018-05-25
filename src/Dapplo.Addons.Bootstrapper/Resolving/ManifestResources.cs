@@ -140,6 +140,32 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         }
 
         /// <summary>
+        /// Get a resource as stream
+        /// </summary>
+        /// <param name="assembly">Assembly containing the resource</param>
+        /// <param name="segments">string array, used to specify the location and name of the resource</param>
+        /// <returns>Stream</returns>
+        public Stream ResourceAsStream(Assembly assembly, params string[] segments)
+        {
+            if (assembly == null)
+            {
+                return null;
+            }
+
+            var name = string.Join(".", segments);
+            try
+            {
+                return ResourceStreamWithDecompression(assembly, name);
+            }
+            catch (Exception ex)
+            {
+                Log.Error().WriteLine(ex, "Couldn't find resource {0} in the assembly {1} and namespace {2}", name, assembly.FullName);
+            }
+
+            return null;
+        }
+
+        /// <summary>
         ///     Create a regex to find a resource in an assembly
         /// </summary>
         /// <param name="assembly">Assembly to look into</param>
@@ -207,7 +233,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <param name="baseType"></param>
         /// <returns>Stream</returns>
         private Stream ResourceStreamWithDecompression(Assembly assembly, string resourceName, Type baseType = null)
-                {
+        {
             var resultStream = baseType == null ? assembly.GetManifestResourceStream(resourceName) : assembly.GetManifestResourceStream(baseType, resourceName);
             if (resultStream != null)
             {
@@ -256,17 +282,17 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         ///     Returns the embedded resource, as specified in the Pack-Uri as a stream.
         ///     This currently doesn't go into the embedded .g.resources files, this might be added later
         /// </summary>
-        /// <param name="packUri">Uri</param>
+        /// <param name="applicationPackUri">Uri</param>
         /// <returns>Stream</returns>
-        public Stream ResourceAsStream(Uri packUri)
+        public Stream ResourceAsStream(Uri applicationPackUri)
         {
-            var match = packUri.PackUriMatch();
+            var match = applicationPackUri.ApplicationPackUriMatch();
 
             var assemblyName = match.Groups["assembly"].Value;
             var assembly = _findAssembly(assemblyName);
             if (assembly == null)
             {
-                throw new ArgumentException($"Pack uri references unknown assembly {assemblyName}.", nameof(packUri));
+                throw new ArgumentException($"Pack uri references unknown assembly {assemblyName}.", nameof(applicationPackUri));
             }
             var path = match.Groups["path"].Value;
             return ResourceAsStream(assembly, path);
@@ -282,7 +308,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <returns>Stream</returns>
         public bool EmbeddedResourceExists(Uri packUri, bool ignoreCase = true)
         {
-            var match = packUri.PackUriMatch();
+            var match = packUri.ApplicationPackUriMatch();
 
             var assemblyName = match.Groups["assembly"].Value;
 

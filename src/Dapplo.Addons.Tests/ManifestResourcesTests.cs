@@ -50,11 +50,8 @@ namespace Dapplo.Addons.Tests
             LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
 
             // Add the pack scheme
-            if (!UriParser.IsKnownScheme("pack"))
-            {
-                // ReSharper disable once UnusedVariable
-                var packScheme = PackUriHelper.UriSchemePack;
-            }
+            // ReSharper disable once UnusedVariable
+            var packScheme = PackUriHelper.UriSchemePack;
         }
 
         /// <summary>

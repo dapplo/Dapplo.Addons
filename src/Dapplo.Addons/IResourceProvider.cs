@@ -37,7 +37,9 @@ namespace Dapplo.Addons
     public interface IResourceProvider
     {
         /// <summary>
-        /// This helps you to get an embedded resource as Stream
+        /// Get a resource as stream
+        ///     It will automatically uncompress if the file-ending is .gz or .compressed
+        ///     Note: a GZipStream is not seekable, this might cause issues.
         /// </summary>
         /// <param name="type">The type whose namespace is used to scope the manifest resource name.</param>
         /// <param name="segments">The case-sensitive name (or segments added to the namespace), of the manifest resource being requested.</param>
@@ -45,12 +47,22 @@ namespace Dapplo.Addons
         Stream ResourceAsStream(Type type, params string[] segments);
 
         /// <summary>
+        /// Get a resource as stream
+        ///     It will automatically uncompress if the file-ending is .gz or .compressed
+        ///     Note: a GZipStream is not seekable, this might cause issues.
+        /// </summary>
+        /// <param name="assembly">Assembly containing the resource</param>
+        /// <param name="segments">string array, used to specify the location and name of the resource</param>
+        /// <returns>Stream</returns>
+        Stream ResourceAsStream(Assembly assembly, params string[] segments);
+
+        /// <summary>
         ///     Get the stream for a assembly manifest resource based on the filePath
         ///     It will automatically uncompress if the file-ending is .gz or .compressed
         ///     Note: a GZipStream is not seekable, this might cause issues.
         /// </summary>
-        /// <param name="filePath">string with the filepath to find</param>
         /// <param name="assembly">Assembly to look into</param>
+        /// <param name="filePath">string with the filepath to find</param>
         /// <param name="ignoreCase">true, which is default, to ignore the case when comparing</param>
         /// <returns>Stream for the filePath, or null if not found</returns>
         Stream ResourceAsStream(Assembly assembly, string filePath, bool ignoreCase = true);
@@ -91,9 +103,9 @@ namespace Dapplo.Addons
         ///     Returns the embedded resource, as specified in the Pack-Uri as a stream.
         ///     This currently doesn't go into the embedded .g.resources files, this might be added later
         /// </summary>
-        /// <param name="packUri">Uri</param>
+        /// <param name="applicationPackUri">Uri</param>
         /// <returns>Stream</returns>
-        Stream ResourceAsStream(Uri packUri);
+        Stream ResourceAsStream(Uri applicationPackUri);
 
         /// <summary>
         ///     Test if there is an embedded resourcefor the Pack-Uri

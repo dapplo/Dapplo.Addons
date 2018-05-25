@@ -25,7 +25,6 @@
 
 #region Usings
 
-using System.Collections.Generic;
 using System.Reflection;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
