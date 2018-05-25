@@ -254,7 +254,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             {
                 Log.Verbose().WriteLine("Loading {0} internally, this COULD cause assembly load context issues...", assemblyLocationInformation.Name);
             }
-            using (var stream = Resources.ResourceAsStream(assemblyLocationInformation.ContainingAssembly, assemblyLocationInformation.Filename, false))
+            using (var stream = Resources.AbsoluteResourceAsStream(assemblyLocationInformation.ContainingAssembly, assemblyLocationInformation.Filename))
             {
                 return Assembly.Load(stream.ToByteArray());
             }
@@ -411,7 +411,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         private Assembly LoadEmbeddedAssemblyViaTmpFile(AssemblyLocationInformation assemblyLocationInformation)
         {
             var assemblyFileName = $@"{FileLocations.AddonsLocation}\{assemblyLocationInformation.Name}.dll";
-            using (var stream = Resources.ResourceAsStream(assemblyLocationInformation.ContainingAssembly, assemblyLocationInformation.Filename, false))
+            using (var stream = Resources.AbsoluteResourceAsStream(assemblyLocationInformation.ContainingAssembly, assemblyLocationInformation.Filename))
             {
                 try
                 {

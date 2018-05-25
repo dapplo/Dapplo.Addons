@@ -37,7 +37,7 @@ namespace Dapplo.Addons
     public interface IResourceProvider
     {
         /// <summary>
-        /// Get a resource as stream
+        /// Get a resource as stream, the resource is offsetted to the namespace of the assembly
         ///     It will automatically uncompress if the file-ending is .gz or .compressed
         ///     Note: a GZipStream is not seekable, this might cause issues.
         /// </summary>
@@ -48,6 +48,16 @@ namespace Dapplo.Addons
 
         /// <summary>
         /// Get a resource as stream
+        ///     It will automatically uncompress if the file-ending is .gz or .compressed
+        ///     Note: a GZipStream is not seekable, this might cause issues.
+        /// </summary>
+        /// <param name="assembly">Assembly containing the resource</param>
+        /// <param name="segments">string array, used to specify the location and name of the resource</param>
+        /// <returns>Stream</returns>
+        Stream AbsoluteResourceAsStream(Assembly assembly, params string[] segments);
+
+        /// <summary>
+        /// Get a resource as stream, the resource is offsetted to the namespace of the assembly
         ///     It will automatically uncompress if the file-ending is .gz or .compressed
         ///     Note: a GZipStream is not seekable, this might cause issues.
         /// </summary>
@@ -65,7 +75,7 @@ namespace Dapplo.Addons
         /// <param name="filePath">string with the filepath to find</param>
         /// <param name="ignoreCase">true, which is default, to ignore the case when comparing</param>
         /// <returns>Stream for the filePath, or null if not found</returns>
-        Stream ResourceAsStream(Assembly assembly, string filePath, bool ignoreCase = true);
+        Stream LocateResourceAsStream(Assembly assembly, string filePath, bool ignoreCase = true);
 
         /// <summary>
         /// Get the ManifestResourceNames for the specified assembly from cache or directly.

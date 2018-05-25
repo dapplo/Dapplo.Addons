@@ -126,17 +126,8 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 return null;
             }
 
-            var name = string.Join(".", segments);
-            try
-            {
-                return ResourceStreamWithDecompression(assembly, name, type);
-            }
-            catch (Exception ex)
-            {
-                Log.Error().WriteLine(ex, "Couldn't find resource {0} in the assembly {1} and namespace {2}", name, assemblyName, type.Namespace);
-            }
-
-            return null;
+            var name = $"{assembly.GetName().Name}.{string.Join(".", segments).Replace(@"\", ".").Replace(@"/", ".")}";
+            return ResourceStreamWithDecompression(assembly, name, type);
         }
 
         /// <summary>
@@ -152,17 +143,25 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 return null;
             }
 
-            var name = string.Join(".", segments);
-            try
+            var name = $"{assembly.GetName().Name}.{string.Join(".", segments).Replace(@"\", ".").Replace(@"/", ".")}";
+            return ResourceStreamWithDecompression(assembly, name);
+        }
+
+        /// <summary>
+        /// Get a resource as stream
+        /// </summary>
+        /// <param name="assembly">Assembly containing the resource</param>
+        /// <param name="segments">string array, used to specify the location and name of the resource</param>
+        /// <returns>Stream</returns>
+        public Stream AbsoluteResourceAsStream(Assembly assembly, params string[] segments)
+        {
+            if (assembly == null)
             {
-                return ResourceStreamWithDecompression(assembly, name);
-            }
-            catch (Exception ex)
-            {
-                Log.Error().WriteLine(ex, "Couldn't find resource {0} in the assembly {1} and namespace {2}", name, assembly.FullName);
+                return null;
             }
 
-            return null;
+            var name = string.Join(".", segments).Replace(@"\", ".").Replace(@"/", ".");
+            return ResourceStreamWithDecompression(assembly, name);
         }
 
         /// <summary>
@@ -197,7 +196,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <param name="assembly">Assembly to look into</param>
         /// <param name="ignoreCase">true, which is default, to ignore the case when comparing</param>
         /// <returns>Stream for the filePath, or null if not found</returns>
-        public Stream ResourceAsStream(Assembly assembly, string filePath, bool ignoreCase = true)
+        public Stream LocateResourceAsStream(Assembly assembly, string filePath, bool ignoreCase = true)
         {
             if (assembly == null)
             {
@@ -226,29 +225,33 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         }
 
         /// <summary>
-        /// Wrapper for retrieving the stream, and wrapping it in a GZipStream or DeflateStream
+        /// Retrieve the named resource as stream
+        ///     It will automatically uncompress if the file-ending is .gz or .compressed
+        ///     Note: a GZipStream is not seekable, this might cause issues.
         /// </summary>
         /// <param name="assembly">Assembly</param>
-        /// <param name="resourceName">string</param>
-        /// <param name="baseType"></param>
+        /// <param name="resourceName">string with the FQ resource name (assemblynamespace.path.filename.extension)</param>
+        /// <param name="baseType">Type whose namespace is used to scope the manifest resource name.</param>
         /// <returns>Stream</returns>
-        private Stream ResourceStreamWithDecompression(Assembly assembly, string resourceName, Type baseType = null)
+        public Stream ResourceStreamWithDecompression(Assembly assembly, string resourceName, Type baseType = null)
         {
             var resultStream = baseType == null ? assembly.GetManifestResourceStream(resourceName) : assembly.GetManifestResourceStream(baseType, resourceName);
-            if (resultStream != null)
+            if (resultStream == null)
             {
-                if (resourceName.EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
-                {
-                    resultStream = new GZipStream(resultStream, CompressionMode.Decompress);
-                }
-                else if(resourceName.EndsWith(".compressed", StringComparison.OrdinalIgnoreCase))
-                {
-                    resultStream = new DeflateStream(resultStream, CompressionMode.Decompress);
-                }
+                throw new FileNotFoundException("Could not find embedded file", $"{assembly.FullName}:{resourceName}");
             }
 
-                return resultStream;
+            if (resourceName.EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
+            {
+                return new GZipStream(resultStream, CompressionMode.Decompress);
             }
+            if (resourceName.EndsWith(".compressed", StringComparison.OrdinalIgnoreCase))
+            {
+                return new DeflateStream(resultStream, CompressionMode.Decompress);
+            }
+
+            return resultStream;
+        }
 
         /// <summary>
         ///     Scan the manifest of the supplied Assembly with a regex pattern for embedded resources
@@ -344,7 +347,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             foreach (var resourcesFile in resourceNames.Where(x => x.EndsWith(".g.resources")))
             {
                 Log.Verbose().WriteLine("Resource not directly found, trying {0}", resourcesFile);
-                using (var resourceStream = ResourceAsStream(assembly, resourcesFile))
+                using (var resourceStream = LocateResourceAsStream(assembly, resourcesFile))
                 {
                     if (resourceStream == null)
                     {

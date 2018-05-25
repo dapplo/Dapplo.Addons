@@ -34,6 +34,9 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         /// </summary>
         public string Filename { get; }
 
+        /// <summary>
+        /// This is the last write time of the assembly on the disk, or the containing assembly for embedded assemblies.
+        /// </summary>
         public DateTime FileDate
         {
             get
@@ -47,6 +50,12 @@ namespace Dapplo.Addons.Bootstrapper.Internal
             }
         }
 
+        /// <summary>
+        /// Constructor for an embedded assembly location information
+        /// </summary>
+        /// <param name="name">string with name of the assembly</param>
+        /// <param name="containingAssembly">Assembly which contains the assembly</param>
+        /// <param name="resourceName">string with the resource name</param>
         public AssemblyLocationInformation(string name, Assembly containingAssembly, string resourceName)
         {
             Name = name;
@@ -55,6 +64,11 @@ namespace Dapplo.Addons.Bootstrapper.Internal
             Filename = resourceName;
         }
 
+        /// <summary>
+        /// Constructor for a disk located assembly location information
+        /// </summary>
+        /// <param name="name">string with the assembly name</param>
+        /// <param name="resourceName">string with the filename</param>
         public AssemblyLocationInformation(string name, string resourceName)
         {
             Name = name;
@@ -77,6 +91,7 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         }
 
 
+        /// <inheritdoc />
         public override bool Equals(object obj)
         {
             return obj is AssemblyLocationInformation information &&
@@ -86,6 +101,7 @@ namespace Dapplo.Addons.Bootstrapper.Internal
                    Filename == information.Filename;
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             var hashCode = 810003866;
@@ -96,6 +112,7 @@ namespace Dapplo.Addons.Bootstrapper.Internal
             return hashCode;
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             if (IsEmbedded)

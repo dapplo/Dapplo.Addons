@@ -43,8 +43,8 @@ namespace Dapplo.Addons.Tests
 {
     public class ManifestResourcesTests
     {
-        private static readonly LogSource Log = new LogSource();
         private readonly AssemblyResolver _resolver = new AssemblyResolver(ApplicationConfig.Create());
+
         public ManifestResourcesTests(ITestOutputHelper testOutputHelper)
         {
             LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
@@ -73,9 +73,9 @@ namespace Dapplo.Addons.Tests
         ///     Test if finding and loading from the manifest works
         /// </summary>
         [Fact]
-        public void Test_GetEmbeddedResourceAsStream()
+        public void Test_LocateResourceAsStream()
         {
-            using (var stream = _resolver.Resources.ResourceAsStream(GetType().Assembly, @"TestFiles\embedded-dapplo.png"))
+            using (var stream = _resolver.Resources.LocateResourceAsStream(GetType().Assembly, @"TestFiles\embedded-dapplo.png"))
             {
                 var bitmap = Image.FromStream(stream);
                 Assert.NotNull(bitmap);
@@ -87,14 +87,25 @@ namespace Dapplo.Addons.Tests
         ///     Test if gunzip works
         /// </summary>
         [Fact]
-        public void Test_GetEmbeddedResourceAsStream_GZ()
+        public void Test_ResourceAsStream_GZ()
         {
-            foreach (var manifestResourceName in _resolver.Resources.GetCachedManifestResourceNames(GetType().Assembly))
-            {
-                Log.Info().WriteLine("Resource: {0}", manifestResourceName);
-            }
-
             using (var stream = _resolver.Resources.ResourceAsStream(GetType().Assembly, @"TestFiles\embedded-dapplo.png.gz"))
+            {
+                using (var bitmap = Image.FromStream(stream))
+                {
+                    Assert.NotNull(bitmap);
+                    Assert.True(bitmap.Width > 0);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Test if gunzip works
+        /// </summary>
+        [Fact]
+        public void Test_LocateResourceAsStream_GZ()
+        {
+            using (var stream = _resolver.Resources.LocateResourceAsStream(GetType().Assembly, @"TestFiles\embedded-dapplo.png.gz"))
             {
                 using (var bitmap = Image.FromStream(stream))
                 {
