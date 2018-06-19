@@ -116,9 +116,9 @@ namespace Dapplo.Addons.Bootstrapper
         public bool HasMutex => !string.IsNullOrEmpty(Mutex);
 
         /// <summary>
-        /// Specify if the mutex is global
+        /// Specify if the mutex is global, default is false
         /// </summary>
-        public bool UseGlobalMutex { get; private set; } = true;
+        public bool UseGlobalMutex { get; private set; }
 
         /// <summary>
         /// Change the application name
@@ -200,10 +200,14 @@ namespace Dapplo.Addons.Bootstrapper
         /// Specify that a mutex needs to be used
         /// </summary>
         /// <param name="mutex">string</param>
-        /// <param name="global">bool specifying if the mutex if global or not</param>
+        /// <param name="global">bool specifying if the mutex if global or not, default is false</param>
         /// <returns>ApplicationConfig</returns>
-        public ApplicationConfig WithMutex(string mutex, bool? global = true)
+        public ApplicationConfig WithMutex(string mutex, bool? global = false)
         {
+            if (global.HasValue)
+            {
+                UseGlobalMutex = global.Value;
+            }
             Mutex = mutex ?? throw new ArgumentNullException(nameof(mutex));
             return this;
         }
