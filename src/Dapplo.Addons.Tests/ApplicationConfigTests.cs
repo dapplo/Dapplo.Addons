@@ -54,7 +54,7 @@ namespace Dapplo.Addons.Tests
             Assert.NotEmpty(config.ApplicationName);
             Assert.Equal(FileLocations.AssemblyResolveDirectories, config.ScanDirectories);
             Assert.Contains(config.Extensions, s => s.Equals(".dll"));
-            Assert.True(config.UseGlobalMutex);
+            Assert.False(config.UseGlobalMutex);
             Assert.True(config.ScanForEmbeddedAssemblies);
             Assert.True(config.CopyEmbeddedAssembliesToFileSystem);
         }
