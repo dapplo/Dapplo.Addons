@@ -554,7 +554,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
             if (Log.IsVerboseEnabled())
             {
-                Log.Verbose().WriteLine("Removing cached assembly files {0}", string.Join(" ", _assembliesToDeleteAtExit.Select(a => $"\"{FileTools.NormalizeDirectory(a)}\"")));
+                Log.Verbose().WriteLine("Removing cached assembly files: \r\n\t{0}", string.Join("\r\n\t", _assembliesToDeleteAtExit.Select(a => $"\"{FileTools.NormalizeDirectory(a)}\"")));
             }
 
             var info = new ProcessStartInfo
