@@ -16,7 +16,7 @@ namespace Dapplo.Addons.DemoConsoleApp
         {
             LogSettings.RegisterDefaultLogger<DebugLogger>(LogLevels.Verbose);
 
-            var applicationConfig = ApplicationConfig.Create()
+            var applicationConfig = ApplicationConfigBuilder.Create()
                 .WithApplicationName("DemoConsoleApp")
                 .WithScanDirectories(
                     FileLocations.StartupDirectory,
@@ -27,7 +27,7 @@ namespace Dapplo.Addons.DemoConsoleApp
                     @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release"
 #endif
                 )
-                .WithAssemblyNames("Dapplo.HttpExtensions", "Dapplo.Addons.TestAddonWithCostura");
+                .WithAssemblyNames("Dapplo.HttpExtensions", "Dapplo.Addons.TestAddonWithCostura").BuildApplicationConfig();
 
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {

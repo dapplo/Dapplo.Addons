@@ -23,11 +23,8 @@
 
 #endregion
 
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
-using Dapplo.Addons.Bootstrapper.Resolving;
 
 namespace Dapplo.Addons.Bootstrapper
 {
@@ -36,251 +33,59 @@ namespace Dapplo.Addons.Bootstrapper
     /// </summary>
     public class ApplicationConfig
     {
-        private readonly ISet<string> _scanDirectories;
-        private readonly ISet<string> _assemblyNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private readonly ISet<Regex> _assemblyNamePatterns = new HashSet<Regex>();
-        private readonly ISet<string> _extensions = new HashSet<string>(new []{".dll", ".dll.compressed", ".dll.gz"}, StringComparer.OrdinalIgnoreCase);
-
-        /// <summary>
-        /// Setup all defaults
-        /// </summary>
-        private ApplicationConfig()
-        {
-            // Create the set of scan directories, including the directories which are used anyway
-            _scanDirectories = new HashSet<string>(FileLocations.AssemblyResolveDirectories, StringComparer.OrdinalIgnoreCase);
-
-            // set the process name to be the name of the application
-            using (var process = Process.GetCurrentProcess())
-            {
-                ApplicationName = process.ProcessName;
-            }
-        }
-
-        /// <summary>
-        /// Factory method
-        /// </summary>
-        /// <returns></returns>
-        public static ApplicationConfig Create()
-        {
-            return new ApplicationConfig();
-        }
-
         /// <summary>
         /// Specifies if the application bootstrapper should scan embedded assemblies
         /// </summary>
-        public bool ScanForEmbeddedAssemblies { get; private set; } = true;
+        public bool ScanForEmbeddedAssemblies { get; internal set; } = true;
 
         /// <summary>
         /// Specifies if the application bootstrapper copy embedded assemblies to the file system
         /// </summary>
-        public bool CopyEmbeddedAssembliesToFileSystem { get; private set; } = true;
+        public bool CopyEmbeddedAssembliesToFileSystem { get; internal set; } = true;
 
         /// <summary>
         /// Specifies if assemblies outside the probing path can be copied to the probing path
         /// </summary>
-        public bool CopyAssembliesToProbingPath { get; private set; } = true;
+        public bool CopyAssembliesToProbingPath { get; internal set; } = true;
 
         /// <summary>
         /// The directories to scan for addons
         /// </summary>
-        public IEnumerable<string> ScanDirectories => _scanDirectories;
+        public IReadOnlyList<string> ScanDirectories { get; internal set; }
 
         /// <summary>
         /// The names of assemblies to load
         /// </summary>
-        public IEnumerable<string> AssemblyNames => _assemblyNames;
+        public IReadOnlyList<string> AssemblyNames { get; internal set; }
 
         /// <summary>
         /// The patterns of assembly names to load
         /// </summary>
-        public IEnumerable<Regex> AssemblyNamePatterns => _assemblyNamePatterns;
+        public IReadOnlyList<Regex> AssemblyNamePatterns { get; internal set; }
 
         /// <summary>
         /// The allowed assembly extensions to load, default .dll
         /// </summary>
-        public IEnumerable<string> Extensions => _extensions;
+        public IReadOnlyList<string> Extensions { get; internal set; }
 
         /// <summary>
         /// The name of the application
         /// </summary>
-        public string ApplicationName { get; private set; }
+        public string ApplicationName { get; internal set; }
 
         /// <summary>
         /// The id of the mutex, if any
         /// </summary>
-        public string Mutex { get; private set; }
+        public string Mutex { get; internal set; }
+
+        /// <summary>
+        /// Specify if the mutex is global, default is false
+        /// </summary>
+        public bool UseGlobalMutex { get; internal set; }
 
         /// <summary>
         /// Test if a mutex is set
         /// </summary>
         public bool HasMutex => !string.IsNullOrEmpty(Mutex);
-
-        /// <summary>
-        /// Specify if the mutex is global, default is false
-        /// </summary>
-        public bool UseGlobalMutex { get; private set; }
-
-        /// <summary>
-        /// Change the application name
-        /// </summary>
-        /// <param name="applicationName">string</param>
-        /// <returns>ApplicationConfig</returns>
-        public ApplicationConfig WithApplicationName(string applicationName)
-        {
-            ApplicationName = applicationName;
-            return this;
-        }
-
-        /// <summary>
-        /// Disable the embedded assembly scanning
-        /// </summary>
-        /// <returns>ApplicationConfig</returns>
-        public ApplicationConfig WithoutScanningForEmbeddedAssemblies()
-        {
-            ScanForEmbeddedAssemblies = false;
-            return this;
-        }
-
-        /// <summary>
-        /// Disable the embedded assembly copying
-        /// </summary>
-        /// <returns>ApplicationConfig</returns>
-        public ApplicationConfig WithoutCopyOfEmbeddedAssemblies()
-        {
-            CopyEmbeddedAssembliesToFileSystem = false;
-            return this;
-        }
-
-        /// <summary>
-        /// The extensions to use for loading the assemblies
-        /// </summary>
-        /// <param name="extensions">string with extension, can use multiple arguments</param>
-        /// <returns>ApplicationConfig</returns>
-        public ApplicationConfig WithExtensions(params string [] extensions)
-        {
-            if (extensions == null || extensions.Length == 0)
-            {
-                return this;
-            }
-            foreach (var extension in extensions)
-            {
-                if (string.IsNullOrEmpty(extension))
-                {
-                    continue;
-                }
-                _extensions.Add(extension);
-            }
-            return this;
-        }
-
-        /// <summary>
-        /// The extensions NOT to use for loading the assemblies, e.g. if you do not want to use .dll call this
-        /// </summary>
-        /// <param name="extensions">string with extension, can use multiple arguments, when null all are removed</param>
-        /// <returns>ApplicationConfig</returns>
-        public ApplicationConfig WithoutExtensions(params string[] extensions)
-        {
-            if (extensions == null || extensions.Length == 0)
-            {
-                _extensions.Clear();
-                return this;
-            }
-            foreach (var extension in extensions)
-            {
-                if (string.IsNullOrEmpty(extension))
-                {
-                    continue;
-                }
-                _extensions.Remove(extension);
-            }
-            return this;
-        }
-
-        /// <summary>
-        /// Specify that a mutex needs to be used
-        /// </summary>
-        /// <param name="mutex">string</param>
-        /// <param name="global">bool specifying if the mutex if global or not, default is false</param>
-        /// <returns>ApplicationConfig</returns>
-        public ApplicationConfig WithMutex(string mutex, bool? global = false)
-        {
-            if (global.HasValue)
-            {
-                UseGlobalMutex = global.Value;
-            }
-            Mutex = mutex ?? throw new ArgumentNullException(nameof(mutex));
-            return this;
-        }
-
-        /// <summary>
-        /// Add scan directory or directories
-        /// </summary>
-        /// <param name="scanDirectories">string []</param>
-        public ApplicationConfig WithScanDirectories(params string[] scanDirectories)
-        {
-            if (scanDirectories == null || scanDirectories.Length == 0)
-            {
-                return this;
-            }
-
-            foreach (var scanDirectory in scanDirectories)
-            {
-                if (string.IsNullOrEmpty(scanDirectory))
-                {
-                    continue;
-                }
-                var normalizedDirectory = FileTools.NormalizeDirectory(scanDirectory);
-                _scanDirectories.Add(normalizedDirectory);
-            }
-           
-            return this;
-        }
-
-        /// <summary>
-        /// Add assembly name(s)
-        /// </summary>
-        /// <param name="assemblyNames">string [] with the names of assemblies to load</param>
-        public ApplicationConfig WithAssemblyNames(params string[] assemblyNames)
-        {
-            if (assemblyNames == null || assemblyNames.Length == 0)
-            {
-                return this;
-            }
-
-            foreach (var assemblyName in assemblyNames)
-            {
-                if (string.IsNullOrEmpty(assemblyName))
-                {
-                    continue;
-                }
-                _assemblyNames.Add(assemblyName);
-            }
-
-            return this;
-        }
-
-        /// <summary>
-        /// Add assembly name patterns to scan for
-        /// </summary>
-        /// <param name="assemblyNamePatterns">string [] with the assembly name patterns</param>
-        public ApplicationConfig WithAssemblyPatterns(params string[] assemblyNamePatterns)
-        {
-            if (assemblyNamePatterns == null || assemblyNamePatterns.Length == 0)
-            {
-                return this;
-            }
-
-            foreach (var assemblyNamePattern in assemblyNamePatterns)
-            {
-                if (string.IsNullOrEmpty(assemblyNamePattern))
-                {
-                    continue;
-                }
-
-                _assemblyNamePatterns.Add(new Regex(assemblyNamePattern.Replace(".", @"\.").Replace('?', '.').Replace("*", @"[^\\]*"), RegexOptions.IgnoreCase));
-            }
-
-            return this;
-        }
     }
 }

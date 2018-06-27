@@ -46,7 +46,7 @@ namespace Dapplo.Addons.Tests
         {
             bool didFirstRun = false;
             bool didSecondRun = false;
-            var applicationConfig = ApplicationConfig.Create().WithApplicationName("StartupTest");
+            var applicationConfig = ApplicationConfigBuilder.Create().WithApplicationName("StartupTest").BuildApplicationConfig();
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
                 bootstrapper.Configure();

@@ -50,7 +50,7 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void Test_ApplicationConfig_Defaults()
         {
-            var config = ApplicationConfig.Create();
+            var config = ApplicationConfigBuilder.Create().BuildApplicationConfig();
             Assert.NotEmpty(config.ApplicationName);
             Assert.Equal(FileLocations.AssemblyResolveDirectories, config.ScanDirectories);
             Assert.Contains(config.Extensions, s => s.Equals(".dll"));
@@ -62,44 +62,44 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void Test_ApplicationConfig_ApplicationName()
         {
-            var config = ApplicationConfig.Create().WithApplicationName("Dapplo");
+            var config = ApplicationConfigBuilder.Create().WithApplicationName("Dapplo").BuildApplicationConfig();
             Assert.Equal("Dapplo", config.ApplicationName);
         }
 
         [Fact]
         public void Test_ApplicationConfig_ScanDirectories_With()
         {
-            var config = ApplicationConfig.Create().WithScanDirectories("TestFiles");
+            var config = ApplicationConfigBuilder.Create().WithScanDirectories("TestFiles").BuildApplicationConfig();
             Assert.Contains(config.ScanDirectories, s => s.EndsWith(@"TestFiles", StringComparison.OrdinalIgnoreCase));
         }
 
         [Fact]
         public void Test_ApplicationConfig_AssemblyNames()
         {
-            var config = ApplicationConfig.Create().WithAssemblyNames("Dapplo.Addons.Config");
+            var config = ApplicationConfigBuilder.Create().WithAssemblyNames("Dapplo.Addons.Config").BuildApplicationConfig();
             Assert.Contains(config.AssemblyNames, s => s.Equals("Dapplo.Addons.Config"));
         }
 
         [Fact]
         public void Test_ApplicationConfig_Mutex()
         {
-            var config = ApplicationConfig.Create().WithMutex("Dapplo.Addons.Config");
+            var config = ApplicationConfigBuilder.Create().WithMutex("Dapplo.Addons.Config").BuildApplicationConfig();
             Assert.Equal("Dapplo.Addons.Config", config.Mutex);
         }
 
         [Fact]
         public void Test_ApplicationConfig_Extensions_Add()
         {
-            var config = ApplicationConfig.Create().WithExtensions(".gsp");
+            var config = ApplicationConfigBuilder.Create().WithExtensions(".gsp").BuildApplicationConfig();
             Assert.Equal(config.Extensions, new[]{".dll", ".dll.compressed", ".dll.gz", ".gsp" });
         }
 
         [Fact]
         public void Test_ApplicationConfig_Extensions_Remove()
         {
-            var config = ApplicationConfig.Create().WithoutExtensions(".dll", ".dll.compressed", ".dll.gz");
+            var config = ApplicationConfigBuilder.Create().WithoutExtensions(".dll", ".dll.compressed", ".dll.gz").BuildApplicationConfig();
             Assert.Empty(config.Extensions);
-            config = ApplicationConfig.Create().WithoutExtensions();
+            config = ApplicationConfigBuilder.Create().WithoutExtensions().BuildApplicationConfig();
             Assert.Empty(config.Extensions);
         }
     }

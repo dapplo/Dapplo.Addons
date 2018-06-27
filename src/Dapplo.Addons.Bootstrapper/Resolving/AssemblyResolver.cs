@@ -82,7 +82,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public AssemblyResolver(ApplicationConfig applicationConfig)
         {
             _applicationConfig = applicationConfig;
-
             // setup the regex
             var regexExtensions = string.Join("|", applicationConfig.Extensions.Select(e => e.Replace(".", @"\.")));
             _assemblyResourceNameRegex = new Regex($@"^(costura\.)*(?<assembly>.*)({regexExtensions})$", RegexOptions.Compiled | RegexOptions.IgnoreCase);

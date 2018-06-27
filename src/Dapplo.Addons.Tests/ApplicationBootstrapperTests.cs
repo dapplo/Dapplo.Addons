@@ -89,7 +89,8 @@ namespace Dapplo.Addons.Tests
             bool isDisposed = false;
             SetEntryAssembly(GetType().Assembly);
 
-            var applicationConfig = ApplicationConfig.Create()
+            var applicationConfig = ApplicationConfigBuilder
+                .Create()
                 .WithApplicationName(ApplicationName)
                 .WithScanDirectories(
                     FileLocations.StartupDirectory,
@@ -102,7 +103,8 @@ namespace Dapplo.Addons.Tests
 #endif
                 )
                 // Add all file starting with Dapplo and ending on .dll
-                .WithAssemblyPatterns("Dapplo*");
+                .WithAssemblyPatterns("Dapplo*")
+                .BuildApplicationConfig();
 
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
@@ -127,8 +129,10 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void TestConstructorAndCleanup()
         {
-            var applicationConfig = ApplicationConfig.Create()
-                .WithApplicationName(ApplicationName);
+            var applicationConfig = ApplicationConfigBuilder
+                .Create()
+                .WithApplicationName(ApplicationName)
+                .BuildApplicationConfig();
 
             var bootstrapper = new ApplicationBootstrapper(applicationConfig);
             bootstrapper.Dispose();
@@ -137,9 +141,11 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void TestConstructorWithMutexAndCleanup()
         {
-            var applicationConfig = ApplicationConfig.Create()
+            var applicationConfig = ApplicationConfigBuilder
+                .Create()
                 .WithApplicationName("Test")
-                .WithMutex(Guid.NewGuid().ToString());
+                .WithMutex(Guid.NewGuid().ToString())
+                .BuildApplicationConfig();
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
                 Assert.False(bootstrapper.IsAlreadyRunning);
@@ -157,7 +163,8 @@ namespace Dapplo.Addons.Tests
         {
             SetEntryAssembly(GetType().Assembly);
 
-            var applicationConfig = ApplicationConfig.Create()
+            var applicationConfig = ApplicationConfigBuilder
+                .Create()
                 .WithApplicationName(ApplicationName)
                 .WithScanDirectories(
                     FileLocations.StartupDirectory,
@@ -170,7 +177,8 @@ namespace Dapplo.Addons.Tests
 #endif
                 )
                 // Add all assemblies starting with Dapplo
-                .WithAssemblyPatterns("Dapplo*");
+                .WithAssemblyPatterns("Dapplo*")
+                .BuildApplicationConfig();
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
                 bootstrapper.Configure();

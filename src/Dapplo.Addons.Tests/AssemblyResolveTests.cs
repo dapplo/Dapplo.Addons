@@ -60,7 +60,8 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void TestCostura()
         {
-            var applicationConfig = ApplicationConfig.Create()
+            var applicationConfig = ApplicationConfigBuilder
+                .Create()
                 .WithApplicationName("TestCostura")
                 .WithScanDirectories(
                     FileLocations.StartupDirectory,
@@ -69,9 +70,10 @@ namespace Dapplo.Addons.Tests
 #else
                     @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release"
 #endif
-                    )
+                )
                 // Add Dapplo.Addons.TestAddonWithCostura
-                .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura");
+                .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura")
+                .BuildApplicationConfig();
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
                 var jiraAssembly = Assembly.Load("Dapplo.Jira");
@@ -82,7 +84,7 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void TestCostura_Nested_AssemblyLoad()
         {
-            var applicationConfig = ApplicationConfig.Create()
+            var applicationConfig = ApplicationConfigBuilder.Create()
                 .WithApplicationName("TestCostura_Nested")
                 .WithScanDirectories(
                     FileLocations.StartupDirectory,
@@ -93,7 +95,8 @@ namespace Dapplo.Addons.Tests
 #endif
                 )
                 // Add Dapplo.Addons.TestAddonWithCostura
-                .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura");
+                .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura")
+                .BuildApplicationConfig();
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
                 var jiraAssembly = Assembly.Load("Svg");
@@ -104,7 +107,7 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void TestCostura_Nested_ResolverLoad()
         {
-            var applicationConfig = ApplicationConfig.Create()
+            var applicationConfig = ApplicationConfigBuilder.Create()
                 .WithApplicationName("TestCostura_Nested")
                 .WithScanDirectories(
                     FileLocations.StartupDirectory,
@@ -115,7 +118,8 @@ namespace Dapplo.Addons.Tests
 #endif
                 )
                 // Add Dapplo.Addons.TestAddonWithCostura
-                .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura");
+                .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura")
+                .BuildApplicationConfig();
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
                 var jiraAssembly = bootstrapper.Resolver.LoadAssembly("Svg");

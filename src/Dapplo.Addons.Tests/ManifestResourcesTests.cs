@@ -43,7 +43,7 @@ namespace Dapplo.Addons.Tests
 {
     public class ManifestResourcesTests
     {
-        private readonly AssemblyResolver _resolver = new AssemblyResolver(ApplicationConfig.Create());
+        private readonly AssemblyResolver _resolver = new AssemblyResolver(ApplicationConfigBuilder.Create().BuildApplicationConfig());
 
         public ManifestResourcesTests(ITestOutputHelper testOutputHelper)
         {
