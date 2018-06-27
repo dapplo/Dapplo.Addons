@@ -13,7 +13,8 @@ It is created for Greenshot, here an example of the code how Greenshot starts:
 
 ```
 // Configure your application
-var applicationConfig = ApplicationConfig.Create()
+var applicationConfig = ApplicationConfigBuilder
+    .Create()
 	// Used for logging, configuration, and thread names
 	.WithApplicationName("Greenshot")
 	// Used to prevent multiple instances
@@ -23,7 +24,8 @@ var applicationConfig = ApplicationConfig.Create()
 	// Add directories to scan for dlls
 	.WithScanDirectories("... directory ...")
 	// Scan for all the assemblies, in the exe directory or specified scan directories, called Greenshot.Addon.*.dll
-	.WithAssemblyPatterns("Greenshot.Addon*");
+	.WithAssemblyPatterns("Greenshot.Addon*")
+	.BuildApplicationConfig();
 
 // Bootstrap it
 using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
