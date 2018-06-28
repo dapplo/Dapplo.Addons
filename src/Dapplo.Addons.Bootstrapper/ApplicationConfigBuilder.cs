@@ -35,7 +35,7 @@ using Dapplo.Addons.Bootstrapper.Resolving;
 namespace Dapplo.Addons.Bootstrapper
 {
     /// <summary>
-    /// This specifies the configuration for the ApplicationBootstrapper
+    /// This is a builder for the ApplicationConfig
     /// </summary>
     public class ApplicationConfigBuilder
     {
@@ -45,9 +45,12 @@ namespace Dapplo.Addons.Bootstrapper
         private readonly HashSet<string> _assemblyNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<Regex> _assemblyNamePatterns = new HashSet<Regex>();
         private readonly HashSet<string> _extensions = new HashSet<string>(new[] { ".dll", ".dll.compressed", ".dll.gz" }, StringComparer.OrdinalIgnoreCase);
-
         private readonly ApplicationConfig _applicationConfig = new ApplicationConfig();
-        private bool _isFinal;
+
+        /// <summary>
+        /// True if the ApplicationConfig was already build.
+        /// </summary>
+        public bool IsBuild { get; private set; }
 
         /// <summary>
         /// Private constructor, to prevent constructing this.
@@ -58,16 +61,24 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
+        /// Factory
+        /// </summary>
+        /// <returns>ApplicationConfig</returns>
+        [Pure]
+        public static ApplicationConfigBuilder Create() => new ApplicationConfigBuilder();
+
+        /// <summary>
         /// Build or finalize the configuration, so it can be used
         /// </summary>
         /// <returns>ApplicationConfig</returns>
+        [Pure]
         public ApplicationConfig BuildApplicationConfig()
         {
-            if (_isFinal)
+            if (IsBuild)
             {
                 throw new NotSupportedException(ApplicationconfigAlreadyBuild);
             }
-            _isFinal = true;
+            IsBuild = true;
 
             // Create an application name, if there is none
             if (string.IsNullOrEmpty(_applicationConfig.ApplicationName))
@@ -89,20 +100,13 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
-        /// Factory
-        /// </summary>
-        /// <returns>ApplicationConfig</returns>
-        [Pure]
-        public static ApplicationConfigBuilder Create() => new ApplicationConfigBuilder();
-
-        /// <summary>
         /// Change the application name
         /// </summary>
         /// <param name="applicationName">string</param>
         /// <returns>ApplicationConfigBuilder</returns>
         public ApplicationConfigBuilder WithApplicationName(string applicationName)
         {
-            if (_isFinal)
+            if (IsBuild)
             {
                 throw new NotSupportedException(ApplicationconfigAlreadyBuild);
             }
@@ -116,7 +120,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <returns>ApplicationConfigBuilder</returns>
         public ApplicationConfigBuilder WithoutScanningForEmbeddedAssemblies()
         {
-            if (_isFinal)
+            if (IsBuild)
             {
                 throw new NotSupportedException(ApplicationconfigAlreadyBuild);
             }
@@ -130,7 +134,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <returns>ApplicationConfigBuilder</returns>
         public ApplicationConfigBuilder WithoutCopyOfEmbeddedAssemblies()
         {
-            if (_isFinal)
+            if (IsBuild)
             {
                 throw new NotSupportedException(ApplicationconfigAlreadyBuild);
             }
@@ -145,7 +149,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <returns>ApplicationConfigBuilder</returns>
         public ApplicationConfigBuilder WithExtensions(params string[] extensions)
         {
-            if (_isFinal)
+            if (IsBuild)
             {
                 throw new NotSupportedException(ApplicationconfigAlreadyBuild);
             }
@@ -172,7 +176,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <returns>ApplicationConfig</returns>
         public ApplicationConfigBuilder WithoutExtensions(params string[] extensions)
         {
-            if (_isFinal)
+            if (IsBuild)
             {
                 throw new NotSupportedException(ApplicationconfigAlreadyBuild);
             }
@@ -200,7 +204,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <returns>ApplicationConfigBuilder</returns>
         public ApplicationConfigBuilder WithMutex(string mutex, bool? global = false)
         {
-            if (_isFinal)
+            if (IsBuild)
             {
                 throw new NotSupportedException(ApplicationconfigAlreadyBuild);
             }
@@ -219,7 +223,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <returns>ApplicationConfigBuilder</returns>
         public ApplicationConfigBuilder WithScanDirectories(params string[] scanDirectories)
         {
-            if (_isFinal)
+            if (IsBuild)
             {
                 throw new NotSupportedException(ApplicationconfigAlreadyBuild);
             }
@@ -242,13 +246,23 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
+        /// This is a shortcut to add the loading of the assembly Dapplo.Addons.Config, which enables Dapplo.Ini and Dapplo.Language
+        /// These assemblies ofcourse needs to be available...
+        /// </summary>
+        /// <returns>ApplicationConfigBuilder</returns>
+        public ApplicationConfigBuilder WithConfigSupport()
+        {
+            return WithAssemblyNames("Dapplo.Addons.Config");
+        }
+
+        /// <summary>
         /// Add assembly name(s)
         /// </summary>
         /// <param name="assemblyNames">string [] with the names of assemblies to load</param>
         /// <returns>ApplicationConfigBuilder</returns>
         public ApplicationConfigBuilder WithAssemblyNames(params string[] assemblyNames)
         {
-            if (_isFinal)
+            if (IsBuild)
             {
                 throw new NotSupportedException(ApplicationconfigAlreadyBuild);
             }
@@ -276,7 +290,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <returns>ApplicationConfigBuilder</returns>
         public ApplicationConfigBuilder WithAssemblyPatterns(params string[] assemblyNamePatterns)
         {
-            if (_isFinal)
+            if (IsBuild)
             {
                 throw new NotSupportedException(ApplicationconfigAlreadyBuild);
             }
