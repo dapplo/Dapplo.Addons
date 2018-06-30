@@ -46,6 +46,7 @@ namespace Dapplo.Addons.Bootstrapper
         private readonly ResourceMutex _resourceMutex;
         private readonly IList<IDisposable> _disposables = new List<IDisposable>();
         private readonly ApplicationConfig _applicationConfig;
+        private bool _loadedAssemblies;
         private bool _isStartedUp;
         private bool _isShutDown;
         private ContainerBuilder _builder;
@@ -114,25 +115,7 @@ namespace Dapplo.Addons.Bootstrapper
                 _resourceMutex = ResourceMutex.Create(applicationConfig.Mutex, applicationConfig.ApplicationName, applicationConfig.UseGlobalMutex);
             }
 
-            Resolver = new AssemblyResolver(applicationConfig);
-
-            foreach (var wantedAssemblyName in _applicationConfig.AssemblyNames)
-            {
-                if (Resolver.AvailableAssemblies.TryGetValue(wantedAssemblyName, out var assemblyLocationInformation))
-                {
-                    Resolver.LoadAssembly(assemblyLocationInformation);
-                }
-                else
-                {
-                    throw new DllNotFoundException($"Assembly {wantedAssemblyName} not found!");
-                }
-            }
-
-            // Start loading!
-            foreach (var availableAssembly in Resolver.AvailableAssemblies.Values.Where(information => applicationConfig.AssemblyNamePatterns.Any(regex => regex.IsMatch(information.Name))))
-            {
-                Resolver.LoadAssembly(availableAssembly);
-            }
+            Resolver = new AssemblyResolver(_applicationConfig);
         }
 
         /// <summary>
@@ -175,15 +158,69 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
+        /// Load all specified assemblies
+        /// </summary>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <exception cref="DllNotFoundException"></exception>
+        public virtual async Task LoadAssemblies(CancellationToken cancellationToken = default)
+        {
+            if (_loadedAssemblies)
+            {
+                return;
+            }
+
+            _loadedAssemblies = true;
+
+            var loaderTasks = new List<Task>();
+            foreach (var wantedAssemblyName in _applicationConfig.AssemblyNames)
+            {
+                if (Resolver.AvailableAssemblies.TryGetValue(wantedAssemblyName, out var assemblyLocationInformation))
+                {
+                    if (_applicationConfig.UseAsyncAssemblyLoading)
+                    {
+                        loaderTasks.Add(Task.Run(() => Resolver.LoadAssembly(assemblyLocationInformation), cancellationToken));
+                    }
+                    else
+                    {
+                        Resolver.LoadAssembly(assemblyLocationInformation);
+                    }
+                }
+                else
+                {
+                    throw new DllNotFoundException($"Assembly {wantedAssemblyName} not found!");
+                }
+            }
+
+            // Start loading!
+            foreach (var availableAssembly in Resolver.AvailableAssemblies.Values.Where(information => _applicationConfig.AssemblyNamePatterns.Any(regex => regex.IsMatch(information.Name))))
+            {
+                if (_applicationConfig.UseAsyncAssemblyLoading)
+                {
+                    loaderTasks.Add(Task.Run(() => Resolver.LoadAssembly(availableAssembly), cancellationToken));
+                }
+                else
+                {
+                    Resolver.LoadAssembly(availableAssembly);
+                }
+            }
+
+            if (loaderTasks.Count > 0)
+            {
+                await Task.WhenAll(loaderTasks);
+            }
+        }
+
+        /// <summary>
         /// Initialize the bootstrapper
         /// </summary>
-        public virtual Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
+        public virtual async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
         {
             if (Container != null)
             {
                 throw new NotSupportedException("Initialize can only be called once.");
             }
             Log.Verbose().WriteLine("Initializing");
+            await LoadAssemblies(cancellationToken);
 
             Configure();
             _builder.Properties[nameof(EnableActivationLogging)] = EnableActivationLogging.ToString();
@@ -241,7 +278,7 @@ namespace Dapplo.Addons.Bootstrapper
             // And the scope
             Scope = Container.BeginLifetimeScope();
 
-            return Task.FromResult(true);
+            return true;
         }
 
         /// <summary>

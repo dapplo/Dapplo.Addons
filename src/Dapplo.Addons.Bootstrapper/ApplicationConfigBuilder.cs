@@ -129,6 +129,20 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
+        /// Disable the async loading of assemblies
+        /// </summary>
+        /// <returns>ApplicationConfigBuilder</returns>
+        public ApplicationConfigBuilder WithoutAsyncAssemblyLoading()
+        {
+            if (IsBuild)
+            {
+                throw new NotSupportedException(ApplicationconfigAlreadyBuild);
+            }
+            _applicationConfig.UseAsyncAssemblyLoading = false;
+            return this;
+        }
+
+        /// <summary>
         /// Disable the embedded assembly copying
         /// </summary>
         /// <returns>ApplicationConfigBuilder</returns>

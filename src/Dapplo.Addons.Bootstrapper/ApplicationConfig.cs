@@ -49,6 +49,11 @@ namespace Dapplo.Addons.Bootstrapper
         public bool CopyAssembliesToProbingPath { get; internal set; } = true;
 
         /// <summary>
+        /// This specifies if the loading of assemblies can be done async
+        /// </summary>
+        public bool UseAsyncAssemblyLoading { get; internal set; } = true;
+
+        /// <summary>
         /// The directories to scan for addons
         /// </summary>
         public IReadOnlyList<string> ScanDirectories { get; internal set; }

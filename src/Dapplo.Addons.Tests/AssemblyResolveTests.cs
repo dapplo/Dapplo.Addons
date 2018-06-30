@@ -26,6 +26,7 @@
 #region Usings
 
 using System.Reflection;
+using System.Threading.Tasks;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Addons.Tests.TestAssembly;
@@ -83,7 +84,7 @@ namespace Dapplo.Addons.Tests
         }
 
         [Fact]
-        public void TestCostura_Nested_AssemblyLoad()
+        public async Task TestCostura_Nested_AssemblyLoad()
         {
             var applicationConfig = ApplicationConfigBuilder.Create()
                 .WithApplicationName("TestCostura_Nested")
@@ -100,13 +101,14 @@ namespace Dapplo.Addons.Tests
                 .BuildApplicationConfig();
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
+                await bootstrapper.InitializeAsync();
                 var jiraAssembly = Assembly.Load("Svg");
                 Assert.NotNull(jiraAssembly);
             }
         }
 
         [Fact]
-        public void TestCostura_Nested_ResolverLoad()
+        public async Task TestCostura_Nested_ResolverLoad()
         {
             var applicationConfig = ApplicationConfigBuilder.Create()
                 .WithApplicationName("TestCostura_Nested")
@@ -123,6 +125,7 @@ namespace Dapplo.Addons.Tests
                 .BuildApplicationConfig();
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
+                await bootstrapper.InitializeAsync();
                 var jiraAssembly = bootstrapper.Resolver.LoadAssembly("Svg");
                 Assert.NotNull(jiraAssembly);
             }
