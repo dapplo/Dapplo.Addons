@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -320,7 +320,14 @@ namespace Dapplo.Addons.Bootstrapper
                 // Auto shutdown
                 using (new NoSynchronizationContextScope())
                 {
-                    ShutdownAsync().Wait();
+                    try
+                    {
+                        ShutdownAsync().Wait();
+                    }
+                    catch (AggregateException ex)
+                    {
+                        throw ex.GetBaseException();
+                    }
                 }
             }
 

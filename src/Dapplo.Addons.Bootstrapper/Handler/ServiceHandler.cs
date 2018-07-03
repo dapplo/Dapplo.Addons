@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -28,6 +28,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Autofac.Features.Metadata;
+using Dapplo.Addons.Bootstrapper.Internal;
 using Dapplo.Log;
 
 namespace Dapplo.Addons.Bootstrapper.Handler
@@ -38,267 +40,170 @@ namespace Dapplo.Addons.Bootstrapper.Handler
     public class ServiceHandler
     {
         private static readonly LogSource Log = new LogSource();
-        private readonly IEnumerable<Lazy<IService, ServiceOrderAttribute>> _services;
+        private readonly IDictionary<string, ServiceNode> _serviceNodes;
 
         /// <summary>
         /// The constructor to specify the startup modules
         /// </summary>
         /// <param name="services">IEnumerable</param>
-        public ServiceHandler(IEnumerable<Lazy<IService, ServiceOrderAttribute>> services)
+        public ServiceHandler(IEnumerable<Meta<IService, ServiceAttribute>> services)
         {
-            _services = services;
+            _serviceNodes = CreateServiceDictionary(services);
         }
 
         /// <summary>
-        /// Do the startup of the services who can startup
+        /// Internal helper, used for the test cases too
         /// </summary>
-        /// <param name="cancellationToken">CancellationToken</param>
-        /// <returns>Task</returns>
-        public async Task StartupAsync(CancellationToken cancellationToken = default)
+        /// <param name="newServices">IEnumerable with Meta of IService and ServiceAttribute</param>
+        /// <returns>IDictionary</returns>
+        internal static IDictionary<string, ServiceNode> CreateServiceDictionary(IEnumerable<Meta<IService, ServiceAttribute>> newServices)
         {
-            Log.Debug().WriteLine("Checking what needs to startup.");
-
-            var orderedServicesToStartup = from startupModule in _services orderby startupModule.Metadata.StartupOrder select startupModule;
-
-            var tasks = new List<KeyValuePair<Type, Task>>();
-            var nonAwaitables = new List<KeyValuePair<Type, Task>>();
-
-            // Variable used for grouping the startups
-            var groupingOrder = int.MaxValue;
-
-            var startupCancellationTokenSource = new CancellationTokenSource();
-
-            // Map the supplied cancellationToken to the _startupCancellationTokenSource, if the first cancells, _startupCancellationTokenSource also does
-            var cancellationTokenRegistration = default(CancellationTokenRegistration);
-            if (cancellationToken.CanBeCanceled)
+            var serviceNodes = newServices.ToDictionary(meta => meta.Metadata.Name, meta => new ServiceNode
             {
-                cancellationTokenRegistration = cancellationToken.Register(() => startupCancellationTokenSource.Cancel());
-            }
+                Details = meta.Metadata,
+                Service = meta.Value
+            });
 
-            foreach (var lazyService in orderedServicesToStartup)
+            // Enrich the information
+            foreach (var serviceNode in serviceNodes.Values)
             {
-                try
+                var serviceAttribute = serviceNode.Details;
+                // check if this depends on anything
+                if (string.IsNullOrEmpty(serviceAttribute.DependsOn))
                 {
-                    // Check if we have all the services belonging to a group
-                    if (tasks.Count > 0 && groupingOrder != lazyService.Metadata.StartupOrder)
-                    {
-                        groupingOrder = lazyService.Metadata.StartupOrder;
-                        // Await all belonging to the same order "group"
-                        await WhenAll(tasks).ConfigureAwait(false);
-                        // Clean the tasks, we are finished.
-                        tasks.Clear();
-                    }
-                    // Fail fast for when the stop is called during startup
-                    if (startupCancellationTokenSource.IsCancellationRequested)
-                    {
-                        Log.Debug().WriteLine("Startup cancelled.");
-                        break;
-                    }
-
-                    IService service;
-                    try
-                    {
-                        service = lazyService.Value;
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error().WriteLine(ex, "Exception instantiating service.");
-                        throw;
-                    }
-
-                    Task startupTask = null;
-
-                    if (Log.IsVerboseEnabled())
-                    {
-                        Log.Verbose().WriteLine("Starting {0}", service.GetType());
-                    }
-                    // Test if async / sync startup
-                    switch (service)
-                    {
-                        case IStartup serviceToStartup:
-                            // Wrap sync call as async task
-                            startupTask = Task.Run(() => serviceToStartup.Start(), cancellationToken);
-                            break;
-                        case IStartupAsync serviceToStartupAsync:
-                            // Create a task (it will start running, but we don't await it yet)
-                            startupTask = serviceToStartupAsync.StartAsync(cancellationToken);
-                            break;
-                    }
-
-                    if (startupTask != null)
-                    {
-                        if (lazyService.Metadata.AwaitStart)
-                        {
-                            tasks.Add(new KeyValuePair<Type, Task>(lazyService.Value.GetType(), startupTask));
-                        }
-                        else
-                        {
-                            if (Log.IsErrorEnabled())
-                            {
-                                // We do await for them, but just to catch any exceptions
-                                nonAwaitables.Add(new KeyValuePair<Type, Task>(lazyService.Value.GetType(), startupTask));
-                            }
-                        }
-                    }
-                }
-                catch (StartupException)
-                {
-                    Log.Fatal().WriteLine("StartupException cancels the startup.");
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    Log.Error().WriteLine(ex, "Exception executing startup {0}: ", lazyService.Value.GetType());
-                }
-                if (cancellationToken.CanBeCanceled)
-                {
-                    cancellationTokenRegistration.Dispose();
-                }
-            }
-
-            // Await all remaining tasks
-            if (tasks.Any())
-            {
-                try
-                {
-                    await WhenAll(tasks, false).ConfigureAwait(false);
-                }
-                catch (StartupException)
-                {
-                    Log.Fatal().WriteLine("Startup will be cancelled due to the previous StartupException.");
-                    throw;
-                }
-            }
-            // If there is logging, log any exceptions of tasks that aren't awaited
-            if (nonAwaitables.Count > 0 && Log.IsErrorEnabled())
-            {
-                // ReSharper disable once UnusedVariable
-                await Task.Run(async () =>
-                {
-                    try
-                    {
-                        await WhenAll(nonAwaitables).ConfigureAwait(false);
-                    }
-                    catch (StartupException)
-                    {
-                        // Ignore the exception, just log information
-                        Log.Info().WriteLine("Ignoring StartupException, as the startup has AwaitStart set to false.");
-                    }
-                }, cancellationToken);
-            }
-        }
-
-
-        /// <summary>
-        /// Start the shutdown
-        /// </summary>
-        /// <param name="cancellationToken">CancellationToken</param>
-        public async Task ShutdownAsync(CancellationToken cancellationToken = default)
-        {
-            Log.Debug().WriteLine("Shutdown of services, if any");
-            var orderedServicesToShutdown = from shutdownModule in _services orderby shutdownModule.Metadata.ShutdownOrder descending select shutdownModule;
-
-            var tasks = new List<KeyValuePair<Type, Task>>();
-
-            // Variable used for grouping the shutdowns
-            var groupingOrder = int.MinValue;
-
-            foreach (var lazyService in orderedServicesToShutdown)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    Log.Debug().WriteLine("Shutdown cancelled.");
-                    break;
-                }
-                // Check if we have all the startup actions belonging to a group
-                if (tasks.Count > 0 && groupingOrder != lazyService.Metadata.ShutdownOrder)
-                {
-                    groupingOrder = lazyService.Metadata.ShutdownOrder;
-
-                    // Await all belonging to the same order "group"
-                    await WhenAll(tasks).ConfigureAwait(false);
-                    // Clean the tasks, we are finished.
-                    tasks.Clear();
-                }
-                IService service;
-                try
-                {
-                    service = lazyService.Value;
-                }
-                catch (Exception ex)
-                {
-                    Log.Error().WriteLine(ex, "Exception instantiating IService (ignoring in shutdown)");
+                    // Doesn't depend
                     continue;
                 }
 
-                if (Log.IsDebugEnabled())
+                if (!serviceNodes.TryGetValue(serviceAttribute.Name, out var thisNode))
                 {
-                    Log.Debug().WriteLine("Stopping {0}", service.GetType());
+                    throw new NotSupportedException($"Coudn't find service with ID {serviceAttribute.Name}");
                 }
+                if (!serviceNodes.TryGetValue(serviceAttribute.DependsOn, out var parentNode))
+                {
+                    throw new NotSupportedException($"Coudn't find service with ID {serviceAttribute.DependsOn}, service {serviceAttribute.Name} depends on this.");
+                }
+                thisNode.DependensOn.Add(parentNode);
+                parentNode.Dependencies.Add(thisNode);
+            }
 
-                try
-                {
-                    Task shutdownTask = null;
-                    // Test if async / sync shutdown
-                    switch (service)
-                    {
-                        case IShutdown shutdownAction:
-                            shutdownTask = Task.Run(() => shutdownAction.Shutdown(), cancellationToken);
-                            break;
-                        case IShutdownAsync asyncShutdownAction:
-                            // Create a task (it will start running, but we don't await it yet)
-                            shutdownTask = asyncShutdownAction.ShutdownAsync(cancellationToken);
-                            break;
-                    }
-                    if (shutdownTask != null)
-                    {
-                        // Store it for awaiting
-                        tasks.Add(new KeyValuePair<Type, Task>(service.GetType(), shutdownTask));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error().WriteLine(ex, "Exception executing shutdown {0}: ", service.GetType());
-                }
-            }
-            // Await all remaining tasks, as the system is shutdown we NEED to wait, and ignore but log their exceptions
-            if (tasks.Count > 0)
-            {
-                await WhenAll(tasks).ConfigureAwait(false);
-            }
+            return serviceNodes;
         }
 
         /// <summary>
-        ///     Special WhenAll, this awaits the supplied values and log any exceptions they had.
-        ///     This is not optimized, like Task.WhenAll...
+        /// Start the services, begin with the root nodes and than everything that depends on these, and so on
         /// </summary>
-        /// <param name="tasksToAwait"></param>
-        /// <param name="ignoreExceptions">if true (default) the exceptions will be logged but ignored.</param>
-        /// <returns>Task</returns>
-        private static async Task WhenAll(IEnumerable<KeyValuePair<Type, Task>> tasksToAwait, bool ignoreExceptions = true)
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>Task to await startup</returns>
+        public Task StartupAsync(CancellationToken cancellationToken = default)
         {
-            foreach (var taskInfo in tasksToAwait)
-            {
-                try
-                {
-                    await taskInfo.Value.ConfigureAwait(false);
-                }
-                catch (StartupException ex)
-                {
-                    Log.Error().WriteLine(ex, "StartupException in {0}", taskInfo.Key);
-                    // Break execution
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    Log.Error().WriteLine(ex, "Exception in {0}", taskInfo.Key);
-                    if (!ignoreExceptions)
-                    {
-                        throw;
-                    }
-                }
-            }
+            var rootNodes = _serviceNodes.Values.Where(node => !node.IsDependendOn);
+            return StartServices(rootNodes, cancellationToken);
         }
 
+        /// <summary>
+        /// Stop the services, begin with the nodes without dependencies and than everything that this depends on, and so on
+        /// </summary>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>Task to await startup</returns>
+        public Task ShutdownAsync(CancellationToken cancellationToken = default)
+        {
+            var leafNodes = _serviceNodes.Values.Where(node => !node.HasDependencies);
+            return StopServices(leafNodes, cancellationToken);
+        }
+
+        /// <summary>
+        /// Create a task for the startup
+        /// </summary>
+        /// <param name="serviceNodes">IEnumerable with ServiceNode</param>
+        /// <param name="cancellation">CancellationToken</param>
+        /// <returns>Task</returns>
+        private Task StartServices(IEnumerable<ServiceNode> serviceNodes, CancellationToken cancellation = default)
+        {
+            var tasks = new List<Task>();
+            foreach (var serviceNode in serviceNodes)
+            {
+                Log.Debug().WriteLine("Starting {0}", serviceNode.Service.GetType());
+
+                switch (serviceNode.Service)
+                {
+                    case IStartupAsync startupAsync:
+                        {
+                            var serviceTask = startupAsync.StartAsync(cancellation);
+                            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                            if (serviceNode.Dependencies.Count > 0)
+                            {
+                                // Recurse into StartServices
+                                serviceTask = serviceTask.ContinueWith(task => StartServices(serviceNode.Dependencies, cancellation), cancellation).Unwrap();
+                            }
+                            tasks.Add(serviceTask);
+                            break;
+                        }
+                    case IStartup startup:
+                        {
+                            var serviceTask = Task.Run(() => startup.Start(), cancellation);
+                            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                            if (serviceNode.Dependencies.Count > 0)
+                            {
+                                // Recurse into StartServices
+                                serviceTask = serviceTask.ContinueWith(task => StartServices(serviceNode.Dependencies, cancellation), cancellation).Unwrap();
+                            }
+                            tasks.Add(serviceTask);
+                            break;
+                        }
+                }
+            }
+
+            return Task.WhenAll(tasks);
+        }
+
+        /// <summary>
+        /// Create a task for the stop
+        /// </summary>
+        /// <param name="serviceNodes">IEnumerable with ServiceNode</param>
+        /// <param name="cancellation">CancellationToken</param>
+        /// <returns>Task</returns>
+        private Task StopServices(IEnumerable<ServiceNode> serviceNodes, CancellationToken cancellation = default)
+        {
+            var tasks = new List<Task>();
+            foreach (var serviceNode in serviceNodes)
+            {
+                if (!serviceNode.StartShutdown())
+                {
+                    // Shutdown was already started
+                    continue;
+                }
+                Log.Debug().WriteLine("Stopping {0}", serviceNode.Service.GetType());
+                switch (serviceNode.Service)
+                {
+                    case IShutdownAsync shutdownAsync:
+                        {
+
+                            var serviceTask = shutdownAsync.ShutdownAsync(cancellation);
+                            if (serviceNode.DependensOn.Count > 0)
+                            {
+                                // Recurse into StartServices
+                                serviceTask = serviceTask.ContinueWith(async task => await StopServices(serviceNode.DependensOn, cancellation), cancellation).Unwrap();
+                            }
+                            tasks.Add(serviceTask);
+                            break;
+                        }
+                    case IShutdown shutdown:
+                        {
+                            var serviceTask = Task.Run(() => shutdown.Shutdown(), cancellation);
+                            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                            if (serviceNode.DependensOn.Count > 0)
+                            {
+                                // Recurse into StartServices
+                                serviceTask = serviceTask.ContinueWith(task => StopServices(serviceNode.DependensOn, cancellation), cancellation).Unwrap();
+                            }
+                            tasks.Add(serviceTask);
+                            break;
+                        }
+                }
+            }
+
+            return Task.WhenAll(tasks);
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -32,7 +32,7 @@ namespace Dapplo.Addons.Config
     /// <summary>
     /// A service for loading and unloading the Ini configuration
     /// </summary>
-    [ServiceOrder(int.MinValue)]
+    [Service(nameof(IniSectionService))]
     internal class IniSectionService : IStartupAsync, IShutdownAsync
     {
         /// <inheritdoc />

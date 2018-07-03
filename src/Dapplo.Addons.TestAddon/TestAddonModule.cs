@@ -1,4 +1,4 @@
-﻿using Autofac;
+using Autofac;
 
 namespace Dapplo.Addons.TestAddon
 {
@@ -8,10 +8,12 @@ namespace Dapplo.Addons.TestAddon
         {
             builder
                 .RegisterType<SomeAddon>()
+                .WithMetadata("Name", nameof(SomeAddon))
                 .As<IService>()
                 .SingleInstance();
             builder
                 .RegisterType<AnotherAddon>()
+                .WithMetadata("Name", nameof(AnotherAddon))
                 .As<IService>()
                 .SingleInstance();
         }

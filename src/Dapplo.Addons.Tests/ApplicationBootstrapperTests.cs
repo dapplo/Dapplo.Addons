@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -120,7 +120,7 @@ namespace Dapplo.Addons.Tests
                 Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Not initialized");
                 
                 // Start the composition, and IStartupActions
-                await Assert.ThrowsAsync<StartupException>(async () => await bootstrapper.StartupAsync().ConfigureAwait(false));
+                await Assert.ThrowsAsync<NotSupportedException>(async () => await bootstrapper.StartupAsync().ConfigureAwait(false));
             }
             // Dispose automatically calls IShutdownActions
             Assert.True(isDisposed);

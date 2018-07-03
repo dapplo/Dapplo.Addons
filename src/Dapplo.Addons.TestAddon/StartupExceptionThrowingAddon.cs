@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -42,7 +42,7 @@ namespace Dapplo.Addons.TestAddon
         {
             if (ThrowStartupException)
             {
-                throw new StartupException("I was ordered to!!!", new NotSupportedException());
+                throw new NotSupportedException("I was ordered to!!!");
             }
         }
     }

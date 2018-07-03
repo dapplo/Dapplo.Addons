@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -61,14 +61,13 @@ namespace Dapplo.Addons.TestAddon
         {
             await Task.Delay(100, cancellationToken).ConfigureAwait(false);
             Log.Debug().WriteLine("ShutdownAsync called!");
-            throw new NotSupportedException("This should be logged!");
         }
 
         public async Task StartAsync(CancellationToken cancellationToken = new CancellationToken())
         {
             if (ThrowStartupException)
             {
-                throw new StartupException("I was ordered to!!!", new NotSupportedException());
+                throw new NotSupportedException("I was ordered to!!!");
             }
             foreach (var iniSection in MyConfigs)
             {

@@ -68,6 +68,7 @@
     <Compile Include="Internal\AssemblyLocationInformation.cs" />
     <Compile Include="Internal\NoSynchronizationContextScope.cs" />
     <Compile Include="EnableActivationLoggingModule.cs" />
+    <Compile Include="Internal\ServiceNode.cs" />
     <Compile Include="Resolving\AssemblyResolver.cs" />
     <Compile Include="Resolving\ManifestResources.cs" />
     <Compile Include="Resolving\FileLocations.cs" />

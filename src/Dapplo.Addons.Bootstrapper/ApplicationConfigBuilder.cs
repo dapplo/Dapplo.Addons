@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -264,10 +264,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// These assemblies ofcourse needs to be available...
         /// </summary>
         /// <returns>ApplicationConfigBuilder</returns>
-        public ApplicationConfigBuilder WithConfigSupport()
-        {
-            return WithAssemblyNames("Dapplo.Addons.Config");
-        }
+        public ApplicationConfigBuilder WithConfigSupport() => WithAssemblyNames("Dapplo.Addons.Config");
 
         /// <summary>
         /// Add assembly name(s)
