@@ -81,14 +81,14 @@ namespace Dapplo.Addons.Bootstrapper.Handler
 
                 if (!serviceNodes.TryGetValue(serviceAttribute.Name, out var thisNode))
                 {
-                    throw new NotSupportedException($"Coudn't find service with ID {serviceAttribute.Name}");
+                    throw new NotSupportedException($"Coudn't find service with Name {serviceAttribute.Name}");
                 }
 
                 if (!serviceNodes.TryGetValue(serviceAttribute.Prerequisite, out var prerequisiteNode))
                 {
                     if (!serviceAttribute.SkipIfPrerequisiteIsMissing)
                     {
-                        throw new NotSupportedException($"Coudn't find service with ID {serviceAttribute.Prerequisite}, service {serviceAttribute.Name} depends on this.");
+                        throw new NotSupportedException($"Coudn't find service with Name {serviceAttribute.Prerequisite}, service {serviceAttribute.Name} depends on this.");
                     }
                     continue;
                 }
@@ -132,41 +132,68 @@ namespace Dapplo.Addons.Bootstrapper.Handler
             var tasks = new List<Task>();
             foreach (var serviceNode in serviceNodes)
             {
-                Log.Debug().WriteLine("Starting {0}", serviceNode.Service.GetType());
+                Log.Debug().WriteLine("Starting {0} ({1})", serviceNode.Details.Name, serviceNode.Service.GetType());
 
+                var startupTask = Task.CompletedTask;
                 switch (serviceNode.Service)
                 {
                     case IStartupAsync startupAsync:
-                        var startupAsyncTask = Run(() => startupAsync.StartAsync(cancellationToken),
-                            serviceNode.Details.TaskSchedulerName, cancellationToken);
- 
-                        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                        if (serviceNode.Dependencies.Count > 0)
-                        {
-                            // Recurse into StartServices
-                            startupAsyncTask = startupAsyncTask.ContinueWith(task => StartServices(serviceNode.Dependencies, cancellationToken), cancellationToken).Unwrap();
-                        }
-                        if (!serviceNode.Details.SkipAwait)
-                        {
-                            tasks.Add(startupAsyncTask);
-                        }
+                        startupTask = Run(() => startupAsync.StartAsync(cancellationToken),
+                            serviceNode.Details.TaskSchedulerName, cancellationToken); 
                         break;
                     case IStartup startup:
-                        var startupTask = Run(() => startup.Start(), serviceNode.Details.TaskSchedulerName, cancellationToken);
-                      
-                        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                        if (serviceNode.Dependencies.Count > 0)
-                        {
-                            // Recurse into StartServices
-                            startupTask = startupTask.ContinueWith(task => StartServices(serviceNode.Dependencies, cancellationToken), cancellationToken).Unwrap();
-                        }
-
-                        if (!serviceNode.Details.SkipAwait)
-                        {
-                            tasks.Add(startupTask);
-                        }
+                        startupTask = Run(() => startup.Start(), serviceNode.Details.TaskSchedulerName, cancellationToken);
                         break;
                 }
+                // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                if (serviceNode.Dependencies.Count > 0)
+                {
+                    // Recurse into StartServices
+                    startupTask = startupTask.ContinueWith(task => StartServices(serviceNode.Dependencies, cancellationToken), cancellationToken).Unwrap();
+                }
+                if (!serviceNode.Details.SkipAwait)
+                {
+                    tasks.Add(startupTask);
+                }
+            }
+
+            return tasks.Count > 0 ? Task.WhenAll(tasks) : Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Create a task for the stop
+        /// </summary>
+        /// <param name="serviceNodes">IEnumerable with ServiceNode</param>
+        /// <param name="cancellation">CancellationToken</param>
+        /// <returns>Task</returns>
+        private Task StopServices(IEnumerable<ServiceNode> serviceNodes, CancellationToken cancellation = default)
+        {
+            var tasks = new List<Task>();
+            foreach (var serviceNode in serviceNodes)
+            {
+                if (!serviceNode.StartShutdown())
+                {
+                    // Shutdown was already started
+                    continue;
+                }
+                var shutdownTask = Task.CompletedTask;
+
+                Log.Debug().WriteLine("Stopping {0} ({1})", serviceNode.Details.Name, serviceNode.Service.GetType());
+                switch (serviceNode.Service)
+                {
+                    case IShutdownAsync shutdownAsync:
+                        shutdownTask = shutdownAsync.ShutdownAsync(cancellation);
+                        break;
+                    case IShutdown shutdown:
+                        shutdownTask = Run(() => shutdown.Shutdown(), serviceNode.Details.TaskSchedulerName, cancellation);
+                        break;
+                }
+                if (serviceNode.Prerequisites.Count > 0)
+                {
+                    // Recurse into StartServices
+                    shutdownTask = shutdownTask.ContinueWith(async task => await StopServices(serviceNode.Prerequisites, cancellation), cancellation).Unwrap();
+                }
+                tasks.Add(shutdownTask);
             }
 
             return tasks.Count > 0 ? Task.WhenAll(tasks) : Task.CompletedTask;
@@ -215,55 +242,6 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                 cancellationToken,
                 TaskCreationOptions.None,
                 _taskSchedulers[taskSchedulerName]);
-        }
-
-        /// <summary>
-        /// Create a task for the stop
-        /// </summary>
-        /// <param name="serviceNodes">IEnumerable with ServiceNode</param>
-        /// <param name="cancellation">CancellationToken</param>
-        /// <returns>Task</returns>
-        private Task StopServices(IEnumerable<ServiceNode> serviceNodes, CancellationToken cancellation = default)
-        {
-            var tasks = new List<Task>();
-            foreach (var serviceNode in serviceNodes)
-            {
-                if (!serviceNode.StartShutdown())
-                {
-                    // Shutdown was already started
-                    continue;
-                }
-                Log.Debug().WriteLine("Stopping {0}", serviceNode.Service.GetType());
-                switch (serviceNode.Service)
-                {
-                    case IShutdownAsync shutdownAsync:
-                        {
-
-                            var serviceTask = shutdownAsync.ShutdownAsync(cancellation);
-                            if (serviceNode.Prerequisites.Count > 0)
-                            {
-                                // Recurse into StartServices
-                                serviceTask = serviceTask.ContinueWith(async task => await StopServices(serviceNode.Prerequisites, cancellation), cancellation).Unwrap();
-                            }
-                            tasks.Add(serviceTask);
-                            break;
-                        }
-                    case IShutdown shutdown:
-                        {
-                            var serviceTask = Run(() => shutdown.Shutdown(), serviceNode.Details.TaskSchedulerName, cancellation);
-                            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                            if (serviceNode.Prerequisites.Count > 0)
-                            {
-                                // Recurse into StartServices
-                                serviceTask = serviceTask.ContinueWith(task => StopServices(serviceNode.Prerequisites, cancellation), cancellation).Unwrap();
-                            }
-                            tasks.Add(serviceTask);
-                            break;
-                        }
-                }
-            }
-
-            return tasks.Count > 0 ? Task.WhenAll(tasks) : Task.CompletedTask;
         }
     }
 }
