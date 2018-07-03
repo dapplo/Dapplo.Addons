@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Autofac.Features.Indexed;
 using Autofac.Features.Metadata;
 using Dapplo.Addons.Bootstrapper.Internal;
 using Dapplo.Log;
@@ -41,13 +42,16 @@ namespace Dapplo.Addons.Bootstrapper.Handler
     {
         private static readonly LogSource Log = new LogSource();
         private readonly IDictionary<string, ServiceNode> _serviceNodes;
+        private readonly IIndex<string, TaskScheduler> _taskSchedulers;
 
         /// <summary>
         /// The constructor to specify the startup modules
         /// </summary>
         /// <param name="services">IEnumerable</param>
-        public ServiceHandler(IEnumerable<Meta<IService, ServiceAttribute>> services)
+        /// <param name="taskSchedulers">IIndex of TaskSchedulers</param>
+        public ServiceHandler(IEnumerable<Meta<IService, ServiceAttribute>> services, IIndex<string, TaskScheduler> taskSchedulers)
         {
+            _taskSchedulers = taskSchedulers;
             _serviceNodes = CreateServiceDictionary(services);
         }
 
@@ -69,9 +73,9 @@ namespace Dapplo.Addons.Bootstrapper.Handler
             {
                 var serviceAttribute = serviceNode.Details;
                 // check if this depends on anything
-                if (string.IsNullOrEmpty(serviceAttribute.DependsOn))
+                if (string.IsNullOrEmpty(serviceAttribute.Prerequisite))
                 {
-                    // Doesn't depend
+                    // Doesn't have any prerequisites
                     continue;
                 }
 
@@ -79,12 +83,17 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                 {
                     throw new NotSupportedException($"Coudn't find service with ID {serviceAttribute.Name}");
                 }
-                if (!serviceNodes.TryGetValue(serviceAttribute.DependsOn, out var parentNode))
+
+                if (!serviceNodes.TryGetValue(serviceAttribute.Prerequisite, out var prerequisiteNode))
                 {
-                    throw new NotSupportedException($"Coudn't find service with ID {serviceAttribute.DependsOn}, service {serviceAttribute.Name} depends on this.");
+                    if (!serviceAttribute.SkipIfPrerequisiteIsMissing)
+                    {
+                        throw new NotSupportedException($"Coudn't find service with ID {serviceAttribute.Prerequisite}, service {serviceAttribute.Name} depends on this.");
+                    }
+                    continue;
                 }
-                thisNode.DependensOn.Add(parentNode);
-                parentNode.Dependencies.Add(thisNode);
+                thisNode.Prerequisites.Add(prerequisiteNode);
+                prerequisiteNode.Dependencies.Add(thisNode);
             }
 
             return serviceNodes;
@@ -97,7 +106,7 @@ namespace Dapplo.Addons.Bootstrapper.Handler
         /// <returns>Task to await startup</returns>
         public Task StartupAsync(CancellationToken cancellationToken = default)
         {
-            var rootNodes = _serviceNodes.Values.Where(node => !node.IsDependendOn);
+            var rootNodes = _serviceNodes.Values.Where(node => !node.HasPrerequisites);
             return StartServices(rootNodes, cancellationToken);
         }
 
@@ -116,9 +125,9 @@ namespace Dapplo.Addons.Bootstrapper.Handler
         /// Create a task for the startup
         /// </summary>
         /// <param name="serviceNodes">IEnumerable with ServiceNode</param>
-        /// <param name="cancellation">CancellationToken</param>
+        /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task</returns>
-        private Task StartServices(IEnumerable<ServiceNode> serviceNodes, CancellationToken cancellation = default)
+        private Task StartServices(IEnumerable<ServiceNode> serviceNodes, CancellationToken cancellationToken = default)
         {
             var tasks = new List<Task>();
             foreach (var serviceNode in serviceNodes)
@@ -128,33 +137,84 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                 switch (serviceNode.Service)
                 {
                     case IStartupAsync startupAsync:
+                        var startupAsyncTask = Run(() => startupAsync.StartAsync(cancellationToken),
+                            serviceNode.Details.TaskSchedulerName, cancellationToken);
+ 
+                        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                        if (serviceNode.Dependencies.Count > 0)
                         {
-                            var serviceTask = startupAsync.StartAsync(cancellation);
-                            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                            if (serviceNode.Dependencies.Count > 0)
-                            {
-                                // Recurse into StartServices
-                                serviceTask = serviceTask.ContinueWith(task => StartServices(serviceNode.Dependencies, cancellation), cancellation).Unwrap();
-                            }
-                            tasks.Add(serviceTask);
-                            break;
+                            // Recurse into StartServices
+                            startupAsyncTask = startupAsyncTask.ContinueWith(task => StartServices(serviceNode.Dependencies, cancellationToken), cancellationToken).Unwrap();
                         }
+                        if (!serviceNode.Details.SkipAwait)
+                        {
+                            tasks.Add(startupAsyncTask);
+                        }
+                        break;
                     case IStartup startup:
+                        var startupTask = Run(() => startup.Start(), serviceNode.Details.TaskSchedulerName, cancellationToken);
+                      
+                        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                        if (serviceNode.Dependencies.Count > 0)
                         {
-                            var serviceTask = Task.Run(() => startup.Start(), cancellation);
-                            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                            if (serviceNode.Dependencies.Count > 0)
-                            {
-                                // Recurse into StartServices
-                                serviceTask = serviceTask.ContinueWith(task => StartServices(serviceNode.Dependencies, cancellation), cancellation).Unwrap();
-                            }
-                            tasks.Add(serviceTask);
-                            break;
+                            // Recurse into StartServices
+                            startupTask = startupTask.ContinueWith(task => StartServices(serviceNode.Dependencies, cancellationToken), cancellationToken).Unwrap();
                         }
+
+                        if (!serviceNode.Details.SkipAwait)
+                        {
+                            tasks.Add(startupTask);
+                        }
+                        break;
                 }
             }
 
-            return Task.WhenAll(tasks);
+            return tasks.Count > 0 ? Task.WhenAll(tasks) : Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Helper method to start a task on a optional TaskScheduler
+        /// </summary>
+        /// <param name="func"></param>
+        /// <param name="taskSchedulerName">string</param>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>Task</returns>
+        private Task Run(Func<Task> func, string taskSchedulerName, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(taskSchedulerName))
+            {
+                return func();
+            }
+
+            // Use the supplied task scheduler
+            return Task.Factory.StartNew(
+                func,
+                cancellationToken,
+                TaskCreationOptions.None,
+                _taskSchedulers[taskSchedulerName]).Unwrap();
+        }
+
+        /// <summary>
+        /// Helper method to start an action
+        /// </summary>
+        /// <param name="action">Action</param>
+        /// <param name="taskSchedulerName">string</param>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>Task</returns>
+        private Task Run(Action action, string taskSchedulerName, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(taskSchedulerName))
+            {
+                // Threadpool
+                return Task.Run(action, cancellationToken);
+            }
+
+            // Use the supplied task scheduler
+            return Task.Factory.StartNew(
+                action,
+                cancellationToken,
+                TaskCreationOptions.None,
+                _taskSchedulers[taskSchedulerName]);
         }
 
         /// <summary>
@@ -180,22 +240,22 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                         {
 
                             var serviceTask = shutdownAsync.ShutdownAsync(cancellation);
-                            if (serviceNode.DependensOn.Count > 0)
+                            if (serviceNode.Prerequisites.Count > 0)
                             {
                                 // Recurse into StartServices
-                                serviceTask = serviceTask.ContinueWith(async task => await StopServices(serviceNode.DependensOn, cancellation), cancellation).Unwrap();
+                                serviceTask = serviceTask.ContinueWith(async task => await StopServices(serviceNode.Prerequisites, cancellation), cancellation).Unwrap();
                             }
                             tasks.Add(serviceTask);
                             break;
                         }
                     case IShutdown shutdown:
                         {
-                            var serviceTask = Task.Run(() => shutdown.Shutdown(), cancellation);
+                            var serviceTask = Run(() => shutdown.Shutdown(), serviceNode.Details.TaskSchedulerName, cancellation);
                             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                            if (serviceNode.DependensOn.Count > 0)
+                            if (serviceNode.Prerequisites.Count > 0)
                             {
                                 // Recurse into StartServices
-                                serviceTask = serviceTask.ContinueWith(task => StopServices(serviceNode.DependensOn, cancellation), cancellation).Unwrap();
+                                serviceTask = serviceTask.ContinueWith(task => StopServices(serviceNode.Prerequisites, cancellation), cancellation).Unwrap();
                             }
                             tasks.Add(serviceTask);
                             break;
@@ -203,7 +263,7 @@ namespace Dapplo.Addons.Bootstrapper.Handler
                 }
             }
 
-            return Task.WhenAll(tasks);
+            return tasks.Count > 0 ? Task.WhenAll(tasks) : Task.CompletedTask;
         }
     }
 }

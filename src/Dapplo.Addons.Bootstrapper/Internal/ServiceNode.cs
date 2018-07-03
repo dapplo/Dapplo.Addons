@@ -39,12 +39,12 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         /// <summary>
         /// Test if this service depends on other services
         /// </summary>
-        public bool IsDependendOn => DependensOn.Count > 0;
+        public bool HasPrerequisites => Prerequisites.Count > 0;
 
         /// <summary>
         /// The service which should be started before this
         /// </summary>
-        public IList<ServiceNode> DependensOn { get; } = new List<ServiceNode>();
+        public IList<ServiceNode> Prerequisites { get; } = new List<ServiceNode>();
 
         /// <summary>
         /// Test if this service has dependencies

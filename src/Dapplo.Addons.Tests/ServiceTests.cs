@@ -1,3 +1,28 @@
+#region Dapplo 2016-2018 - GNU Lesser General Public License
+
+// Dapplo - building blocks for .NET applications
+// Copyright (C) 2016-2018 Dapplo
+// 
+// For more information see: http://dapplo.net/
+// Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+// 
+// This file is part of Dapplo.Addons
+// 
+// Dapplo.Addons is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// Dapplo.Addons is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// 
+// You should have a copy of the GNU Lesser General Public License
+// along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+
+#endregion
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -33,6 +58,11 @@ namespace Dapplo.Addons.Tests
             {
                 bootstrapper.Configure();
 
+                bootstrapper.Builder
+                    .RegisterInstance(TaskScheduler.Current)
+                    .Named<TaskScheduler>("test")
+                    .SingleInstance();
+
                 bootstrapper.Builder.Register(context => new FirstStartupAction
                 {
                     MyStartAction = () => didFirstStartRun = true,
@@ -45,6 +75,11 @@ namespace Dapplo.Addons.Tests
                     MyStopAction = () => didSecondShutdownRun = true
                 }).As<IService>().SingleInstance();
 
+                bootstrapper.Builder.Register(context => new FourthStartupAction
+                {
+                    MyStartFunc = cancellationToken => Task.Delay(10, cancellationToken),
+                    MyStopFunc = cancellationToken => Task.Delay(10, cancellationToken)
+                }).As<IService>().SingleInstance();
                 // 
                 bootstrapper.Builder.Register(context => new ThirdStartupAction()).As<IService>().SingleInstance();
 
@@ -77,7 +112,7 @@ namespace Dapplo.Addons.Tests
 
             // Build dictionary for lookups
             var serviceDictionary = ServiceHandler.CreateServiceDictionary(serviceAttributes.Select(attribute => new Meta<IService, ServiceAttribute>(null, attribute)));
-            var rootNodes = serviceDictionary.Values.Count(node => !node.IsDependendOn);
+            var rootNodes = serviceDictionary.Values.Count(node => !node.HasPrerequisites);
             Assert.Equal(2, rootNodes);
             Assert.Equal(3, serviceDictionary.Values.First(node => node.Details.Name == "7").Dependencies.Count);
         }

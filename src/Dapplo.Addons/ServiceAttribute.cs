@@ -41,7 +41,7 @@ namespace Dapplo.Addons
     public class ServiceAttribute : Attribute
     {
         /// <summary>
-        /// Default service , this should actually not be used...
+        /// Default service, used by autofac, this should actually not be used directly...
         /// </summary>
         public ServiceAttribute()
         {
@@ -51,13 +51,13 @@ namespace Dapplo.Addons
         /// Specify the name of the service and an optional a service this depends on
         /// </summary>
         /// <param name="name">string</param>
-        /// <param name="dependsOn">string, optional</param>
-        public ServiceAttribute(string name, string dependsOn = null)
+        /// <param name="prerequisite">string, optional</param>
+        public ServiceAttribute(string name, string prerequisite = null)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
-            if (dependsOn != null)
+            if (prerequisite != null)
             {
-                DependsOn = dependsOn;
+                Prerequisite = prerequisite;
             }
         }
 
@@ -71,6 +71,27 @@ namespace Dapplo.Addons
         ///     Describes the service (name) this service depends on
         /// </summary>
         [DefaultValue(null)]
-        public string DependsOn { get; set; }
+        public string Prerequisite { get; set; }
+
+        /// <summary>
+        /// The name of the TaskScheduler, or null if the threadpool is used
+        /// </summary>
+        [DefaultValue(null)]
+        public string TaskSchedulerName { get; set; }
+
+        /// <summary>
+        /// If this is true, the service will not be started if the prerequisite is missing.
+        /// Default is false, which will stop the startup if it is missing.
+        /// </summary>
+        [DefaultValue(false)]
+        public bool SkipIfPrerequisiteIsMissing { get; set; }
+
+        /// <summary>
+        /// If this is true, the startup of the whole branch of services is not awaited.
+        /// This does not have have influence on the shutdown.
+        /// </summary>
+        [DefaultValue(false)]
+        public bool SkipAwait { get; set; }
+
     }
 }

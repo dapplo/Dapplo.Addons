@@ -26,17 +26,26 @@
 #region Usings
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+
 #endregion
 
 namespace Dapplo.Addons.Tests.TestModules
 {
-    public class AbstractStartupAction : IStartup, IShutdown
+    public class AbstractAsyncStartupAction : IStartupAsync, IShutdownAsync
     {
-        public Action MyStartAction { get; set; }
-        public Action MyStopAction { get; set; }
+        public Func<CancellationToken, Task> MyStartFunc { get; set; }
+        public Func<CancellationToken, Task> MyStopFunc { get; set; }
 
-        public void Start() => MyStartAction?.Invoke();
+        public Task StartAsync(CancellationToken cancellationToken = default)
+        {
+            return MyStartFunc?.Invoke(cancellationToken);
+        }
 
-        public void Shutdown() => MyStopAction?.Invoke();
+        public Task ShutdownAsync(CancellationToken cancellationToken = default)
+        {
+            return MyStopFunc?.Invoke(cancellationToken);
+        }
     }
 }

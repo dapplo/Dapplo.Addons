@@ -99,7 +99,9 @@
     <Compile Include="ResourceMutexTests.cs" />
     <Compile Include="ServiceTests.cs" />
     <Compile Include="TestFiles\Dummy.cs" />
+    <Compile Include="TestModules\AbstractAsyncStartupAction.cs" />
     <Compile Include="TestModules\AbstractStartupAction.cs" />
+    <Compile Include="TestModules\FourthStartupAction.cs" />
     <Compile Include="TestModules\ThirdStartupAction.cs" />
     <Compile Include="TestModules\SecondStartupAction.cs" />
     <Compile Include="TestModules\FirstStartupAction.cs" />
