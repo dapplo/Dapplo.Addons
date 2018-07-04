@@ -29,7 +29,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Autofac.Features.Metadata;
 using Dapplo.Addons.Bootstrapper;
-using Dapplo.Addons.Bootstrapper.Handler;
+using Dapplo.Addons.Bootstrapper.Services;
 using Dapplo.Addons.Tests.TestModules;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;

@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 
-namespace Dapplo.Addons.Bootstrapper.Internal
+namespace Dapplo.Addons.Bootstrapper.Services
 {
     /// <summary>
     /// This contains the information needed for the startup and shutdown of services
     /// </summary>
-    public class ServiceNode
+    public class ServiceNode<TService>
     {
         private bool _isShutdownStarted;
 
@@ -34,7 +34,7 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         /// <summary>
         /// Task of the service
         /// </summary>
-        public IService Service { get; set; }
+        public TService Service { get; set; }
 
         /// <summary>
         /// Test if this service depends on other services
@@ -44,7 +44,7 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         /// <summary>
         /// The service which should be started before this
         /// </summary>
-        public IList<ServiceNode> Prerequisites { get; } = new List<ServiceNode>();
+        public IList<ServiceNode<TService>> Prerequisites { get; } = new List<ServiceNode<TService>>();
 
         /// <summary>
         /// Test if this service has dependencies
@@ -54,6 +54,6 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         /// <summary>
         /// The services awaiting for this
         /// </summary>
-        public IList<ServiceNode> Dependencies { get; } = new List<ServiceNode>();
+        public IList<ServiceNode<TService>> Dependencies { get; } = new List<ServiceNode<TService>>();
     }
 }

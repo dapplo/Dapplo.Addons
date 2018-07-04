@@ -30,18 +30,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using Autofac.Features.Indexed;
 using Autofac.Features.Metadata;
-using Dapplo.Addons.Bootstrapper.Internal;
 using Dapplo.Log;
 
-namespace Dapplo.Addons.Bootstrapper.Handler
+namespace Dapplo.Addons.Bootstrapper.Services
 {
     /// <summary>
     /// This handles the startup of all IService implementing classes
     /// </summary>
-    public class ServiceHandler
+    public class ServiceHandler : AbstractServiceHandler<IService>
     {
         private static readonly LogSource Log = new LogSource();
-        private readonly IDictionary<string, ServiceNode> _serviceNodes;
         private readonly IIndex<string, TaskScheduler> _taskSchedulers;
 
         /// <summary>
@@ -49,54 +47,9 @@ namespace Dapplo.Addons.Bootstrapper.Handler
         /// </summary>
         /// <param name="services">IEnumerable</param>
         /// <param name="taskSchedulers">IIndex of TaskSchedulers</param>
-        public ServiceHandler(IEnumerable<Meta<IService, ServiceAttribute>> services, IIndex<string, TaskScheduler> taskSchedulers)
+        public ServiceHandler(IEnumerable<Meta<IService, ServiceAttribute>> services, IIndex<string, TaskScheduler> taskSchedulers) : base(services)
         {
             _taskSchedulers = taskSchedulers;
-            _serviceNodes = CreateServiceDictionary(services);
-        }
-
-        /// <summary>
-        /// Internal helper, used for the test cases too
-        /// </summary>
-        /// <param name="newServices">IEnumerable with Meta of IService and ServiceAttribute</param>
-        /// <returns>IDictionary</returns>
-        internal static IDictionary<string, ServiceNode> CreateServiceDictionary(IEnumerable<Meta<IService, ServiceAttribute>> newServices)
-        {
-            var serviceNodes = newServices.ToDictionary(meta => meta.Metadata.Name, meta => new ServiceNode
-            {
-                Details = meta.Metadata,
-                Service = meta.Value
-            });
-
-            // Enrich the information
-            foreach (var serviceNode in serviceNodes.Values)
-            {
-                var serviceAttribute = serviceNode.Details;
-                // check if this depends on anything
-                if (string.IsNullOrEmpty(serviceAttribute.Prerequisite))
-                {
-                    // Doesn't have any prerequisites
-                    continue;
-                }
-
-                if (!serviceNodes.TryGetValue(serviceAttribute.Name, out var thisNode))
-                {
-                    throw new NotSupportedException($"Coudn't find service with Name {serviceAttribute.Name}");
-                }
-
-                if (!serviceNodes.TryGetValue(serviceAttribute.Prerequisite, out var prerequisiteNode))
-                {
-                    if (!serviceAttribute.SkipIfPrerequisiteIsMissing)
-                    {
-                        throw new NotSupportedException($"Coudn't find service with Name {serviceAttribute.Prerequisite}, service {serviceAttribute.Name} depends on this.");
-                    }
-                    continue;
-                }
-                thisNode.Prerequisites.Add(prerequisiteNode);
-                prerequisiteNode.Dependencies.Add(thisNode);
-            }
-
-            return serviceNodes;
         }
 
         /// <summary>
@@ -104,9 +57,9 @@ namespace Dapplo.Addons.Bootstrapper.Handler
         /// </summary>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task to await startup</returns>
-        public Task StartupAsync(CancellationToken cancellationToken = default)
+        public override Task StartupAsync(CancellationToken cancellationToken = default)
         {
-            var rootNodes = _serviceNodes.Values.Where(node => !node.HasPrerequisites);
+            var rootNodes = ServiceNodes.Values.Where(node => !node.HasPrerequisites);
             return StartServices(rootNodes, cancellationToken);
         }
 
@@ -115,9 +68,9 @@ namespace Dapplo.Addons.Bootstrapper.Handler
         /// </summary>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task to await startup</returns>
-        public Task ShutdownAsync(CancellationToken cancellationToken = default)
+        public override Task ShutdownAsync(CancellationToken cancellationToken = default)
         {
-            var leafNodes = _serviceNodes.Values.Where(node => !node.HasDependencies);
+            var leafNodes = ServiceNodes.Values.Where(node => !node.HasDependencies);
             return StopServices(leafNodes, cancellationToken);
         }
 
@@ -127,7 +80,7 @@ namespace Dapplo.Addons.Bootstrapper.Handler
         /// <param name="serviceNodes">IEnumerable with ServiceNode</param>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task</returns>
-        private Task StartServices(IEnumerable<ServiceNode> serviceNodes, CancellationToken cancellationToken = default)
+        private Task StartServices(IEnumerable<ServiceNode<IService>> serviceNodes, CancellationToken cancellationToken = default)
         {
             var tasks = new List<Task>();
             foreach (var serviceNode in serviceNodes)
@@ -166,7 +119,7 @@ namespace Dapplo.Addons.Bootstrapper.Handler
         /// <param name="serviceNodes">IEnumerable with ServiceNode</param>
         /// <param name="cancellation">CancellationToken</param>
         /// <returns>Task</returns>
-        private Task StopServices(IEnumerable<ServiceNode> serviceNodes, CancellationToken cancellation = default)
+        private Task StopServices(IEnumerable<ServiceNode<IService>> serviceNodes, CancellationToken cancellation = default)
         {
             var tasks = new List<Task>();
             foreach (var serviceNode in serviceNodes)

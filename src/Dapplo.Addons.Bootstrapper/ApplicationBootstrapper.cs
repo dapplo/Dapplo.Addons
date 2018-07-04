@@ -30,9 +30,9 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
-using Dapplo.Addons.Bootstrapper.Handler;
 using Dapplo.Addons.Bootstrapper.Internal;
 using Dapplo.Addons.Bootstrapper.Resolving;
+using Dapplo.Addons.Bootstrapper.Services;
 using Dapplo.Log;
 
 namespace Dapplo.Addons.Bootstrapper

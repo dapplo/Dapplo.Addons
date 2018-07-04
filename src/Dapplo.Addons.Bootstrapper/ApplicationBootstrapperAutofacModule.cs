@@ -25,7 +25,7 @@
 
 using Autofac;
 using Autofac.Extras.AttributeMetadata;
-using Dapplo.Addons.Bootstrapper.Handler;
+using Dapplo.Addons.Bootstrapper.Services;
 
 namespace Dapplo.Addons.Bootstrapper
 {
