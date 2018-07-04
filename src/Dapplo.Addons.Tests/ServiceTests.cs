@@ -54,6 +54,8 @@ namespace Dapplo.Addons.Tests
             var applicationConfig = ApplicationConfigBuilder
                 .Create()
                 .WithApplicationName("StartupTest")
+                .WithConfigSupport()
+                .WithIniSectionResolving()
                 .BuildApplicationConfig();
 
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))

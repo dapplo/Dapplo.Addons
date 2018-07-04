@@ -31,6 +31,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
+using Dapplo.Addons.Config;
 using Dapplo.Ini;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
@@ -92,6 +93,8 @@ namespace Dapplo.Addons.Tests
             var applicationConfig = ApplicationConfigBuilder
                 .Create()
                 .WithApplicationName(ApplicationName)
+                .WithConfigSupport()
+                .WithIniSectionResolving()
                 .WithScanDirectories(
                     FileLocations.StartupDirectory,
 #if DEBUG
