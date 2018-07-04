@@ -68,6 +68,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApplicationConfigBuilderConfigExtensions.cs" />
     <Compile Include="ConfigAddonModule.cs" />
     <Compile Include="IniSectionRegistrationSource.cs" />
     <Compile Include="IniSectionService.cs" />
@@ -80,6 +81,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Dapplo.Addons.Bootstrapper\Dapplo.Addons.Bootstrapper.csproj">
+      <Project>{f1f6c18f-1fbc-4d0b-aac4-6c53110eea15}</Project>
+      <Name>Dapplo.Addons.Bootstrapper</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dapplo.Addons\Dapplo.Addons.csproj">
       <Project>{bd6b2425-92e5-48c4-82bd-c2aafe454df2}</Project>
       <Name>Dapplo.Addons</Name>

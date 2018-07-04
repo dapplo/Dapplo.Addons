@@ -152,6 +152,10 @@ namespace Dapplo.Addons.Bootstrapper
 
             _builder = new ContainerBuilder();
             _builder.Properties[nameof(ApplicationName)] = ApplicationName;
+            foreach (var propertiesKey in _applicationConfig.Properties.Keys)
+            {
+                _builder.Properties[propertiesKey] = _applicationConfig.Properties[propertiesKey];
+            }
             // Provide the IResourceProvider
             _builder.RegisterInstance(Resolver.Resources).As<IResourceProvider>().ExternallyOwned();
             return this;

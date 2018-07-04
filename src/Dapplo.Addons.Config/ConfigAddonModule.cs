@@ -46,23 +46,23 @@ namespace Dapplo.Addons.Config
 
             var applicationName = builder.Properties[nameof(IApplicationBootstrapper.ApplicationName)] as string;
 
-            _applicationIniConfig = IniConfig.Current;
-            if (_applicationIniConfig == null)
+            _applicationIniConfig = IniConfig.Current ?? new IniConfig(applicationName, applicationName);
+
+            if (ApplicationConfigBuilderConfigExtensions.IsIniSectionResolvingEnabled(builder.Properties))
             {
-                _applicationIniConfig = new IniConfig(applicationName, applicationName);
+                builder.RegisterSource(new IniSectionRegistrationSource());
             }
-            builder.RegisterSource(new IniSectionRegistrationSource());
 
             builder.RegisterType<LanguageService>()
                 .As<IService>()
                 .SingleInstance();
 
-            _languageLoader = LanguageLoader.Current;
-            if (_languageLoader == null)
+            _languageLoader = LanguageLoader.Current ?? new LanguageLoader(applicationName);
+
+            if (ApplicationConfigBuilderConfigExtensions.IsLanguageResolvingEnabled(builder.Properties))
             {
-                _languageLoader = LanguageLoader.Current ?? new LanguageLoader(applicationName);
+                builder.RegisterSource(new LanguageRegistrationSource());
             }
-            builder.RegisterSource(new LanguageRegistrationSource());
         }
     }
 }

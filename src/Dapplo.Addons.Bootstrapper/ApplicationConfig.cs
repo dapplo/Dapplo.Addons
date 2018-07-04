@@ -34,6 +34,11 @@ namespace Dapplo.Addons.Bootstrapper
     public class ApplicationConfig
     {
         /// <summary>
+        /// The properties for the container
+        /// </summary>
+        public IReadOnlyDictionary<string, object> Properties { get; internal set; }
+
+        /// <summary>
         /// Specifies if the application bootstrapper should scan embedded assemblies
         /// </summary>
         public bool ScanForEmbeddedAssemblies { get; internal set; } = true;

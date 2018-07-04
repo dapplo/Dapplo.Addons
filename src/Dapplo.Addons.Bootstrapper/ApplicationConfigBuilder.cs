@@ -46,6 +46,12 @@ namespace Dapplo.Addons.Bootstrapper
         private readonly HashSet<Regex> _assemblyNamePatterns = new HashSet<Regex>();
         private readonly HashSet<string> _extensions = new HashSet<string>(new[] { ".dll", ".dll.compressed", ".dll.gz" }, StringComparer.OrdinalIgnoreCase);
         private readonly ApplicationConfig _applicationConfig = new ApplicationConfig();
+        private readonly Dictionary<string, object> _properties = new Dictionary<string, object>();
+
+        /// <summary>
+        /// Container Properties
+        /// </summary>
+        public IDictionary<string, object> Properties => _properties;
 
         /// <summary>
         /// True if the ApplicationConfig was already build.
@@ -95,7 +101,7 @@ namespace Dapplo.Addons.Bootstrapper
             _applicationConfig.ScanDirectories = new ReadOnlyCollection<string>(_scanDirectories.ToList());
             _applicationConfig.AssemblyNames = new ReadOnlyCollection<string>(_assemblyNames.ToList());
             _applicationConfig.AssemblyNamePatterns = new ReadOnlyCollection<Regex>(_assemblyNamePatterns.ToList());
-
+            _applicationConfig.Properties = _properties;
             return _applicationConfig;
         }
 

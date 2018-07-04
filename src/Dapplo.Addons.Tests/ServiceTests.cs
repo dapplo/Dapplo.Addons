@@ -30,6 +30,7 @@ using Autofac;
 using Autofac.Features.Metadata;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Services;
+using Dapplo.Addons.Config;
 using Dapplo.Addons.Services;
 using Dapplo.Addons.Tests.TestModules;
 using Dapplo.Log;
