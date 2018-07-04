@@ -38,7 +38,7 @@ namespace Dapplo.Addons.Bootstrapper.Services
     /// <summary>
     /// This handles the startup of all IService implementing classes
     /// </summary>
-    public class ServiceHandler : AbstractServiceHandler<IService>
+    public class ServiceStartupShutdown : ServiceNodeContainer<IService>, IStartupAsync, IShutdownAsync
     {
         private static readonly LogSource Log = new LogSource();
         private readonly IIndex<string, TaskScheduler> _taskSchedulers;
@@ -48,7 +48,7 @@ namespace Dapplo.Addons.Bootstrapper.Services
         /// </summary>
         /// <param name="services">IEnumerable</param>
         /// <param name="taskSchedulers">IIndex of TaskSchedulers</param>
-        public ServiceHandler(IEnumerable<Meta<IService, ServiceAttribute>> services, IIndex<string, TaskScheduler> taskSchedulers)
+        public ServiceStartupShutdown(IEnumerable<Meta<IService, ServiceAttribute>> services, IIndex<string, TaskScheduler> taskSchedulers)
             : base(services) => _taskSchedulers = taskSchedulers;
 
         /// <summary>
@@ -56,7 +56,7 @@ namespace Dapplo.Addons.Bootstrapper.Services
         /// </summary>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task to await startup</returns>
-        public override Task StartupAsync(CancellationToken cancellationToken = default)
+        public Task StartupAsync(CancellationToken cancellationToken = default)
         {
             var rootNodes = ServiceNodes.Values.Where(node => !node.HasPrerequisites);
             return StartServices(rootNodes, cancellationToken);
@@ -67,7 +67,7 @@ namespace Dapplo.Addons.Bootstrapper.Services
         /// </summary>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task to await startup</returns>
-        public override Task ShutdownAsync(CancellationToken cancellationToken = default)
+        public Task ShutdownAsync(CancellationToken cancellationToken = default)
         {
             var leafNodes = ServiceNodes.Values.Where(node => !node.HasDependencies);
             return StopServices(leafNodes, cancellationToken);
@@ -143,7 +143,7 @@ namespace Dapplo.Addons.Bootstrapper.Services
                 if (serviceNode.Prerequisites.Count > 0)
                 {
                     // Recurse into StartServices
-                    shutdownTask = shutdownTask.ContinueWith(async task => await StopServices(serviceNode.Prerequisites, cancellation), cancellation).Unwrap();
+                    shutdownTask = shutdownTask.ContinueWith(task => StopServices(serviceNode.Prerequisites, cancellation), cancellation).Unwrap();
                 }
                 tasks.Add(shutdownTask);
             }

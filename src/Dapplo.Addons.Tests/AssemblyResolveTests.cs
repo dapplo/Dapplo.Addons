@@ -98,7 +98,7 @@ namespace Dapplo.Addons.Tests
                 .BuildApplicationConfig();
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
-                await bootstrapper.InitializeAsync();
+                await bootstrapper.InitializeAsync().ConfigureAwait(false);
                 var jiraAssembly = Assembly.Load("Svg");
                 Assert.NotNull(jiraAssembly);
             }
@@ -122,7 +122,7 @@ namespace Dapplo.Addons.Tests
                 .BuildApplicationConfig();
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
-                await bootstrapper.InitializeAsync();
+                await bootstrapper.InitializeAsync().ConfigureAwait(false);
                 var jiraAssembly = bootstrapper.Resolver.LoadAssembly("Svg");
                 Assert.NotNull(jiraAssembly);
             }

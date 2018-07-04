@@ -24,12 +24,14 @@
 #endregion
 
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Features.Metadata;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Services;
+using Dapplo.Addons.Services;
 using Dapplo.Addons.Tests.TestModules;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
@@ -85,7 +87,7 @@ namespace Dapplo.Addons.Tests
 
                 await bootstrapper.InitializeAsync();
 
-                var serviceHandler = bootstrapper.Container.Resolve<ServiceHandler>();
+                var serviceHandler = bootstrapper.Container.Resolve<ServiceStartupShutdown>();
                 await serviceHandler.StartupAsync();
 
                 Assert.True(didFirstStartRun);
@@ -110,11 +112,11 @@ namespace Dapplo.Addons.Tests
                 new ServiceAttribute("6", "7")
             };
 
+            var serviceContainer = new ServiceNodeContainer<IService>(serviceAttributes.Select(attribute => new Meta<IService, ServiceAttribute>(null, attribute)));
             // Build dictionary for lookups
-            var serviceDictionary = ServiceHandler.CreateServiceDictionary(serviceAttributes.Select(attribute => new Meta<IService, ServiceAttribute>(null, attribute)));
-            var rootNodes = serviceDictionary.Values.Count(node => !node.HasPrerequisites);
+            var rootNodes = serviceContainer.ServiceNodes.Values.Count(node => !node.HasPrerequisites);
             Assert.Equal(2, rootNodes);
-            Assert.Equal(3, serviceDictionary.Values.First(node => node.Details.Name == "7").Dependencies.Count);
+            Assert.Equal(3, serviceContainer.ServiceNodes.Values.First(node => node.Details.Name == "7").Dependencies.Count);
         }
     }
 }

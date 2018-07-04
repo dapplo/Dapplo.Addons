@@ -26,34 +26,32 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Autofac.Features.Metadata;
 
 namespace Dapplo.Addons.Services
 {
     /// <summary>
-    /// This is an abstract implementation of a service handler, which can be used if you want to reuse the concept.
+    /// This can hold the servicenodes for a tree based dependency startup, shutdown or simular services
     /// </summary>
-    public abstract class AbstractServiceHandler<TService> : IStartupAsync, IShutdownAsync
+    public class ServiceNodeContainer<TService>
     {
         /// <summary>
         /// This contains all the nodes for your services
         /// </summary>
-        public IDictionary<string, ServiceNode<TService>> ServiceNodes { get; }
+        public IReadOnlyDictionary<string, ServiceNode<TService>> ServiceNodes { get; }
 
         /// <summary>
-        /// The constructor to specify the startup modules
+        /// The constructor to specify the services
         /// </summary>
         /// <param name="services">IEnumerable</param>
-        public AbstractServiceHandler(IEnumerable<Meta<TService, ServiceAttribute>> services) => ServiceNodes = CreateServiceDictionary(services);
+        public ServiceNodeContainer(IEnumerable<Meta<TService, ServiceAttribute>> services) => ServiceNodes = CreateServiceDictionary(services);
 
         /// <summary>
-        /// Internal helper, used for the test cases too
+        /// This builds a tree of servicenodes
         /// </summary>
         /// <param name="services">IEnumerable with Meta of IService and ServiceAttribute</param>
         /// <returns>IDictionary</returns>
-        public static IDictionary<string, ServiceNode<TService>> CreateServiceDictionary(IEnumerable<Meta<TService, ServiceAttribute>> services)
+        private static IReadOnlyDictionary<string, ServiceNode<TService>> CreateServiceDictionary(IEnumerable<Meta<TService, ServiceAttribute>> services)
         {
             var serviceNodes = services.ToDictionary(meta => meta.Metadata.Name, meta => new ServiceNode<TService>
             {
@@ -91,19 +89,5 @@ namespace Dapplo.Addons.Services
 
             return serviceNodes;
         }
-
-        /// <summary>
-        /// Start the services, begin with the root nodes and than everything that depends on these, and so on
-        /// </summary>
-        /// <param name="cancellationToken">CancellationToken</param>
-        /// <returns>Task to await startup</returns>
-        public abstract Task StartupAsync(CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Stop the services, begin with the nodes without dependencies and than everything that this depends on, and so on
-        /// </summary>
-        /// <param name="cancellationToken">CancellationToken</param>
-        /// <returns>Task to await startup</returns>
-        public abstract Task ShutdownAsync(CancellationToken cancellationToken = default);
     }
 }

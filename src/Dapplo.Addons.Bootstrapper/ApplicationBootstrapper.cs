@@ -206,7 +206,7 @@ namespace Dapplo.Addons.Bootstrapper
 
             if (loaderTasks.Count > 0)
             {
-                await Task.WhenAll(loaderTasks);
+                await Task.WhenAll(loaderTasks).ConfigureAwait(false);
             }
         }
 
@@ -220,7 +220,7 @@ namespace Dapplo.Addons.Bootstrapper
                 throw new NotSupportedException("Initialize can only be called once.");
             }
             Log.Verbose().WriteLine("Initializing");
-            await LoadAssemblies(cancellationToken);
+            await LoadAssemblies(cancellationToken).ConfigureAwait(false);
 
             Configure();
             _builder.Properties[nameof(EnableActivationLogging)] = EnableActivationLogging.ToString();
@@ -289,10 +289,10 @@ namespace Dapplo.Addons.Bootstrapper
         {
             if (Container == null)
             {
-                await InitializeAsync(cancellationToken);
+                await InitializeAsync(cancellationToken).ConfigureAwait(false);
             }
             _isStartedUp = true;
-            await Scope.Resolve<ServiceHandler>().StartupAsync(cancellationToken);
+            await Scope.Resolve<ServiceStartupShutdown>().StartupAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -306,7 +306,7 @@ namespace Dapplo.Addons.Bootstrapper
                 throw new NotSupportedException("Start before shutdown!");
             }
             _isShutDown = true;
-            return Scope.Resolve<ServiceHandler>().ShutdownAsync(cancellationToken);
+            return Scope.Resolve<ServiceStartupShutdown>().ShutdownAsync(cancellationToken);
         }
 
         /// <summary>

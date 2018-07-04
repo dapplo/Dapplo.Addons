@@ -40,7 +40,7 @@ namespace Dapplo.Addons.Bootstrapper
             // Make sure Attributes are allowed
             builder.RegisterModule<AttributedMetadataModule>();
             // Provide the startup & shutdown functionality
-            builder.RegisterType<ServiceHandler>().AsSelf().IfNotRegistered(typeof(ServiceHandler)).SingleInstance();
+            builder.RegisterType<ServiceStartupShutdown>().AsSelf().IfNotRegistered(typeof(ServiceStartupShutdown)).SingleInstance();
         }
     }
 }

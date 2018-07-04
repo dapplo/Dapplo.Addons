@@ -38,7 +38,7 @@ namespace Dapplo.Addons.DemoConsoleApp
 
                 await bootstrapper.InitializeAsync().ConfigureAwait(false);
 
-                bootstrapper.Container.Resolve<ServiceHandler>();
+                bootstrapper.Container.Resolve<ServiceStartupShutdown>();
                 // Find all, currently, available assemblies
                 if (Log.IsDebugEnabled())
                 {

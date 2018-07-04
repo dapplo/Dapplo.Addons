@@ -63,7 +63,7 @@
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\PackUriExtensions.cs" />
     <Compile Include="Extensions\StreamExtensions.cs" />
-    <Compile Include="Services\ServiceHandler.cs" />
+    <Compile Include="Services\ServiceStartupShutdown.cs" />
     <Compile Include="IApplicationBootstrapper.cs" />
     <Compile Include="Internal\AssemblyLocationInformation.cs" />
     <Compile Include="Internal\NoSynchronizationContextScope.cs" />
