@@ -90,8 +90,7 @@ namespace Dapplo.Addons.Bootstrapper.Services
                 switch (serviceNode.Service)
                 {
                     case IStartupAsync startupAsync:
-                        startupTask = Run(() => startupAsync.StartupAsync(cancellationToken),
-                            serviceNode.Details.TaskSchedulerName, cancellationToken); 
+                        startupTask = Run(startupAsync.StartupAsync, serviceNode.Details.TaskSchedulerName, cancellationToken); 
                         break;
                     case IStartup startup:
                         startupTask = Run(() => startup.Startup(), serviceNode.Details.TaskSchedulerName, cancellationToken);
@@ -116,9 +115,9 @@ namespace Dapplo.Addons.Bootstrapper.Services
         /// Create a task for the stop
         /// </summary>
         /// <param name="serviceNodes">IEnumerable with ServiceNode</param>
-        /// <param name="cancellation">CancellationToken</param>
+        /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task</returns>
-        private Task StopServices(IEnumerable<ServiceNode<IService>> serviceNodes, CancellationToken cancellation = default)
+        private Task StopServices(IEnumerable<ServiceNode<IService>> serviceNodes, CancellationToken cancellationToken = default)
         {
             var tasks = new List<Task>();
             foreach (var serviceNode in serviceNodes)
@@ -134,16 +133,16 @@ namespace Dapplo.Addons.Bootstrapper.Services
                 switch (serviceNode.Service)
                 {
                     case IShutdownAsync shutdownAsync:
-                        shutdownTask = shutdownAsync.ShutdownAsync(cancellation);
+                        shutdownTask = Run(shutdownAsync.ShutdownAsync, serviceNode.Details.TaskSchedulerName, cancellationToken); ;
                         break;
                     case IShutdown shutdown:
-                        shutdownTask = Run(() => shutdown.Shutdown(), serviceNode.Details.TaskSchedulerName, cancellation);
+                        shutdownTask = Run(() => shutdown.Shutdown(), serviceNode.Details.TaskSchedulerName, cancellationToken);
                         break;
                 }
                 if (serviceNode.Prerequisites.Count > 0)
                 {
                     // Recurse into StartServices
-                    shutdownTask = shutdownTask.ContinueWith(task => StopServices(serviceNode.Prerequisites, cancellation), cancellation).Unwrap();
+                    shutdownTask = shutdownTask.ContinueWith(task => StopServices(serviceNode.Prerequisites, cancellationToken), cancellationToken).Unwrap();
                 }
                 tasks.Add(shutdownTask);
             }
@@ -154,20 +153,21 @@ namespace Dapplo.Addons.Bootstrapper.Services
         /// <summary>
         /// Helper method to start a task on a optional TaskScheduler
         /// </summary>
-        /// <param name="func"></param>
+        /// <param name="func">Func accepting CancellationToken returning Task</param>
         /// <param name="taskSchedulerName">string</param>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task</returns>
-        private Task Run(Func<Task> func, string taskSchedulerName, CancellationToken cancellationToken = default)
+        private Task Run(Func<CancellationToken, Task> func, string taskSchedulerName, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(taskSchedulerName))
             {
-                return func();
+                // Threadpool
+                return Task.Run(() => func(cancellationToken), cancellationToken);
             }
 
             // Use the supplied task scheduler
             return Task.Factory.StartNew(
-                func,
+                () => func(cancellationToken),
                 cancellationToken,
                 TaskCreationOptions.None,
                 _taskSchedulers[taskSchedulerName]).Unwrap();
