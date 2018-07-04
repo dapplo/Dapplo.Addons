@@ -48,6 +48,7 @@ Every addon needs to have at least one class extending AddonModule, which is pra
 Example Service:
 
 ```
+[Service(nameof(SomeAddonService), nameof(DependsOn))]
 public class SomeAddonService : IStartupAsync, IShutdownAsync
 {
 	public async Task ShutdownAsync(CancellationToken cancellationToken = default)
@@ -56,7 +57,7 @@ public class SomeAddonService : IStartupAsync, IShutdownAsync
 		await Task.Delay(100, cancellationToken);
 	}
 
-	public async Task StartAsync(CancellationToken cancellationToken = default)
+	public async Task StartupAsync(CancellationToken cancellationToken = default)
 	{
 		// Startup code
 		await Task.Delay(100, cancellationToken);
