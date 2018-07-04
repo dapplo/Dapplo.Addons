@@ -25,7 +25,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Autofac.Features.Metadata;
 
 namespace Dapplo.Addons.Services
@@ -53,11 +52,21 @@ namespace Dapplo.Addons.Services
         /// <returns>IDictionary</returns>
         private static IReadOnlyDictionary<string, ServiceNode<TService>> CreateServiceDictionary(IEnumerable<Meta<TService, ServiceAttribute>> services)
         {
-            var serviceNodes = services.ToDictionary(meta => meta.Metadata.Name, meta => new ServiceNode<TService>
+            var serviceNodes = new Dictionary<string, ServiceNode<TService>>();
+            // Build dictionary and check some constrains
+            foreach (var service in services)
             {
-                Details = meta.Metadata,
-                Service = meta.Value
-            });
+                var name = service.Metadata.Name ?? throw new ArgumentNullException(nameof(service.Metadata.Name), $"{service.Value.GetType()} doesn't have a name.");
+                if (serviceNodes.ContainsKey(name))
+                {
+                    throw new NotSupportedException($"{service.Value.GetType()} uses a duplicate name: {service.Metadata.Name}");
+                }
+                serviceNodes.Add(name, new ServiceNode<TService>
+                {
+                    Details = service.Metadata,
+                    Service = service.Value
+                });
+            }
 
             // Enrich the information
             foreach (var serviceNode in serviceNodes.Values)
