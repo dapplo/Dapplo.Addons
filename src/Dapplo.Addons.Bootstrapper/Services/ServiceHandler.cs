@@ -90,11 +90,11 @@ namespace Dapplo.Addons.Bootstrapper.Services
                 switch (serviceNode.Service)
                 {
                     case IStartupAsync startupAsync:
-                        startupTask = Run(() => startupAsync.StartAsync(cancellationToken),
+                        startupTask = Run(() => startupAsync.StartupAsync(cancellationToken),
                             serviceNode.Details.TaskSchedulerName, cancellationToken); 
                         break;
                     case IStartup startup:
-                        startupTask = Run(() => startup.Start(), serviceNode.Details.TaskSchedulerName, cancellationToken);
+                        startupTask = Run(() => startup.Startup(), serviceNode.Details.TaskSchedulerName, cancellationToken);
                         break;
                 }
                 // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression

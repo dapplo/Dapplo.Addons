@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -39,6 +39,6 @@ namespace Dapplo.Addons
         ///     Make sure this can be called multiple times, e.g. do nothing when it was already started.
         ///     throw a StartupException if something went terribly wrong and the application should NOT continue
         /// </summary>
-        void Start();
+        void Startup();
     }
 }

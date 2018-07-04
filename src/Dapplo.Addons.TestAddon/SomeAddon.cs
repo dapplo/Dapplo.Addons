@@ -63,7 +63,7 @@ namespace Dapplo.Addons.TestAddon
             Log.Debug().WriteLine("ShutdownAsync called!");
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken = new CancellationToken())
+        public async Task StartupAsync(CancellationToken cancellationToken = new CancellationToken())
         {
             if (ThrowStartupException)
             {

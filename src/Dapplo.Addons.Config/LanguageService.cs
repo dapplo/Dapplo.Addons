@@ -40,7 +40,7 @@ namespace Dapplo.Addons.Config
         /// </summary>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task</returns>
-        public async Task StartAsync(CancellationToken cancellationToken = new CancellationToken())
+        public async Task StartupAsync(CancellationToken cancellationToken = new CancellationToken())
         {
             await LanguageLoader.Current.LoadIfNeededAsync(cancellationToken).ConfigureAwait(false);
         }

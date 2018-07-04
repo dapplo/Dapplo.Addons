@@ -36,7 +36,7 @@ namespace Dapplo.Addons.Config
     internal class IniSectionService : IStartupAsync, IShutdownAsync
     {
         /// <inheritdoc />
-        public Task StartAsync(CancellationToken cancellationToken = default)
+        public Task StartupAsync(CancellationToken cancellationToken = default)
         {
             return IniConfig.Current.LoadIfNeededAsync(cancellationToken);
         }

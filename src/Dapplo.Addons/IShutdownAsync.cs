@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -43,6 +43,6 @@ namespace Dapplo.Addons
         /// </summary>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task</returns>
-        Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken));
+        Task ShutdownAsync(CancellationToken cancellationToken = default);
     }
 }

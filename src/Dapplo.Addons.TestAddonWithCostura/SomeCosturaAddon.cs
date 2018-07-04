@@ -46,7 +46,7 @@ namespace Dapplo.Addons.TestAddonWithCostura
             throw new NotSupportedException("This should be logged!");
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken = new CancellationToken())
+        public async Task StartupAsync(CancellationToken cancellationToken = new CancellationToken())
         {
             Log.Debug().WriteLine("StartAsync called!");
             var serverInfo = await JiraClient.Create(new Uri("https://greenshot.atlassian.net")).Server.GetInfoAsync(cancellationToken).ConfigureAwait(false);

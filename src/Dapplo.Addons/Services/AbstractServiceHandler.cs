@@ -35,7 +35,7 @@ namespace Dapplo.Addons.Services
     /// <summary>
     /// This is an abstract implementation of a service handler, which can be used if you want to reuse the concept.
     /// </summary>
-    public abstract class AbstractServiceHandler<TService>
+    public abstract class AbstractServiceHandler<TService> : IStartupAsync, IShutdownAsync
     {
         /// <summary>
         /// This contains all the nodes for your services

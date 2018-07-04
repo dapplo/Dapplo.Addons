@@ -38,7 +38,7 @@ namespace Dapplo.Addons.Tests.TestModules
         public Func<CancellationToken, Task> MyStartFunc { get; set; }
         public Func<CancellationToken, Task> MyStopFunc { get; set; }
 
-        public Task StartAsync(CancellationToken cancellationToken = default)
+        public Task StartupAsync(CancellationToken cancellationToken = default)
         {
             return MyStartFunc?.Invoke(cancellationToken);
         }

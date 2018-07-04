@@ -60,6 +60,6 @@ namespace Dapplo.Addons.TestAddon
 
         public async Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken)) => await Task.Delay(100, cancellationToken).ConfigureAwait(false);
 
-        public async Task StartAsync(CancellationToken cancellationToken = new CancellationToken()) => await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+        public async Task StartupAsync(CancellationToken cancellationToken = new CancellationToken()) => await Task.Delay(100, cancellationToken).ConfigureAwait(false);
     }
 }

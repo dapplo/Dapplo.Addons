@@ -38,7 +38,7 @@ namespace Dapplo.Addons.TestAddon
         /// </summary>
         public bool ThrowStartupException { get; set; }
 
-        public void Start()
+        public void Startup()
         {
             if (ThrowStartupException)
             {
