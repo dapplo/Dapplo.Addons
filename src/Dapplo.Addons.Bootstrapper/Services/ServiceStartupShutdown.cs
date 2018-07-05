@@ -133,7 +133,7 @@ namespace Dapplo.Addons.Bootstrapper.Services
                 switch (serviceNode.Service)
                 {
                     case IShutdownAsync shutdownAsync:
-                        shutdownTask = Run(shutdownAsync.ShutdownAsync, serviceNode.Details.TaskSchedulerName, cancellationToken); ;
+                        shutdownTask = Run(shutdownAsync.ShutdownAsync, serviceNode.Details.TaskSchedulerName, cancellationToken);
                         break;
                     case IShutdown shutdown:
                         shutdownTask = Run(() => shutdown.Shutdown(), serviceNode.Details.TaskSchedulerName, cancellationToken);

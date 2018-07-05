@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -325,6 +325,11 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         private Assembly AssemblyResolve(object sender, ResolveEventArgs resolveEventArgs)
         {
             var assemblyName = new AssemblyName(resolveEventArgs.Name);
+            // Fail fast for resolving .resources requests
+            if (assemblyName.Name.EndsWith(".resources"))
+            {
+                return null;
+            }
             Log.Verbose().WriteLine("Resolving {0}", assemblyName.FullName);
             if (_resolving.Contains(assemblyName.Name))
             {
@@ -332,15 +337,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 return null;
             }
 
-            if (assemblyName.Name.EndsWith(".resources"))
-            {
-                // Ignore to prevent resolving logic which doesn't find anything anyway
-                if (Log.IsVerboseEnabled())
-                {
-                    Log.Verbose().WriteLine("Ignoring resolve event for {0}", assemblyName.Name);
-                }
-                return null;
-            }
 
             if (LoadedAssemblies.TryGetValue(assemblyName.Name, out var assemblyResult))
             {
@@ -497,6 +493,12 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             LoadedAssemblies[assemblyName] = loadedAssembly;
 
             if (!_applicationConfig.ScanForEmbeddedAssemblies)
+            {
+                return;
+            }
+
+            // Ignore resource checking on certain assemblies
+            if (AssembliesToIgnore.IsMatch(assemblyName))
             {
                 return;
             }

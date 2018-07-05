@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -51,6 +51,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <returns>normalized directory name</returns>
         public static string NormalizeDirectory(string directory)
         {
+            if (string.IsNullOrEmpty(directory))
+            {
+                return directory;
+            }
             if (directory.Contains(":"))
             {
                 try
