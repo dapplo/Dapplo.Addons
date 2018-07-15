@@ -9,7 +9,7 @@ Work in progress
 
 This library can be used to host addons in your application, or make addons for your application.
 
-It is created for Greenshot, here an example of the code how Greenshot starts:
+This project was mainly created for Greenshot, here is a subset of the code how Greenshot starts:
 
 ```
 // Configure your application
@@ -19,12 +19,16 @@ var applicationConfig = ApplicationConfigBuilder
 	.WithApplicationName("Greenshot")
 	// Used to prevent multiple instances
 	.WithMutex("<your GUID>")
-	// Enable Dapplo.Ini & Dapplo.Language support
-	.WithAssemblyNames("Dapplo.Addons.Config")
+	// Enable Dapplo.Ini & Dapplo.Language support, these packages need to be added via nuget.
+	.WithConfigSupport()
+	// Enable support for IniSection resolving, no need to register them manually
+	.WithIniSectionResolving()
+	// Enable support for ILanguage resolving, no need to register them manually
+	.WithLanguageResolving()
 	// Add directories to scan for dlls
 	.WithScanDirectories("... directory ...")
 	// Scan for all the assemblies, in the exe directory or specified scan directories, called Greenshot.Addon.*.dll
-	.WithAssemblyPatterns("Greenshot.Addon*")
+	.WithAssemblyPatterns("Greenshot.Addon.*")
 	.BuildApplicationConfig();
 
 // Bootstrap it
