@@ -2,14 +2,21 @@ Dapplo.Addons
 =====================
 Work in progress
 
-- Documentation can be found [here](http://www.dapplo.net/blocks/Dapplo.Addons) (later!!)
+- Documentation will be made availabe [here](http://www.dapplo.net/blocks/Dapplo.Addons) when the automated build is ready.
 - Current build status: [![Build status](https://ci.appveyor.com/api/projects/status/bem7losuu07ywvyr?svg=true)](https://ci.appveyor.com/project/dapplo/dapplo-addons)
 - Coverage Status: [![Coverage Status](https://coveralls.io/repos/github/dapplo/Dapplo.Addons/badge.svg?branch=master)](https://coveralls.io/github/dapplo/Dapplo.Addons?branch=master)
 - NuGet package: [![NuGet package](https://badge.fury.io/nu/Dapplo.Addons.svg)](https://badge.fury.io/nu/Dapplo.Addons)
 
 This library can be used to host addons in your application, or make addons for your application.
 
-This project was mainly created for Greenshot, here is a subset of the code how Greenshot starts:
+Dapplo.Addons tries to abstract the complexibility of loading assemblies in the .NET Framework.
+This combined with dependency injection, using Autofac, makes a good solution for addons.
+
+This project was mainly created for Greenshot, to remove the complexity from there and contain it in a separate project.
+It was written by one person, and still very new, documentation is horrible and the API is not clean yet.
+But I use it in a couple of other projects, this saves me a lot of time and issues!
+
+Here is a subset of the code how Greenshot starts:
 
 ```
 // Configure your application
@@ -86,6 +93,6 @@ public class ExampleAddonModule : AddonModule
 
 Also look [here](https://github.com/dapplo/Dapplo.Addons/blob/master/src/Dapplo.Addons.Tests/ApplicationBootstrapperTests.cs#L138) for an example Test-Case on how to use this.
 
-Every addon should use Dapplo.Addons as a reference, the containing application should use Dapplo.Addons.Bootstrapper
+Every addon should use Dapplo.Addons as a reference, only the application container should use Dapplo.Addons.Bootstrapper
 It is heavily based upon Autofac, and can use the Dapplo.Config framework for inserting translations & configurations in your classes.
 The Dapplo.CaliburnMicro project extends this functionality, to have a MVVM application with Composition.
