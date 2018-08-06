@@ -335,11 +335,14 @@ namespace Dapplo.Addons.Bootstrapper
                 }
             }
 
-            var reversedDisposables = _disposables.Reverse().ToList();
-            _disposables.Clear();
-            foreach (var disposable in reversedDisposables)
+            if (_disposables.Count > 0)
             {
-                disposable?.Dispose();
+                var reversedDisposables = _disposables.Reverse().Where(disposable => disposable != null).ToList();
+                _disposables.Clear();
+                foreach (var disposable in reversedDisposables)
+                {
+                    disposable?.Dispose();
+                }
             }
 
             Scope?.Dispose();
