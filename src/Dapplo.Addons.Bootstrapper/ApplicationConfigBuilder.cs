@@ -163,6 +163,20 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
+        /// Disable the copying of assemblies to the probing path, this is risky as it could introduce assembly load context issues
+        /// </summary>
+        /// <returns>ApplicationConfigBuilder</returns>
+        public ApplicationConfigBuilder WithoutCopyOfAssembliesToProbingPath()
+        {
+            if (IsBuild)
+            {
+                throw new NotSupportedException(ApplicationconfigAlreadyBuild);
+            }
+            _applicationConfig.CopyAssembliesToProbingPath = false;
+            return this;
+        }
+
+        /// <summary>
         /// The extensions to use for loading the assemblies
         /// </summary>
         /// <param name="extensions">string with extension, can use multiple arguments</param>
