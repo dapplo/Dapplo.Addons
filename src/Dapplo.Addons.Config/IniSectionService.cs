@@ -33,18 +33,12 @@ namespace Dapplo.Addons.Config
     /// A service for loading and unloading the Ini configuration
     /// </summary>
     [Service(nameof(IniSectionService))]
-    internal class IniSectionService : IStartupAsync, IShutdownAsync
+    public class IniSectionService : IStartupAsync, IShutdownAsync
     {
         /// <inheritdoc />
-        public Task StartupAsync(CancellationToken cancellationToken = default)
-        {
-            return IniConfig.Current.LoadIfNeededAsync(cancellationToken);
-        }
+        public Task StartupAsync(CancellationToken cancellationToken = default) => IniConfig.Current.LoadIfNeededAsync(cancellationToken);
 
         /// <inheritdoc />
-        public Task ShutdownAsync(CancellationToken cancellationToken = default)
-        {
-            return IniConfig.Current.WriteAsync(cancellationToken);
-        }
+        public Task ShutdownAsync(CancellationToken cancellationToken = default) => IniConfig.Current.WriteAsync(cancellationToken);
     }
 }

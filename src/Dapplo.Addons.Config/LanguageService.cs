@@ -33,16 +33,13 @@ namespace Dapplo.Addons.Config
     /// A service for loading the language
     /// </summary>
     [Service(nameof(LanguageService))]
-    internal class LanguageService : IStartupAsync
+    public class LanguageService : IStartupAsync
     {
         /// <summary>
         /// async Start of the LanguageLoader
         /// </summary>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>Task</returns>
-        public async Task StartupAsync(CancellationToken cancellationToken = new CancellationToken())
-        {
-            await LanguageLoader.Current.LoadIfNeededAsync(cancellationToken).ConfigureAwait(false);
-        }
+        public Task StartupAsync(CancellationToken cancellationToken = new CancellationToken()) => LanguageLoader.Current.LoadIfNeededAsync(cancellationToken);
     }
 }
