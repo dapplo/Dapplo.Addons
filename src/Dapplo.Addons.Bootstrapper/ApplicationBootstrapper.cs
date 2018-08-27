@@ -148,7 +148,11 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 return this;
             }
-            Log.Verbose().WriteLine("Configuring");
+
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Configuring");
+            }
 
             _builder = new ContainerBuilder();
             _builder.Properties[nameof(ApplicationName)] = ApplicationName;
@@ -223,7 +227,11 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 throw new NotSupportedException("Initialize can only be called once.");
             }
-            Log.Verbose().WriteLine("Initializing");
+
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Initializing");
+            }
             await LoadAssemblies(cancellationToken).ConfigureAwait(false);
 
             Configure();

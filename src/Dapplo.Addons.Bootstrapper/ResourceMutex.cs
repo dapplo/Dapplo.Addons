@@ -84,7 +84,10 @@ namespace Dapplo.Addons.Bootstrapper
         /// <returns>true if it worked, false if another instance is already running or something went wrong</returns>
         public bool Lock()
         {
-            Log.Verbose().WriteLine("{0} is trying to get Mutex {1}", _resourceName, _mutexId);
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("{0} is trying to get Mutex {1}", _resourceName, _mutexId);
+            }
 
             IsLocked = true;
             // check whether there's an local instance running already, but use local so this works in a multi-user environment

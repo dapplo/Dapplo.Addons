@@ -215,7 +215,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             // Check if the simple name can be found in the cache
             if (LoadedAssemblies.TryGetValue(assemblyLocationInformation.Name, out var assembly))
             {
-                Log.Info().WriteLine("Returned {0} from cache.", assemblyLocationInformation.Name);
+                if (Log.IsInfoEnabled())
+                {
+                    Log.Info().WriteLine("Returned {0} from cache.", assemblyLocationInformation.Name);
+                }
                 return assembly;
             }
 
@@ -271,7 +274,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             // Check the cache again, this time with the "real" name
             if (LoadedAssemblies.TryGetValue(assemblyName.Name, out var assembly))
             {
-                Log.Info().WriteLine("Returned {0} from cache.", assemblyName.Name);
+                if (Log.IsInfoEnabled())
+                {
+                    Log.Info().WriteLine("Returned {0} from cache.", assemblyName.Name);
+                }
                 return assembly;
             }
 
@@ -282,7 +288,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 {
                     if (ShouldWrite(additionalInformation, destination))
                     {
-                        Log.Verbose().WriteLine("Creating a copy of {0} to {1}, solving potential context loading issues.", additionalInformation.Filename, destination);
+                        if (Log.IsVerboseEnabled())
+                        {
+                            Log.Verbose().WriteLine("Creating a copy of {0} to {1}, solving potential context loading issues.", additionalInformation.Filename, destination);
+                        }
                         File.Copy(additionalInformation.Filename, destination);
                         // Register delete on exit, this is done by calling a command
                         _assembliesToDeleteAtExit.Add(destination);
@@ -330,7 +339,11 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             {
                 return null;
             }
-            Log.Verbose().WriteLine("Resolving {0}", assemblyName.FullName);
+
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Resolving {0}", assemblyName.FullName);
+            }
             if (_resolving.Contains(assemblyName.Name))
             {
                 Log.Warn().WriteLine("Ignoring recursive resolve event for {0}", assemblyName.Name);
@@ -422,7 +435,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
                     // Get the assembly name from the file
                     var assemblyName = AssemblyName.GetAssemblyName(assemblyFileName);
-                    Log.Verbose().WriteLine("Loading {0} from {1}", assemblyLocationInformation.Name, assemblyFileName);
+                    if (Log.IsVerboseEnabled())
+                    {
+                        Log.Verbose().WriteLine("Loading {0} from {1}", assemblyLocationInformation.Name, assemblyFileName);
+                    }
                     // Use load, as it's now in the probing path
                     return Assembly.Load(assemblyName);
                 }
@@ -440,7 +456,11 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                         // Register delete on exit, this is done by calling a command
                         _assembliesToDeleteAtExit.Add(assemblyFileName);
                     }
-                    Log.Verbose().WriteLine("Loading {0} from {1}", assemblyLocationInformation.Name, assemblyFileName);
+
+                    if (Log.IsVerboseEnabled())
+                    {
+                        Log.Verbose().WriteLine("Loading {0} from {1}", assemblyLocationInformation.Name, assemblyFileName);
+                    }
                     // Use load-from, as it's on a different place
                     return Assembly.LoadFrom(assemblyFileName);
                 }
@@ -489,7 +509,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         {
             var loadedAssembly = args.LoadedAssembly;
             var assemblyName = loadedAssembly.GetName().Name;
-            Log.Verbose().WriteLine("Loaded {0}", assemblyName);
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Loaded {0}", assemblyName);
+            }
             LoadedAssemblies[assemblyName] = loadedAssembly;
 
             if (!_applicationConfig.ScanForEmbeddedAssemblies)

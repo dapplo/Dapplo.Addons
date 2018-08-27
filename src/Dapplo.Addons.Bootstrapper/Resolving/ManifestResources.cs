@@ -346,7 +346,10 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             var resourceNames = GetCachedManifestResourceNames(assembly);
             foreach (var resourcesFile in resourceNames.Where(x => x.EndsWith(".g.resources")))
             {
-                Log.Verbose().WriteLine("Resource not directly found, trying {0}", resourcesFile);
+                if (Log.IsVerboseEnabled())
+                {
+                    Log.Verbose().WriteLine("Resource not directly found, trying {0}", resourcesFile);
+                }
                 using (var resourceStream = LocateResourceAsStream(assembly, resourcesFile))
                 {
                     if (resourceStream == null)

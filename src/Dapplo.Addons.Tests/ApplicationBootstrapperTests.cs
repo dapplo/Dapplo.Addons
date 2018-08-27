@@ -116,7 +116,6 @@ namespace Dapplo.Addons.Tests
                 // Makes the startup break
                 bootstrapper.Builder.Register(context => true);
 
-
                 bootstrapper.RegisterForDisposal(SimpleDisposable.Create(() => isDisposed = true));
 
                 // Initialize, so we can export

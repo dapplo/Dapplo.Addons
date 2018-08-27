@@ -25,6 +25,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Autofac.Features.Metadata;
 
 namespace Dapplo.Addons.Services
@@ -46,7 +47,7 @@ namespace Dapplo.Addons.Services
         public ServiceNodeContainer(IEnumerable<Meta<TService, ServiceAttribute>> services) => ServiceNodes = CreateServiceDictionary(services);
 
         /// <summary>
-        /// This builds a tree of servicenodes
+        /// This builds a tree of service nodes
         /// </summary>
         /// <param name="services">IEnumerable with Meta of IService and ServiceAttribute</param>
         /// <returns>IDictionary</returns>
@@ -72,28 +73,27 @@ namespace Dapplo.Addons.Services
             foreach (var serviceNode in serviceNodes.Values)
             {
                 var serviceAttribute = serviceNode.Details;
-                // check if this depends on anything
-                if (string.IsNullOrEmpty(serviceAttribute.Prerequisite))
-                {
-                    // Doesn't have any prerequisites
-                    continue;
-                }
+
 
                 if (!serviceNodes.TryGetValue(serviceAttribute.Name, out var thisNode))
                 {
                     throw new NotSupportedException($"Coudn't find service with Name {serviceAttribute.Name}");
                 }
 
-                if (!serviceNodes.TryGetValue(serviceAttribute.Prerequisite, out var prerequisiteNode))
+                // check if this depends on anything
+                foreach (var prerequisite in serviceAttribute.Prerequisites ?? Enumerable.Empty<string>())
                 {
-                    if (!serviceAttribute.SkipIfPrerequisiteIsMissing)
+                    if (!serviceNodes.TryGetValue(prerequisite, out var prerequisiteNode))
                     {
-                        throw new NotSupportedException($"Coudn't find service with Name {serviceAttribute.Prerequisite}, service {serviceAttribute.Name} depends on this.");
+                        if (!serviceAttribute.SkipIfPrerequisiteIsMissing)
+                        {
+                            throw new NotSupportedException($"Coudn't find service with Name {serviceAttribute.Prerequisites}, service {serviceAttribute.Name} depends on this.");
+                        }
+                        continue;
                     }
-                    continue;
+                    thisNode.Prerequisites.Add(prerequisiteNode);
+                    prerequisiteNode.Dependencies.Add(thisNode);
                 }
-                thisNode.Prerequisites.Add(prerequisiteNode);
-                prerequisiteNode.Dependencies.Add(thisNode);
             }
 
             return serviceNodes;

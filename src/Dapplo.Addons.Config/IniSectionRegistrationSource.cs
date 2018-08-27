@@ -88,7 +88,11 @@ namespace Dapplo.Addons.Config
             {
                 return null;
             }
-            Log.Verbose().WriteLine("Creating registration for {0}", typeToCreate);
+
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Creating registration for {0}", typeToCreate);
+            }
             return (IComponentRegistration)buildMethod.Invoke(null, null);
         }
 

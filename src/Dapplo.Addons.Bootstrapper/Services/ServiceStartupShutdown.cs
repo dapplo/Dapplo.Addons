@@ -84,18 +84,24 @@ namespace Dapplo.Addons.Bootstrapper.Services
             var tasks = new List<Task>();
             foreach (var serviceNode in serviceNodes)
             {
-                Log.Debug().WriteLine("Starting {0} ({1})", serviceNode.Details.Name, serviceNode.Service.GetType());
-
-                var startupTask = Task.CompletedTask;
-                switch (serviceNode.Service)
+                if (!serviceNode.TryBeginStartup())
                 {
-                    case IStartupAsync startupAsync:
-                        startupTask = Run(startupAsync.StartupAsync, serviceNode.Details.TaskSchedulerName, cancellationToken); 
-                        break;
-                    case IStartup startup:
-                        startupTask = Run(() => startup.Startup(), serviceNode.Details.TaskSchedulerName, cancellationToken);
-                        break;
+                    // already started
+                    continue;
                 }
+                if (Log.IsDebugEnabled())
+                {
+                    Log.Debug().WriteLine("Starting {0} ({1})", serviceNode.Details.Name, serviceNode.Service.GetType());
+                }
+
+                TaskScheduler taskScheduler = null;
+                if (!string.IsNullOrEmpty(serviceNode.Details.TaskSchedulerName))
+                {
+                    _taskSchedulers.TryGetValue(serviceNode.Details.TaskSchedulerName, out taskScheduler);
+                }
+
+                var startupTask = serviceNode.Startup(taskScheduler, cancellationToken);
+                
                 // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                 if (serviceNode.Dependencies.Count > 0)
                 {
@@ -122,23 +128,24 @@ namespace Dapplo.Addons.Bootstrapper.Services
             var tasks = new List<Task>();
             foreach (var serviceNode in serviceNodes)
             {
-                if (!serviceNode.StartShutdown())
+                if (!serviceNode.TryBeginShutdown())
                 {
                     // Shutdown was already started
                     continue;
                 }
-                var shutdownTask = Task.CompletedTask;
 
-                Log.Debug().WriteLine("Stopping {0} ({1})", serviceNode.Details.Name, serviceNode.Service.GetType());
-                switch (serviceNode.Service)
+                if (Log.IsDebugEnabled())
                 {
-                    case IShutdownAsync shutdownAsync:
-                        shutdownTask = Run(shutdownAsync.ShutdownAsync, serviceNode.Details.TaskSchedulerName, cancellationToken);
-                        break;
-                    case IShutdown shutdown:
-                        shutdownTask = Run(() => shutdown.Shutdown(), serviceNode.Details.TaskSchedulerName, cancellationToken);
-                        break;
+                    Log.Debug().WriteLine("Stopping {0} ({1})", serviceNode.Details.Name, serviceNode.Service.GetType());
                 }
+
+                TaskScheduler taskScheduler = null;
+                if (!string.IsNullOrEmpty(serviceNode.Details.TaskSchedulerName))
+                {
+                    _taskSchedulers.TryGetValue(serviceNode.Details.TaskSchedulerName, out taskScheduler);
+                }
+
+                var shutdownTask = serviceNode.Shutdown(taskScheduler, cancellationToken);
                 if (serviceNode.Prerequisites.Count > 0)
                 {
                     // Recurse into StartServices
@@ -148,52 +155,6 @@ namespace Dapplo.Addons.Bootstrapper.Services
             }
 
             return tasks.Count > 0 ? Task.WhenAll(tasks) : Task.CompletedTask;
-        }
-
-        /// <summary>
-        /// Helper method to start a task on a optional TaskScheduler
-        /// </summary>
-        /// <param name="func">Func accepting CancellationToken returning Task</param>
-        /// <param name="taskSchedulerName">string</param>
-        /// <param name="cancellationToken">CancellationToken</param>
-        /// <returns>Task</returns>
-        private Task Run(Func<CancellationToken, Task> func, string taskSchedulerName, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrEmpty(taskSchedulerName))
-            {
-                // Threadpool
-                return Task.Run(() => func(cancellationToken), cancellationToken);
-            }
-
-            // Use the supplied task scheduler
-            return Task.Factory.StartNew(
-                () => func(cancellationToken),
-                cancellationToken,
-                TaskCreationOptions.None,
-                _taskSchedulers[taskSchedulerName]).Unwrap();
-        }
-
-        /// <summary>
-        /// Helper method to start an action
-        /// </summary>
-        /// <param name="action">Action</param>
-        /// <param name="taskSchedulerName">string</param>
-        /// <param name="cancellationToken">CancellationToken</param>
-        /// <returns>Task</returns>
-        private Task Run(Action action, string taskSchedulerName, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrEmpty(taskSchedulerName))
-            {
-                // Threadpool
-                return Task.Run(action, cancellationToken);
-            }
-
-            // Use the supplied task scheduler
-            return Task.Factory.StartNew(
-                action,
-                cancellationToken,
-                TaskCreationOptions.None,
-                _taskSchedulers[taskSchedulerName]);
         }
     }
 }
