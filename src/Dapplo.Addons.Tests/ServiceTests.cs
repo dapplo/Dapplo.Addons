@@ -67,6 +67,10 @@ namespace Dapplo.Addons.Tests
                     .Named<TaskScheduler>("test")
                     .SingleInstance();
 
+                bootstrapper.Builder
+                    .Register(context => new ParentStartupAction())
+                    .As<IService>().SingleInstance();
+
                 bootstrapper.Builder.Register(context => new FirstStartupAction
                 {
                     MyStartAction = () => didFirstStartRun = true,

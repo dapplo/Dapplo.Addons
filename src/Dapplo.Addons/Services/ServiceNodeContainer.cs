@@ -62,11 +62,7 @@ namespace Dapplo.Addons.Services
                 {
                     throw new NotSupportedException($"{service.Value.GetType()} uses a duplicate name: {service.Metadata.Name}");
                 }
-                serviceNodes.Add(name, new ServiceNode<TService>
-                {
-                    Details = service.Metadata,
-                    Service = service.Value
-                });
+                serviceNodes.Add(name, new ServiceNode<TService>(service.Value, service.Metadata));
             }
 
             // Enrich the information

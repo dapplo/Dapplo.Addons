@@ -29,8 +29,12 @@
 
 namespace Dapplo.Addons.Tests.TestModules
 {
-    [Service(nameof(FirstStartupAction), nameof(ParentStartupAction))]
-    public class FirstStartupAction : AbstractStartupAction
+    [Service(nameof(ParentStartupAction))]
+    public class ParentStartupAction : IShutdown
     {
+        public void Shutdown()
+        {
+
+        }
     }
 }

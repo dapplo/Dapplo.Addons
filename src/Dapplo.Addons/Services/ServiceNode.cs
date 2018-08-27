@@ -25,6 +25,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,14 +43,36 @@ namespace Dapplo.Addons.Services
         private readonly TaskCompletionSource<object> _shutdownTaskCompletionSource = new TaskCompletionSource<object>();
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="service">TService</param>
+        /// <param name="details">ServiceAttribute</param>
+        public ServiceNode(TService service, ServiceAttribute details)
+        {
+            Service = service;
+            Details = details;
+            var interfaces = service?.GetType().GetInterfaces();
+            // If the type doesn't implement a shutdown, mark this as done
+            if (interfaces == null || (!interfaces.Contains(typeof(IShutdownAsync)) && !interfaces.Contains(typeof(IShutdown))))
+            {
+                _shutdownTaskCompletionSource.TrySetResult(null);
+            }
+            // If the type doesn't implement a startup, mark this as done
+            if (interfaces == null || (!interfaces.Contains(typeof(IStartupAsync)) && !interfaces.Contains(typeof(IStartup))))
+            {
+                _startupTaskCompletionSource.TrySetResult(null);
+            }
+        }
+
+        /// <summary>
         /// The attributed details
         /// </summary>
-        public ServiceAttribute Details { get; set; }
+        public ServiceAttribute Details { get; }
 
         /// <summary>
         /// Task of the service
         /// </summary>
-        public TService Service { get; set; }
+        public TService Service { get; }
 
         /// <summary>
         /// Test if this service depends on other services
