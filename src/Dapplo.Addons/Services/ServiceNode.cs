@@ -99,20 +99,20 @@ namespace Dapplo.Addons.Services
             var prerequisiteTasks = Prerequisites.Select(node => node._startupTaskCompletionSource.Task).ToArray();
             if (prerequisiteTasks.Length == 1)
             {
-                await prerequisiteTasks[0];
+                await prerequisiteTasks[0].ConfigureAwait(false);
             }
             else if (prerequisiteTasks.Length == 1)
             {
-                await Task.WhenAll(prerequisiteTasks);
+                await Task.WhenAll(prerequisiteTasks).ConfigureAwait(false); ;
             }
 
             switch (Service)
             {
                 case IShutdownAsync shutdownAsync:
-                    await Run(shutdownAsync.ShutdownAsync, taskScheduler, _startupTaskCompletionSource, cancellationToken);
+                    await Run(shutdownAsync.ShutdownAsync, taskScheduler, _startupTaskCompletionSource, cancellationToken).ConfigureAwait(false); ;
                     break;
                 case IShutdown shutdown:
-                    await Run(() => shutdown.Shutdown(), taskScheduler, _startupTaskCompletionSource, cancellationToken);
+                    await Run(() => shutdown.Shutdown(), taskScheduler, _startupTaskCompletionSource, cancellationToken).ConfigureAwait(false); ;
                     break;
             }
         }
@@ -145,20 +145,20 @@ namespace Dapplo.Addons.Services
             var prerequisiteTasks = Prerequisites.Select(node => node._startupTaskCompletionSource.Task).ToArray();
             if (prerequisiteTasks.Length == 1)
             {
-                await prerequisiteTasks[0];
+                await prerequisiteTasks[0].ConfigureAwait(false); ;
             }
             else if (prerequisiteTasks.Length == 1)
             {
-                await Task.WhenAll(prerequisiteTasks);
+                await Task.WhenAll(prerequisiteTasks).ConfigureAwait(false); ;
             }
 
             switch (Service)
             {
                 case IStartupAsync startupAsync:
-                    await Run(startupAsync.StartupAsync, taskScheduler, _startupTaskCompletionSource, cancellationToken);
+                    await Run(startupAsync.StartupAsync, taskScheduler, _startupTaskCompletionSource, cancellationToken).ConfigureAwait(false); ;
                     break;
                 case IStartup startup:
-                    await Run(() => startup.Startup(), taskScheduler, _startupTaskCompletionSource, cancellationToken);
+                    await Run(() => startup.Startup(), taskScheduler, _startupTaskCompletionSource, cancellationToken).ConfigureAwait(false); ;
                     break;
            }
         }
@@ -180,7 +180,7 @@ namespace Dapplo.Addons.Services
                 {
                     try
                     {
-                        await func(cancellationToken);
+                        await func(cancellationToken).ConfigureAwait(false); ;
                         tcs.TrySetResult(null);
                     }
                     catch (Exception ex)
@@ -198,7 +198,7 @@ namespace Dapplo.Addons.Services
                 {
                     try
                     {
-                        await func(cancellationToken);
+                        await func(cancellationToken).ConfigureAwait(false); ;
                         tcs.TrySetResult(null);
                     }
                     catch (Exception ex)
