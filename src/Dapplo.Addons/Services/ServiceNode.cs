@@ -25,7 +25,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,12 +54,14 @@ namespace Dapplo.Addons.Services
             // If the type doesn't implement a shutdown, mark this as done
             if (interfaces == null || (!interfaces.Contains(typeof(IShutdownAsync)) && !interfaces.Contains(typeof(IShutdown))))
             {
-                _shutdownTaskCompletionSource.TrySetResult(null);
+                _isShutdownCalled = true;
+                _shutdownTaskCompletionSource.SetResult(null);
             }
             // If the type doesn't implement a startup, mark this as done
             if (interfaces == null || (!interfaces.Contains(typeof(IStartupAsync)) && !interfaces.Contains(typeof(IStartup))))
             {
-                _startupTaskCompletionSource.TrySetResult(null);
+                _isStartupCalled = true;
+                _startupTaskCompletionSource.SetResult(null);
             }
         }
 
@@ -119,23 +120,23 @@ namespace Dapplo.Addons.Services
         /// <returns>Task</returns>
         public async Task Shutdown(TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
         {
-            var prerequisiteTasks = Prerequisites.Select(node => node._startupTaskCompletionSource.Task).ToArray();
-            if (prerequisiteTasks.Length == 1)
+            var dependencyTasks = Dependencies.Select(node => node._shutdownTaskCompletionSource.Task).ToArray();
+            if (dependencyTasks.Length == 1)
             {
-                await prerequisiteTasks[0].ConfigureAwait(false);
+                await dependencyTasks[0].ConfigureAwait(false);
             }
-            else if (prerequisiteTasks.Length == 1)
+            else if (dependencyTasks.Length > 1)
             {
-                await Task.WhenAll(prerequisiteTasks).ConfigureAwait(false); ;
+                await Task.WhenAll(dependencyTasks).ConfigureAwait(false);
             }
 
             switch (Service)
             {
                 case IShutdownAsync shutdownAsync:
-                    await Run(shutdownAsync.ShutdownAsync, taskScheduler, _startupTaskCompletionSource, cancellationToken).ConfigureAwait(false); ;
+                    await Run(shutdownAsync.ShutdownAsync, taskScheduler, _shutdownTaskCompletionSource, cancellationToken).ConfigureAwait(false);
                     break;
                 case IShutdown shutdown:
-                    await Run(() => shutdown.Shutdown(), taskScheduler, _startupTaskCompletionSource, cancellationToken).ConfigureAwait(false); ;
+                    await Run(shutdown.Shutdown, taskScheduler, _shutdownTaskCompletionSource, cancellationToken).ConfigureAwait(false);
                     break;
             }
         }
@@ -166,22 +167,23 @@ namespace Dapplo.Addons.Services
         public async Task Startup(TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
         {
             var prerequisiteTasks = Prerequisites.Select(node => node._startupTaskCompletionSource.Task).ToArray();
+
             if (prerequisiteTasks.Length == 1)
             {
-                await prerequisiteTasks[0].ConfigureAwait(false); ;
+                await prerequisiteTasks[0].ConfigureAwait(false);
             }
-            else if (prerequisiteTasks.Length == 1)
+            else if (prerequisiteTasks.Length > 1)
             {
-                await Task.WhenAll(prerequisiteTasks).ConfigureAwait(false); ;
+                await Task.WhenAll(prerequisiteTasks).ConfigureAwait(false);
             }
 
             switch (Service)
             {
                 case IStartupAsync startupAsync:
-                    await Run(startupAsync.StartupAsync, taskScheduler, _startupTaskCompletionSource, cancellationToken).ConfigureAwait(false); ;
+                    await Run(startupAsync.StartupAsync, taskScheduler, _startupTaskCompletionSource, cancellationToken).ConfigureAwait(false);
                     break;
                 case IStartup startup:
-                    await Run(() => startup.Startup(), taskScheduler, _startupTaskCompletionSource, cancellationToken).ConfigureAwait(false); ;
+                    await Run(startup.Startup, taskScheduler, _startupTaskCompletionSource, cancellationToken).ConfigureAwait(false);
                     break;
            }
         }
@@ -203,7 +205,7 @@ namespace Dapplo.Addons.Services
                 {
                     try
                     {
-                        await func(cancellationToken).ConfigureAwait(false); ;
+                        await func(cancellationToken).ConfigureAwait(false);
                         tcs.TrySetResult(null);
                     }
                     catch (Exception ex)
@@ -221,7 +223,7 @@ namespace Dapplo.Addons.Services
                 {
                     try
                     {
-                        await func(cancellationToken).ConfigureAwait(false); ;
+                        await func(cancellationToken).ConfigureAwait(false);
                         tcs.TrySetResult(null);
                     }
                     catch (Exception ex)

@@ -23,7 +23,6 @@
 
 #endregion
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -31,7 +30,6 @@ using System.Threading.Tasks;
 using Autofac.Features.Indexed;
 using Autofac.Features.Metadata;
 using Dapplo.Addons.Services;
-using Dapplo.Log;
 
 namespace Dapplo.Addons.Bootstrapper.Services
 {
@@ -40,7 +38,6 @@ namespace Dapplo.Addons.Bootstrapper.Services
     /// </summary>
     public class ServiceStartupShutdown : ServiceNodeContainer<IService>, IStartupAsync, IShutdownAsync
     {
-        private static readonly LogSource Log = new LogSource();
         private readonly IIndex<string, TaskScheduler> _taskSchedulers;
 
         /// <summary>
@@ -84,30 +81,33 @@ namespace Dapplo.Addons.Bootstrapper.Services
             var tasks = new List<Task>();
             foreach (var serviceNode in serviceNodes)
             {
-                if (!serviceNode.TryBeginStartup())
+                var startup = serviceNode.TryBeginStartup();
+                if (!startup)
                 {
-                    // already started
-                    continue;
-                }
-                if (Log.IsDebugEnabled())
-                {
-                    Log.Debug().WriteLine("Starting {0} ({1})", serviceNode.Details.Name, serviceNode.Service.GetType());
-                }
-
-                TaskScheduler taskScheduler = null;
-                if (!string.IsNullOrEmpty(serviceNode.Details.TaskSchedulerName))
-                {
-                    _taskSchedulers.TryGetValue(serviceNode.Details.TaskSchedulerName, out taskScheduler);
+                    if (serviceNode.Dependencies.Count == 0)
+                    {
+                        continue;
+                    }
                 }
 
-                var startupTask = serviceNode.Startup(taskScheduler, cancellationToken);
-                
-                // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                if (serviceNode.Dependencies.Count > 0)
+                var startupTask = Task.Run(async () =>
                 {
-                    // Recurse into StartServices
-                    startupTask = startupTask.ContinueWith(task => StartServices(serviceNode.Dependencies, cancellationToken), cancellationToken).Unwrap();
-                }
+                    if (startup)
+                    {
+                        TaskScheduler taskScheduler = null;
+                        if (!string.IsNullOrEmpty(serviceNode.Details.TaskSchedulerName))
+                        {
+                            _taskSchedulers.TryGetValue(serviceNode.Details.TaskSchedulerName, out taskScheduler);
+                        }
+                        await serviceNode.Startup(taskScheduler, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    if (serviceNode.Dependencies.Count > 0)
+                    {
+                        // Recurse into StartServices
+                        await StartServices(serviceNode.Dependencies, cancellationToken).ConfigureAwait(false);
+                    }
+                }, cancellationToken);
                 if (!serviceNode.Details.SkipAwait)
                 {
                     tasks.Add(startupTask);
@@ -128,32 +128,34 @@ namespace Dapplo.Addons.Bootstrapper.Services
             var tasks = new List<Task>();
             foreach (var serviceNode in serviceNodes)
             {
-                if (!serviceNode.TryBeginShutdown())
+                var shutdown = serviceNode.TryBeginShutdown();
+                if (!shutdown)
                 {
-                    // Shutdown was already started
-                    continue;
+                    if (serviceNode.Prerequisites.Count == 0)
+                    {
+                        continue;
+                    }
                 }
+                var shutdownTask = Task.Run(async () =>
+                {
+                    if (shutdown)
+                    {
+                        TaskScheduler taskScheduler = null;
+                        if (!string.IsNullOrEmpty(serviceNode.Details.TaskSchedulerName))
+                        {
+                            _taskSchedulers.TryGetValue(serviceNode.Details.TaskSchedulerName, out taskScheduler);
+                        }
+                        await serviceNode.Shutdown(taskScheduler, cancellationToken).ConfigureAwait(false);
+                    }
 
-                if (Log.IsDebugEnabled())
-                {
-                    Log.Debug().WriteLine("Stopping {0} ({1})", serviceNode.Details.Name, serviceNode.Service.GetType());
-                }
-
-                TaskScheduler taskScheduler = null;
-                if (!string.IsNullOrEmpty(serviceNode.Details.TaskSchedulerName))
-                {
-                    _taskSchedulers.TryGetValue(serviceNode.Details.TaskSchedulerName, out taskScheduler);
-                }
-
-                var shutdownTask = serviceNode.Shutdown(taskScheduler, cancellationToken);
-                if (serviceNode.Prerequisites.Count > 0)
-                {
-                    // Recurse into StartServices
-                    shutdownTask = shutdownTask.ContinueWith(task => StopServices(serviceNode.Prerequisites, cancellationToken), cancellationToken).Unwrap();
-                }
+                    if (serviceNode.Prerequisites.Count > 0)
+                    {
+                        // Recurse into StartServices
+                        await StopServices(serviceNode.Prerequisites, cancellationToken).ConfigureAwait(false);
+                    }
+                }, cancellationToken);
                 tasks.Add(shutdownTask);
             }
-
             return tasks.Count > 0 ? Task.WhenAll(tasks) : Task.CompletedTask;
         }
     }

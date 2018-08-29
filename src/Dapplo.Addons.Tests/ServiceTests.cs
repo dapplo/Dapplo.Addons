@@ -45,12 +45,8 @@ namespace Dapplo.Addons.Tests
         public ServiceTests(ITestOutputHelper testOutputHelper) => LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
 
         [Fact]
-        public async Task Test_StartupShutdown()
+        public async Task Test_ServiceStartupShutdownOrder()
         {
-            bool didFirstStartRun = false;
-            bool didSecondStartRun = false;
-            bool didFirstShutdownRun = false;
-            bool didSecondShutdownRun = false;
             var applicationConfig = ApplicationConfigBuilder
                 .Create()
                 .WithApplicationName("StartupTest")
@@ -68,39 +64,80 @@ namespace Dapplo.Addons.Tests
                     .SingleInstance();
 
                 bootstrapper.Builder
-                    .Register(context => new ParentStartupAction())
-                    .As<IService>().SingleInstance();
+                    .RegisterType<OrderProvider>()
+                    .AsSelf()
+                    .SingleInstance();
 
-                bootstrapper.Builder.Register(context => new FirstStartupAction
-                {
-                    MyStartAction = () => didFirstStartRun = true,
-                    MyStopAction = () => didFirstShutdownRun = true
-                }).As<IService>().SingleInstance();
+                bootstrapper.Builder
+                    .RegisterType<ParentService>()
+                    .As<IService>()
+                    .SingleInstance();
 
-                bootstrapper.Builder.Register(context => new SecondStartupAction
-                {
-                    MyStartAction = () => didSecondStartRun = true,
-                    MyStopAction = () => didSecondShutdownRun = true
-                }).As<IService>().SingleInstance();
+                bootstrapper.Builder
+                    .RegisterType<ServiceOne>()
+                    .AsSelf()
+                    .As<IService>()
+                    .SingleInstance();
 
-                bootstrapper.Builder.Register(context => new FourthStartupAction
-                {
-                    MyStartFunc = cancellationToken => Task.Delay(10, cancellationToken),
-                    MyStopFunc = cancellationToken => Task.Delay(10, cancellationToken)
-                }).As<IService>().SingleInstance();
-                // 
-                bootstrapper.Builder.Register(context => new ThirdStartupAction()).As<IService>().SingleInstance();
+                bootstrapper.Builder
+                    .RegisterType<ServiceTwoA>()
+                    .AsSelf()
+                    .As<IService>()
+                    .SingleInstance();
+
+                bootstrapper.Builder
+                    .RegisterType<ServiceTwoB>()
+                    .AsSelf()
+                    .As<IService>()
+                    .SingleInstance();
+
+                bootstrapper.Builder
+                    .RegisterType<ServiceThree>()
+                    .AsSelf()
+                    .As<IService>()
+                    .SingleInstance();
+
+                bootstrapper.Builder
+                    .RegisterType<ServiceFour>()
+                    .AsSelf()
+                    .As<IService>()
+                    .SingleInstance();
 
                 await bootstrapper.InitializeAsync();
 
                 var serviceHandler = bootstrapper.Container.Resolve<ServiceStartupShutdown>();
+
                 await serviceHandler.StartupAsync();
 
-                Assert.True(didFirstStartRun);
-                Assert.True(didSecondStartRun);
+                var serviceOne = bootstrapper.Container.Resolve<ServiceOne>();
+                var serviceTwoA = bootstrapper.Container.Resolve<ServiceTwoA>();
+                var serviceTwoB = bootstrapper.Container.Resolve<ServiceTwoB>();
+                var serviceThree = bootstrapper.Container.Resolve<ServiceThree>();
+                var serviceFour = bootstrapper.Container.Resolve<ServiceFour>();
+
+                Assert.True(serviceOne.DidStartup);
+                Assert.True(serviceTwoA.DidStartup);
+                Assert.True(serviceTwoB.DidStartup);
+                Assert.True(serviceThree.DidStartup);
+                Assert.True(serviceFour.DidStartup);
+                Assert.Equal(1, serviceOne.StartupOrder);
+                Assert.True(serviceTwoA.StartupOrder == 2 || serviceTwoA.StartupOrder == 3, $"Value should be 2 or 3, but is {serviceTwoA.StartupOrder}");
+                Assert.True(serviceTwoB.StartupOrder == 2 || serviceTwoB.StartupOrder == 3, $"Value should be 2 or 3, but is {serviceTwoB.StartupOrder}");
+                Assert.Equal(4, serviceThree.StartupOrder);
+                Assert.Equal(5, serviceFour.StartupOrder);
+
                 await serviceHandler.ShutdownAsync();
-                Assert.True(didSecondShutdownRun);
-                Assert.True(didFirstShutdownRun);
+
+                Assert.True(serviceOne.DidShutdown);
+                Assert.True(serviceTwoA.DidShutdown);
+                Assert.True(serviceTwoB.DidShutdown);
+                Assert.True(serviceThree.DidShutdown);
+                Assert.True(serviceFour.DidShutdown);
+                Assert.Equal(1, serviceFour.ShutdownOrder);
+                Assert.Equal(2, serviceThree.ShutdownOrder);
+                Assert.True(serviceTwoA.ShutdownOrder == 3 || serviceTwoA.ShutdownOrder == 4, $"Value should be 3 or 4, but is {serviceTwoA.ShutdownOrder}");
+                Assert.True(serviceTwoB.ShutdownOrder == 3 || serviceTwoB.ShutdownOrder == 4, $"Value should be 3 or 4, but is {serviceTwoB.ShutdownOrder}");
+                Assert.Equal(5, serviceOne.ShutdownOrder);
             }
         }
 

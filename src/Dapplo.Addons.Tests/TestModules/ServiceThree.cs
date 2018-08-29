@@ -29,8 +29,11 @@
 
 namespace Dapplo.Addons.Tests.TestModules
 {
-    [Service(nameof(FirstStartupAction), nameof(ParentStartupAction))]
-    public class FirstStartupAction : AbstractStartupAction
+    [Service(nameof(ServiceThree),nameof(ServiceTwoA), nameof(ServiceTwoB))]
+    public class ServiceThree : AbstractService
     {
+        public ServiceThree(OrderProvider orderProvider) : base(orderProvider)
+        {
+        }
     }
 }

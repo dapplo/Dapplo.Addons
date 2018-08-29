@@ -29,8 +29,11 @@
 
 namespace Dapplo.Addons.Tests.TestModules
 {
-    [Service(nameof(ThirdStartupAction),nameof(FirstStartupAction))]
-    public class ThirdStartupAction : AbstractStartupAction
+    [Service(nameof(ServiceTwoB), nameof(ServiceOne), TaskSchedulerName = "test")]
+    public class ServiceTwoB : AbstractAsyncService
     {
+        public ServiceTwoB(OrderProvider orderProvider) : base(orderProvider)
+        {
+        }
     }
 }

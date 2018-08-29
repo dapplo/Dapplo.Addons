@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -25,6 +25,7 @@
 
 using System.Collections.Generic;
 using Dapplo.Addons.Bootstrapper;
+using Dapplo.Addons.Config.Internal;
 
 namespace Dapplo.Addons.Config
 {

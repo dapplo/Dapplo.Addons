@@ -299,11 +299,11 @@ namespace Dapplo.Addons.Bootstrapper
         /// <param name="cancellationToken">CancellationToken</param>
         public async Task StartupAsync(CancellationToken cancellationToken = default)
         {
+            _isStartedUp = true;
             if (Container == null)
             {
                 await InitializeAsync(cancellationToken).ConfigureAwait(false);
             }
-            _isStartedUp = true;
             await Scope.Resolve<ServiceStartupShutdown>().StartupAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -315,7 +315,7 @@ namespace Dapplo.Addons.Bootstrapper
         {
             if (!_isStartedUp)
             {
-                throw new NotSupportedException("Start before shutdown!");
+                throw new NotSupportedException("Please call StartupAsync before shutdown!");
             }
             _isShutDown = true;
             return Scope.Resolve<ServiceStartupShutdown>().ShutdownAsync(cancellationToken);

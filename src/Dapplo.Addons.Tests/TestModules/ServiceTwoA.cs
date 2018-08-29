@@ -25,27 +25,15 @@
 
 #region Usings
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
 #endregion
 
 namespace Dapplo.Addons.Tests.TestModules
 {
-    public class AbstractAsyncStartupAction : IStartupAsync, IShutdownAsync
+    [Service(nameof(ServiceTwoA), nameof(ServiceOne), TaskSchedulerName = "test")]
+    public class ServiceTwoA : AbstractService
     {
-        public Func<CancellationToken, Task> MyStartFunc { get; set; }
-        public Func<CancellationToken, Task> MyStopFunc { get; set; }
-
-        public Task StartupAsync(CancellationToken cancellationToken = default)
+        public ServiceTwoA(OrderProvider orderProvider) : base(orderProvider)
         {
-            return MyStartFunc?.Invoke(cancellationToken);
-        }
-
-        public Task ShutdownAsync(CancellationToken cancellationToken = default)
-        {
-            return MyStopFunc?.Invoke(cancellationToken);
         }
     }
 }

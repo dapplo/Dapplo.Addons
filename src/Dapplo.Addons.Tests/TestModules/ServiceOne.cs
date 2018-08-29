@@ -29,12 +29,11 @@
 
 namespace Dapplo.Addons.Tests.TestModules
 {
-    [Service(nameof(ParentStartupAction))]
-    public class ParentStartupAction : IShutdown
+    [Service(nameof(ServiceOne), nameof(ParentService))]
+    public class ServiceOne : AbstractService
     {
-        public void Shutdown()
+        public ServiceOne(OrderProvider orderProvider) : base(orderProvider)
         {
-
         }
     }
 }

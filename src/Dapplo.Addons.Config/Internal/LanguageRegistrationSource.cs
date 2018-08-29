@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -32,7 +32,7 @@ using Autofac.Core;
 using Dapplo.Language;
 using Dapplo.Log;
 
-namespace Dapplo.Addons.Config
+namespace Dapplo.Addons.Config.Internal
 {
     /// <summary>
     /// This is an IRegistrationSource for the ILanguage

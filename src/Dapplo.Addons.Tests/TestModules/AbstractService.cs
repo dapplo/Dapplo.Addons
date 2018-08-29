@@ -25,12 +25,42 @@
 
 #region Usings
 
+using Dapplo.Log;
+
 #endregion
 
 namespace Dapplo.Addons.Tests.TestModules
 {
-    [Service(nameof(FourthStartupAction), nameof(FirstStartupAction), SkipAwait = true)]
-    public class FourthStartupAction : AbstractAsyncStartupAction
+    public class AbstractService : IStartup, IShutdown
     {
+        private readonly OrderProvider _orderProvider;
+        private readonly LogSource _log;
+        public int StartupOrder { get; private set; }
+        public int ShutdownOrder { get; private set; }
+        public bool DidStartup { get; private set; }
+        public bool DidShutdown{ get; private set; }
+
+
+        public AbstractService(OrderProvider orderProvider)
+        {
+            _orderProvider = orderProvider;
+            _log = new LogSource(GetType());
+        }
+
+        public void Startup()
+        {
+            _log.Info().WriteLine("Before");
+            StartupOrder = _orderProvider.TakeStartupNumber();
+            DidStartup = true;
+            _log.Info().WriteLine("After");
+        }
+
+        public void Shutdown()
+        {
+            _log.Info().WriteLine("Before");
+            ShutdownOrder = _orderProvider.TakeShutdownNumber();
+            DidShutdown = true;
+            _log.Info().WriteLine("After");
+        }
     }
 }

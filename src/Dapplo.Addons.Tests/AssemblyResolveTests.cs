@@ -73,7 +73,7 @@ namespace Dapplo.Addons.Tests
                 .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura")
                 .BuildApplicationConfig();
 
-            using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
+            using (new ApplicationBootstrapper(applicationConfig))
             {
                 var jiraAssembly = Assembly.Load("Dapplo.Jira");
                 Assert.NotNull(jiraAssembly);

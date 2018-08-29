@@ -52,6 +52,9 @@
     <Reference Include="Dapplo.Log, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Dapplo.Log.1.2.1\lib\net45\Dapplo.Log.dll</HintPath>
     </Reference>
+    <Reference Include="Dapplo.Log.Loggers, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapplo.Log.Loggers.1.2.1\lib\net45\Dapplo.Log.Loggers.dll</HintPath>
+    </Reference>
     <Reference Include="Dapplo.Log.XUnit, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Dapplo.Log.XUnit.1.2.1\lib\net46\Dapplo.Log.XUnit.dll</HintPath>
     </Reference>
@@ -96,13 +99,15 @@
     <Compile Include="ResourceMutexTests.cs" />
     <Compile Include="ServiceTests.cs" />
     <Compile Include="TestFiles\Dummy.cs" />
-    <Compile Include="TestModules\AbstractAsyncStartupAction.cs" />
-    <Compile Include="TestModules\AbstractStartupAction.cs" />
-    <Compile Include="TestModules\ParentStartupAction.cs" />
-    <Compile Include="TestModules\FourthStartupAction.cs" />
-    <Compile Include="TestModules\ThirdStartupAction.cs" />
-    <Compile Include="TestModules\SecondStartupAction.cs" />
-    <Compile Include="TestModules\FirstStartupAction.cs" />
+    <Compile Include="TestModules\AbstractAsyncService.cs" />
+    <Compile Include="TestModules\AbstractService.cs" />
+    <Compile Include="TestModules\ParentService.cs" />
+    <Compile Include="TestModules\ServiceFour.cs" />
+    <Compile Include="TestModules\OrderProvider.cs" />
+    <Compile Include="TestModules\ServiceTwoB.cs" />
+    <Compile Include="TestModules\ServiceThree.cs" />
+    <Compile Include="TestModules\ServiceTwoA.cs" />
+    <Compile Include="TestModules\ServiceOne.cs" />
     <Compile Include="Utils\AssemblyUtils.cs" />
   </ItemGroup>
   <ItemGroup>
