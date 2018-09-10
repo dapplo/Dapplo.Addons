@@ -1,168 +1,45 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\xunit.runner.visualstudio.2.4.0\build\net20\xunit.runner.visualstudio.props" Condition="Exists('..\packages\xunit.runner.visualstudio.2.4.0\build\net20\xunit.runner.visualstudio.props')" />
-  <Import Project="..\packages\xunit.runner.console.2.4.0\build\xunit.runner.console.props" Condition="Exists('..\packages\xunit.runner.console.2.4.0\build\xunit.runner.console.props')" />
-  <Import Project="..\packages\xunit.core.2.4.0\build\xunit.core.props" Condition="Exists('..\packages\xunit.core.2.4.0\build\xunit.core.props')" />
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4ECE26AD-6832-4A19-982A-65F5E3D2AFDE}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Dapplo.Addons.Tests</RootNamespace>
-    <AssemblyName>Dapplo.Addons.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <TargetFrameworks>net461</TargetFrameworks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="Autofac, Version=4.8.1.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
-      <HintPath>..\packages\Autofac.4.8.1\lib\net45\Autofac.dll</HintPath>
-    </Reference>
-    <Reference Include="Dapplo.Ini, Version=0.5.29.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Ini.0.5.29\lib\net45\Dapplo.Ini.dll</HintPath>
-    </Reference>
-    <Reference Include="Dapplo.InterfaceImpl, Version=0.2.12.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.InterfaceImpl.0.2.12\lib\net45\Dapplo.InterfaceImpl.dll</HintPath>
-    </Reference>
-    <Reference Include="Dapplo.Log, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Log.1.2.1\lib\net45\Dapplo.Log.dll</HintPath>
-    </Reference>
-    <Reference Include="Dapplo.Log.Loggers, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Log.Loggers.1.2.1\lib\net45\Dapplo.Log.Loggers.dll</HintPath>
-    </Reference>
-    <Reference Include="Dapplo.Log.XUnit, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Log.XUnit.1.2.1\lib\net46\Dapplo.Log.XUnit.dll</HintPath>
-    </Reference>
-    <Reference Include="Dapplo.Utils, Version=1.0.161.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.Utils.1.0.161\lib\net45\Dapplo.Utils.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.VisualBasic" />
-    <Reference Include="System" />
-    <Reference Include="System.ComponentModel.Composition" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Runtime.Caching" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="WindowsBase" />
-    <Reference Include="xunit.abstractions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
-      <HintPath>..\packages\xunit.abstractions.2.0.2\lib\net35\xunit.abstractions.dll</HintPath>
-    </Reference>
-    <Reference Include="xunit.assert, Version=2.4.0.4049, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
-      <HintPath>..\packages\xunit.assert.2.4.0\lib\netstandard2.0\xunit.assert.dll</HintPath>
-    </Reference>
-    <Reference Include="xunit.core, Version=2.4.0.4049, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
-      <HintPath>..\packages\xunit.extensibility.core.2.4.0\lib\net452\xunit.core.dll</HintPath>
-    </Reference>
-    <Reference Include="xunit.execution.desktop, Version=2.4.0.4049, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
-      <HintPath>..\packages\xunit.extensibility.execution.2.4.0\lib\net452\xunit.execution.desktop.dll</HintPath>
-    </Reference>
+    <None Remove="TestFiles\embedded-dapplo.png" />
+    <None Remove="TestFiles\embedded-dapplo.png.gz" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="AssemblyResolveTests.cs" />
-    <Compile Include="ApplicationBootstrapperTests.cs" />
-    <Compile Include="Entities\Orders.cs" />
-    <Compile Include="ApplicationConfigTests.cs" />
-    <Compile Include="PackUriTests.cs" />
-    <Compile Include="FileToolsTests.cs" />
-    <Compile Include="ManifestResourcesTests.cs" />
-    <Compile Include="Entities\DependencyTaker.cs" />
-    <Compile Include="Entities\TestAsyncStartupAction.cs" />
-    <Compile Include="FileLocationsTests.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ResourceMutexTests.cs" />
-    <Compile Include="ServiceTests.cs" />
-    <Compile Include="TestFiles\Dummy.cs" />
-    <Compile Include="TestModules\AbstractAsyncService.cs" />
-    <Compile Include="TestModules\AbstractService.cs" />
-    <Compile Include="TestModules\ParentService.cs" />
-    <Compile Include="TestModules\ServiceFour.cs" />
-    <Compile Include="TestModules\OrderProvider.cs" />
-    <Compile Include="TestModules\ServiceTwoB.cs" />
-    <Compile Include="TestModules\ServiceThree.cs" />
-    <Compile Include="TestModules\ServiceTwoA.cs" />
-    <Compile Include="TestModules\ServiceOne.cs" />
-    <Compile Include="Utils\AssemblyUtils.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Dapplo.Addons.Bootstrapper\Dapplo.Addons.Bootstrapper.csproj">
-      <Project>{8dbe963a-5098-4dab-8050-0d31c847db19}</Project>
-      <Name>Dapplo.Addons.Bootstrapper</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Dapplo.Addons.Config\Dapplo.Addons.Config.csproj">
-      <Project>{6746a1d7-e693-4b37-b045-61557b60143a}</Project>
-      <Name>Dapplo.Addons.Config</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Dapplo.Addons.TestAddon\Dapplo.Addons.TestAddon.csproj">
-      <Project>{450BA0DC-F37C-45F5-B250-0B20F4B1D594}</Project>
-      <Name>Dapplo.Addons.TestAddon</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Dapplo.Addons.Tests.TestAssembly\Dapplo.Addons.Tests.TestAssembly.csproj">
-      <Project>{1d0dd792-a80d-4d12-9bc5-b7f7d6ad1b5f}</Project>
-      <Name>Dapplo.Addons.Tests.TestAssembly</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Dapplo.Addons\Dapplo.Addons.csproj">
-      <Project>{66106beb-d338-4887-af47-125abb31555f}</Project>
-      <Name>Dapplo.Addons</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <EmbeddedResource Include="TestFiles\embedded-dapplo.png.gz" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="TestFiles\dapplo.png" />
     <EmbeddedResource Include="TestFiles\embedded-dapplo.png" />
+    <EmbeddedResource Include="TestFiles\embedded-dapplo.png.gz" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="4.8.1" />
+    <PackageReference Include="Dapplo.Ini" Version="0.5.31" />
+    <PackageReference Include="Dapplo.Log" Version="1.2.1" />
+    <PackageReference Include="Dapplo.Log.XUnit" Version="1.2.1" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Analyzer Include="..\packages\xunit.analyzers.0.10.0\analyzers\dotnet\cs\xunit.analyzers.dll" />
+    <Reference Include="System.ComponentModel.Composition" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\xunit.core.2.4.0\build\xunit.core.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\xunit.core.2.4.0\build\xunit.core.props'))" />
-    <Error Condition="!Exists('..\packages\xunit.core.2.4.0\build\xunit.core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\xunit.core.2.4.0\build\xunit.core.targets'))" />
-    <Error Condition="!Exists('..\packages\xunit.runner.console.2.4.0\build\xunit.runner.console.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\xunit.runner.console.2.4.0\build\xunit.runner.console.props'))" />
-    <Error Condition="!Exists('..\packages\xunit.runner.visualstudio.2.4.0\build\net20\xunit.runner.visualstudio.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\xunit.runner.visualstudio.2.4.0\build\net20\xunit.runner.visualstudio.props'))" />
-  </Target>
-  <Import Project="..\packages\xunit.core.2.4.0\build\xunit.core.targets" Condition="Exists('..\packages\xunit.core.2.4.0\build\xunit.core.targets')" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Dapplo.Addons\Dapplo.Addons.csproj" />
+    <ProjectReference Include="..\Dapplo.Addons.Bootstrapper\Dapplo.Addons.Bootstrapper.csproj" />
+    <ProjectReference Include="..\Dapplo.Addons.Config\Dapplo.Addons.Config.csproj" />
+    <ProjectReference Include="..\Dapplo.Addons.TestAddon\Dapplo.Addons.TestAddon.csproj" />
+    <ProjectReference Include="..\Dapplo.Addons.Tests.TestAssembly\Dapplo.Addons.Tests.TestAssembly.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="TestFiles\dapplo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

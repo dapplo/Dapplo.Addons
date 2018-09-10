@@ -93,6 +93,7 @@ namespace Dapplo.Addons.Bootstrapper
             // check whether there's an local instance running already, but use local so this works in a multi-user environment
             try
             {
+#if NET461
                 // Added Mutex Security, hopefully this prevents the UnauthorizedAccessException more gracefully
                 var sid = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
                 var mutexsecurity = new MutexSecurity();
@@ -102,6 +103,10 @@ namespace Dapplo.Addons.Bootstrapper
 
                 // 1) Create Mutex
                 _applicationMutex = new Mutex(true, _mutexId, out var createdNew, mutexsecurity);
+#else
+                // 1) Create Mutex
+                _applicationMutex = new Mutex(true, _mutexId, out var createdNew);
+#endif
                 // 2) if the mutex wasn't created new get the right to it, this returns false if it's already locked
                 if (!createdNew)
                 {
@@ -143,7 +148,7 @@ namespace Dapplo.Addons.Bootstrapper
             return IsLocked;
         }
 
-        #region IDisposable Support
+#region IDisposable Support
 
         //  To detect redundant Dispose calls
         private bool _disposedValue;
@@ -179,7 +184,7 @@ namespace Dapplo.Addons.Bootstrapper
             _applicationMutex = null;
         }
 
-        #endregion
+#endregion
     }
 
 }

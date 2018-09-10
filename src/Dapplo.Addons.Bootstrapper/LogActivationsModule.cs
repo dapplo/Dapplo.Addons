@@ -35,6 +35,7 @@ namespace Dapplo.Addons.Bootstrapper
     /// </summary>
     public class LogActivationsModule : Module
     {
+        private const string LogActivation = "LogActivation";
         private static readonly LogSource Log = new LogSource();
         private int _depth;
 
@@ -45,7 +46,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <param name="registration">IComponentRegistration</param>
         protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry, IComponentRegistration registration)
         {
-            if (!string.Equals(bool.TrueString, componentRegistry.Properties["LogActivation"] as string, StringComparison.OrdinalIgnoreCase))
+            if (!componentRegistry.Properties.ContainsKey(LogActivation) || !string.Equals(bool.TrueString, componentRegistry.Properties[LogActivation] as string, StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }

@@ -64,9 +64,9 @@ namespace Dapplo.Addons.Tests
                 .WithScanDirectories(
                     FileLocations.StartupDirectory,
 #if DEBUG
-                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net461"
 #else
-                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net461"
 #endif
                 )
                 // Add Dapplo.Addons.TestAddonWithCostura
@@ -88,9 +88,9 @@ namespace Dapplo.Addons.Tests
                 .WithScanDirectories(
                     FileLocations.StartupDirectory,
 #if DEBUG
-                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net461"
 #else
-                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net461"
 #endif
                 )
                 // Add Dapplo.Addons.TestAddonWithCostura
@@ -112,9 +112,9 @@ namespace Dapplo.Addons.Tests
                 .WithScanDirectories(
                     FileLocations.StartupDirectory,
 #if DEBUG
-                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net461"
 #else
-                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net461"
 #endif
                 )
                 // Add Dapplo.Addons.TestAddonWithCostura

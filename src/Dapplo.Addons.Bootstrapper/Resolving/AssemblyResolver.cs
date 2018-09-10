@@ -59,7 +59,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// </summary>
         public IDictionary<string, AssemblyLocationInformation> AvailableAssemblies { get; } = new ConcurrentDictionary<string, AssemblyLocationInformation>(StringComparer.OrdinalIgnoreCase);
 
-
         /// <summary>
         /// A dictionary with all the loaded assemblies, for caching and analysing
         /// </summary>
