@@ -44,6 +44,14 @@ namespace Dapplo.Addons.Tests
     /// </summary>
     public class AssemblyResolveTests
     {
+        private const string ScanDirectory =
+#if DEBUG
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net461"
+#else
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net461"
+#endif
+        ;
+
         /// <summary>
         /// </summary>
         /// <param name="testOutputHelper"></param>
@@ -62,12 +70,7 @@ namespace Dapplo.Addons.Tests
                 .Create()
                 .WithApplicationName("TestCostura")
                 .WithScanDirectories(
-                    FileLocations.StartupDirectory,
-#if DEBUG
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net461"
-#else
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net461"
-#endif
+                    FileLocations.StartupDirectory, ScanDirectory
                 )
                 // Add Dapplo.Addons.TestAddonWithCostura
                 .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura")
@@ -86,12 +89,7 @@ namespace Dapplo.Addons.Tests
             var applicationConfig = ApplicationConfigBuilder.Create()
                 .WithApplicationName("TestCostura_Nested")
                 .WithScanDirectories(
-                    FileLocations.StartupDirectory,
-#if DEBUG
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net461"
-#else
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net461"
-#endif
+                    FileLocations.StartupDirectory, ScanDirectory
                 )
                 // Add Dapplo.Addons.TestAddonWithCostura
                 .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura")
@@ -110,12 +108,7 @@ namespace Dapplo.Addons.Tests
             var applicationConfig = ApplicationConfigBuilder.Create()
                 .WithApplicationName("TestCostura_Nested")
                 .WithScanDirectories(
-                    FileLocations.StartupDirectory,
-#if DEBUG
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net461"
-#else
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net461"
-#endif
+                    FileLocations.StartupDirectory, ScanDirectory
                 )
                 // Add Dapplo.Addons.TestAddonWithCostura
                 .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura")

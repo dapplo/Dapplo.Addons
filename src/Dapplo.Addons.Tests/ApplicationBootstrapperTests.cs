@@ -32,6 +32,7 @@ using Autofac;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Addons.Config;
+using Dapplo.Addons.Tests.Utils;
 using Dapplo.Ini;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
@@ -58,37 +59,11 @@ namespace Dapplo.Addons.Tests
             IniConfig.Delete(ApplicationName, ApplicationName);
         }
 
-        /// <summary>
-        ///     Allows setting the Entry Assembly when needed.
-        ///     Use SetEntryAssembly() only for tests
-        /// </summary>
-        /// <param name="assembly">Assembly to set as entry assembly</param>
-        private static void SetEntryAssembly(Assembly assembly)
-        {
-            if (Assembly.GetEntryAssembly() != null)
-            {
-                return;
-            }
-            var manager = new AppDomainManager();
-            var entryAssemblyfield = manager.GetType().GetField("m_entryAssembly", BindingFlags.Instance | BindingFlags.NonPublic);
-            if (entryAssemblyfield != null)
-            {
-                entryAssemblyfield.SetValue(manager, assembly);
-            }
-
-            var domain = AppDomain.CurrentDomain;
-            var domainManagerField = domain.GetType().GetField("_domainManager", BindingFlags.Instance | BindingFlags.NonPublic);
-            if (domainManagerField != null)
-            {
-                domainManagerField.SetValue(domain, manager);
-            }
-        }
-
         [Fact]
         public async Task Test_StartupException()
         {
             bool isDisposed = false;
-            SetEntryAssembly(GetType().Assembly);
+            AssemblyUtils.SetEntryAssembly(GetType().Assembly);
 
             var applicationConfig = ApplicationConfigBuilder
                 .Create()
@@ -163,7 +138,7 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public async Task TestStartupShutdown()
         {
-            SetEntryAssembly(GetType().Assembly);
+            AssemblyUtils.SetEntryAssembly(GetType().Assembly);
 
             var applicationConfig = ApplicationConfigBuilder
                 .Create()

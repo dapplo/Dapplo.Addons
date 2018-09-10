@@ -22,9 +22,9 @@ namespace Dapplo.Addons.DemoConsoleApp
                     FileLocations.StartupDirectory,
                     @"MyOtherLibs",
 #if DEBUG
-                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net461"
 #else
-                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net461"
 #endif
                 )
                 .WithAssemblyNames("Dapplo.HttpExtensions", "Dapplo.Addons.TestAddonWithCostura").BuildApplicationConfig();
@@ -49,7 +49,6 @@ namespace Dapplo.Addons.DemoConsoleApp
                 }
                 Assembly.Load("Svg");
             }
-
             return 0;
         }
     }
