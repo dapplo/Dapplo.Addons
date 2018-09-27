@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Dapplo.Addons.Bootstrapper.Resolving;
 
-namespace Dapplo.Addons.Bootstrapper.Internal
+namespace Dapplo.Addons.Bootstrapper.AttributeMetaData
 {
     /// <summary>
     /// 
@@ -104,12 +104,15 @@ namespace Dapplo.Addons.Bootstrapper.Internal
         /// <inheritdoc />
         public override int GetHashCode()
         {
-            var hashCode = 810003866;
-            hashCode = hashCode * -1521134295 + IsEmbedded.GetHashCode();
-            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Name);
-            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(ContainingAssembly?.FullName);
-            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Filename);
-            return hashCode;
+            unchecked
+            {
+                var hashCode = 810003866;
+                hashCode = hashCode * -1521134295 + IsEmbedded.GetHashCode();
+                hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Name);
+                hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(ContainingAssembly?.FullName);
+                hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Filename);
+                return hashCode;
+            }
         }
 
         /// <inheritdoc />

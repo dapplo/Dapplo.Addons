@@ -31,6 +31,9 @@ using System;
 
 namespace Dapplo.Addons.NuGet
 {
+    /// <summary>
+    /// This contains extensions for the AppDomain instance
+    /// </summary>
     public static class AppDomainExtensions
     {
         /// <summary>

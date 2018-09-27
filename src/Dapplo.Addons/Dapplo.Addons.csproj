@@ -1,16 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.0;net461</TargetFrameworks>
-    <LangVersion>latest</LangVersion>
-	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+	<Description>Interfaces for addons loaded by Dapplo.Addons.Bootstrapper</Description>
+	<PackageTags>dapplo autofac addon</PackageTags>
+	<AssemblyTitle>Dapplo.Addons</AssemblyTitle>
+    <AssemblyName>Dapplo.Addons</AssemblyName>
+    <PackageId>Dapplo.Addons</PackageId>
+	<Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Autofac" Version="4.8.1" />
-    <PackageReference Include="Autofac.Extras.AttributeMetadata" Version="4.0.1" />
   </ItemGroup>
   
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.0' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="System.ComponentModel.Composition" Version="4.5.0" />
   </ItemGroup>
   

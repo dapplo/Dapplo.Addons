@@ -30,7 +30,7 @@ using System.Threading;
 
 #endregion
 
-namespace Dapplo.Addons.Bootstrapper.Internal
+namespace Dapplo.Addons.Bootstrapper.AttributeMetaData
 {
     /// <summary>
     ///     Create a scope in which code doesn't have a SynchronizationContext, dispose this to leave the scope

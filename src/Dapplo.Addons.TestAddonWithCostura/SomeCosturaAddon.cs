@@ -39,7 +39,7 @@ namespace Dapplo.Addons.TestAddonWithCostura
     {
         private static readonly LogSource Log = new LogSource();
 
-        public async Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task ShutdownAsync(CancellationToken cancellationToken = default)
         {
             await Task.Delay(100, cancellationToken).ConfigureAwait(false);
             Log.Debug().WriteLine("ShutdownAsync called!");

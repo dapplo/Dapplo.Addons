@@ -1,9 +1,8 @@
-version: 1.0.{build}
+version: 1.1.{build}
 skip_tags: true
 os: Visual Studio 2017
 configuration: Release
 platform: Any CPU
-clone_depth: 2
 test: off
 branches:
   only:
@@ -17,7 +16,7 @@ environment:
 build_script:
 - ps: .\build.ps1 --settings_skipverification=true
 artifacts:
-- path: artifacts\**\*.nupkg
+- path: src\**\*.nupkg
 - path: artifacts\**\site.zip
 - path: artifacts\*.xml
 - path: artifacts\*.html
