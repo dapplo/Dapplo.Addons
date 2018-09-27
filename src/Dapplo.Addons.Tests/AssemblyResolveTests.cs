@@ -64,7 +64,7 @@ namespace Dapplo.Addons.Tests
         }
 
         [Fact]
-        public void TestCostura()
+        public async Task TestCostura()
         {
             var applicationConfig = ApplicationConfigBuilder
                 .Create()
@@ -76,8 +76,9 @@ namespace Dapplo.Addons.Tests
                 .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura")
                 .BuildApplicationConfig();
 
-            using (new ApplicationBootstrapper(applicationConfig))
+            using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
+                await bootstrapper.InitializeAsync();
                 var jiraAssembly = Assembly.Load("Dapplo.Jira");
                 Assert.NotNull(jiraAssembly);
             }
