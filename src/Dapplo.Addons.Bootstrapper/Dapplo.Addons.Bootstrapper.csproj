@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <TargetFrameworks>net461</TargetFrameworks>
 	<Description>A bootstrapper which loads Dapplo.Addons addons</Description>
     <AssemblyTitle>Dapplo.Addons.Bootstrapper</AssemblyTitle>
     <AssemblyName>Dapplo.Addons.Bootstrapper</AssemblyName>

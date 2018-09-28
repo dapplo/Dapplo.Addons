@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <TargetFrameworks>net461</TargetFrameworks>
 	<Description>Provide configuration services for addons</Description>
     <AssemblyTitle>Dapplo.Addons.Config</AssemblyTitle>
     <AssemblyName>Dapplo.Addons.Config</AssemblyName>

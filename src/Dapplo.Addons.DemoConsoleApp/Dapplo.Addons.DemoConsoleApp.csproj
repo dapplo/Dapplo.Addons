@@ -3,9 +3,12 @@
   <PropertyGroup>
     <TargetFrameworks>net461</TargetFrameworks>
     <LangVersion>latest</LangVersion>
-    <ApplicationIcon />
-    <OutputType>WinExe</OutputType>
-    <StartupObject />
+    <OutputType>Exe</OutputType>
+<!--
+	<RuntimeIdentifier>win7-x64</RuntimeIdentifier>
+	<PreserveCompilationContext>false</PreserveCompilationContext>
+	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+-->
   </PropertyGroup>
 
   <ItemGroup>
