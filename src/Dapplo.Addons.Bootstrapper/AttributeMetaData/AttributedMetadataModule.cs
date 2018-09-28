@@ -29,7 +29,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel.Composition;
-using Dapplo.Log;
 
 namespace Dapplo.Addons.Bootstrapper.AttributeMetaData
 {
@@ -38,8 +37,6 @@ namespace Dapplo.Addons.Bootstrapper.AttributeMetaData
     /// </summary>
     public class AttributedMetadataModule : Module
     {
-        private static readonly LogSource Log = new LogSource();
-
         /// <summary>
         /// Override to attach module-specific functionality to a
         /// component registration.
@@ -54,7 +51,6 @@ namespace Dapplo.Addons.Bootstrapper.AttributeMetaData
             {
                 throw new ArgumentNullException("registration");
             }
-            Log.Debug().WriteLine("Processing {0}", registration.Activator.LimitType);
             foreach (var property in GetMetadata(registration.Activator.LimitType))
             {
                 registration.Metadata[property.Key] = property.Value;

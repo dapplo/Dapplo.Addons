@@ -31,9 +31,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.0' ">
-	<PackageReference Include="Microsoft.DesktopUI.App" Version="3.0.0-alpha-26829-8" />
-  </ItemGroup>
   
   <ItemGroup>
     <Reference Include="System.ComponentModel.Composition" />

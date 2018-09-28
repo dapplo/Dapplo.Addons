@@ -27,6 +27,7 @@ using Autofac;
 using Dapplo.Addons.Config.Internal;
 using Dapplo.Ini;
 using Dapplo.Language;
+using Dapplo.Log;
 
 namespace Dapplo.Addons.Config
 {
@@ -35,26 +36,24 @@ namespace Dapplo.Addons.Config
     /// </summary>
     public class ConfigAddonModule : AddonModule
     {
+        private static readonly LogSource Log = new LogSource();
+
         private IniConfig _applicationIniConfig;
         private LanguageLoader _languageLoader;
 
         /// <inheritdoc />
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<IniSectionService>()
-                .As<IService>()
-                .SingleInstance();
-
             var applicationName = builder.Properties[nameof(IApplicationBootstrapper.ApplicationName)] as string;
-
+            Log.Debug().WriteLine("Initializing the configuration for {0}", applicationName);
             _applicationIniConfig = IniConfig.Current ?? new IniConfig(applicationName, applicationName);
 
             if (ApplicationConfigBuilderConfigExtensions.IsIniSectionResolvingEnabled(builder.Properties))
             {
+                Log.Debug().WriteLine("IniSection resolving is enabled.");
                 builder.RegisterSource(new IniSectionRegistrationSource());
             }
-
-            builder.RegisterType<LanguageService>()
+            builder.RegisterType<IniSectionService>()
                 .As<IService>()
                 .SingleInstance();
 
@@ -62,8 +61,13 @@ namespace Dapplo.Addons.Config
 
             if (ApplicationConfigBuilderConfigExtensions.IsLanguageResolvingEnabled(builder.Properties))
             {
+                Log.Debug().WriteLine("Language resolving is enabled.");
                 builder.RegisterSource(new LanguageRegistrationSource());
             }
+
+            builder.RegisterType<LanguageService>()
+                .As<IService>()
+                .SingleInstance();
         }
     }
 }
