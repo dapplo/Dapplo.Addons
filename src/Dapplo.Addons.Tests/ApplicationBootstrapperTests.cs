@@ -26,12 +26,13 @@
 #region Usings
 
 using System;
-using System.Reflection;
+using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Addons.Config;
+using Dapplo.Addons.Tests.Utils;
 using Dapplo.Ini;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
@@ -46,7 +47,18 @@ namespace Dapplo.Addons.Tests
     [Collection("IniConfig")]
     public sealed class ApplicationBootstrapperTests : IDisposable
     {
+        private static readonly LogSource Log = new LogSource();
         private const string ApplicationName = "Dapplo";
+        private readonly string[] TestAssemblyDirectories = {
+            FileLocations.StartupDirectory,
+#if DEBUG
+                    @"..\..\..\..\Dapplo.Addons.TestAddon\bin\Debug\net461",
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net461"
+#else
+                    @"..\..\..\..\Dapplo.Addons.TestAddon\bin\Release\net461",
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net461"
+#endif
+        };
 
         public ApplicationBootstrapperTests(ITestOutputHelper testOutputHelper)
         {
@@ -58,37 +70,11 @@ namespace Dapplo.Addons.Tests
             IniConfig.Delete(ApplicationName, ApplicationName);
         }
 
-        /// <summary>
-        ///     Allows setting the Entry Assembly when needed.
-        ///     Use SetEntryAssembly() only for tests
-        /// </summary>
-        /// <param name="assembly">Assembly to set as entry assembly</param>
-        private static void SetEntryAssembly(Assembly assembly)
-        {
-            if (Assembly.GetEntryAssembly() != null)
-            {
-                return;
-            }
-            var manager = new AppDomainManager();
-            var entryAssemblyfield = manager.GetType().GetField("m_entryAssembly", BindingFlags.Instance | BindingFlags.NonPublic);
-            if (entryAssemblyfield != null)
-            {
-                entryAssemblyfield.SetValue(manager, assembly);
-            }
-
-            var domain = AppDomain.CurrentDomain;
-            var domainManagerField = domain.GetType().GetField("_domainManager", BindingFlags.Instance | BindingFlags.NonPublic);
-            if (domainManagerField != null)
-            {
-                domainManagerField.SetValue(domain, manager);
-            }
-        }
-
         [Fact]
         public async Task Test_StartupException()
         {
             bool isDisposed = false;
-            SetEntryAssembly(GetType().Assembly);
+            AssemblyUtils.SetEntryAssembly(GetType().Assembly);
 
             var applicationConfig = ApplicationConfigBuilder
                 .Create()
@@ -96,14 +82,7 @@ namespace Dapplo.Addons.Tests
                 .WithConfigSupport()
                 .WithIniSectionResolving()
                 .WithScanDirectories(
-                    FileLocations.StartupDirectory,
-#if DEBUG
-                    @"..\..\..\Dapplo.Addons.TestAddon\bin\Debug",
-                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug"
-#else
-                    @"..\..\..\Dapplo.Addons.TestAddon\bin\Release",
-                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release"
-#endif
+                    TestAssemblyDirectories
                 )
                 // Add all file starting with Dapplo and ending on .dll
                 .WithAssemblyPatterns("Dapplo*")
@@ -163,21 +142,12 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public async Task TestStartupShutdown()
         {
-            SetEntryAssembly(GetType().Assembly);
+            AssemblyUtils.SetEntryAssembly(GetType().Assembly);
 
             var applicationConfig = ApplicationConfigBuilder
                 .Create()
                 .WithApplicationName(ApplicationName)
-                .WithScanDirectories(
-                    FileLocations.StartupDirectory,
-#if DEBUG
-                    @"..\..\..\Dapplo.Addons.TestAddon\bin\Debug",
-                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug"
-#else
-                    @"..\..\..\Dapplo.Addons.TestAddon\bin\Release",
-                    @"..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release"
-#endif
-                )
+                .WithScanDirectories(TestAssemblyDirectories)
                 // Add all assemblies starting with Dapplo
                 .WithAssemblyPatterns("Dapplo*")
                 .BuildApplicationConfig();
@@ -187,11 +157,10 @@ namespace Dapplo.Addons.Tests
 #if DEBUG
                 bootstrapper.EnableActivationLogging = true;
 #endif
-                // Test if our test addon was loaded
-                Assert.Contains(bootstrapper.LoadedAssemblies, addon => addon.GetName().Name.EndsWith("TestAddon"));
-
                 // Start the composition, and IStartupActions
                 Assert.True(await bootstrapper.InitializeAsync().ConfigureAwait(false), "Couldn't run");
+
+                Assert.Contains(bootstrapper.LoadedAssemblies, addon => addon.GetName().Name.EndsWith("TestAddon"));
             }
             // Dispose automatically calls IShutdownActions
         }

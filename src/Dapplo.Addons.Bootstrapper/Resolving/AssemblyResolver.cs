@@ -32,7 +32,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Dapplo.Addons.Bootstrapper.Extensions;
-using Dapplo.Addons.Bootstrapper.Internal;
+using Dapplo.Addons.Bootstrapper.AttributeMetaData;
 using Dapplo.Log;
 
 namespace Dapplo.Addons.Bootstrapper.Resolving
@@ -58,7 +58,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// A dictionary with all the loaded assemblies, for caching and analysing
         /// </summary>
         public IDictionary<string, AssemblyLocationInformation> AvailableAssemblies { get; } = new ConcurrentDictionary<string, AssemblyLocationInformation>(StringComparer.OrdinalIgnoreCase);
-
 
         /// <summary>
         /// A dictionary with all the loaded assemblies, for caching and analysing

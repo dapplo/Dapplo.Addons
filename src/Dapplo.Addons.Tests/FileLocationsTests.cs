@@ -55,7 +55,7 @@ namespace Dapplo.Addons.Tests
         {
             var startupDirectory = FileLocations.StartupDirectory;
             var files = FileLocations.Scan(new[] {startupDirectory}, "*.xml");
-            Assert.Contains(files, file => file.EndsWith("Dapplo.Utils.xml"));
+            Assert.Contains(files, file => file.EndsWith("Dapplo.Addons.xml"));
         }
 
         [Fact]
@@ -64,7 +64,7 @@ namespace Dapplo.Addons.Tests
             var startupDirectory = FileLocations.StartupDirectory;
             var regex = FileTools.FilenameToRegex("*", new[] {".xml"});
             var files = FileLocations.Scan(new[] { startupDirectory }, regex);
-            Assert.Contains(files, file => file.Item1.EndsWith("Dapplo.Utils.xml"));
+            Assert.Contains(files, file => file.Item1.EndsWith("Dapplo.Addons.xml"));
         }
 
         [Fact]
@@ -72,7 +72,7 @@ namespace Dapplo.Addons.Tests
         {
             var startupDirectory = FileLocations.StartupDirectory;
             var files = FileLocations.Scan(new[] {startupDirectory}, new Regex(@".*\.xml"));
-            Assert.Contains(files, file => file.Item1.EndsWith("Dapplo.Utils.xml"));
+            Assert.Contains(files, file => file.Item1.EndsWith("Dapplo.Addons.xml"));
         }
     }
 }

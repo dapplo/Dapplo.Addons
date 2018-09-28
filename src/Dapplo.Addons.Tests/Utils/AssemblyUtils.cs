@@ -48,6 +48,7 @@ namespace Dapplo.Addons.Tests.Utils
             {
                 return;
             }
+#if NET461
             var manager = new AppDomainManager();
             var entryAssemblyfield = manager.GetType().GetField("m_entryAssembly", BindingFlags.Instance | BindingFlags.NonPublic);
             if (entryAssemblyfield != null)
@@ -61,6 +62,7 @@ namespace Dapplo.Addons.Tests.Utils
             {
                 domainManagerField.SetValue(domain, manager);
             }
+#endif
         }
     }
 }

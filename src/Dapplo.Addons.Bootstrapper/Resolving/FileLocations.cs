@@ -46,7 +46,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
     {
         private static readonly LogSource Log = new LogSource();
 
-
         /// <summary>
         ///     Get the startup location, which is either the location of the entry assemby, or the executing assembly
         /// </summary>
@@ -62,7 +61,14 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <summary>
         /// Returns the directories where assembly resolving is made
         /// </summary>
-        public static IEnumerable<string> AssemblyResolveDirectories { get; } = new[] {StartupDirectory}.Concat(ProbingPath?.Split(';').Select(path => Path.Combine(StartupDirectory, path)) ?? Enumerable.Empty<string>()).Concat(AppDomain.CurrentDomain.SetupInformation.PrivateBinPath?.Split(';').Select(path => Path.Combine(StartupDirectory, path)) ?? Enumerable.Empty<string>());
+        public static IEnumerable<string> AssemblyResolveDirectories { get; } = new[] { StartupDirectory }
+            .Concat(ProbingPath?.Split(';')
+            .Select(path => Path.Combine(StartupDirectory, path)) ?? Enumerable.Empty<string>())
+#if NET461
+            .Concat(AppDomain.CurrentDomain.SetupInformation.PrivateBinPath?.Split(';')
+            .Select(path => Path.Combine(StartupDirectory, path)) ?? Enumerable.Empty<string>())
+#endif
+        ;
 
         /// <summary>
         /// Returns the directory where the addon assemblies are stored, this is the location specified by 
@@ -74,6 +80,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// </summary>
         private static string ProbingPath {
             get {
+#if NET461
                 var configFile = XElement.Load(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile);
                 var probingElement = (
                         from runtime
@@ -86,6 +93,9 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     .FirstOrDefault();
 
                 return probingElement?.Attribute("privatePath")?.Value;
+#else
+                return string.Empty;
+#endif
             }
         }
 
