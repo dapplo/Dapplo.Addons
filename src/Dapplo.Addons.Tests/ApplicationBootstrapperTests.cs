@@ -26,7 +26,6 @@
 #region Usings
 
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Dapplo.Addons.Bootstrapper;
@@ -47,7 +46,6 @@ namespace Dapplo.Addons.Tests
     [Collection("IniConfig")]
     public sealed class ApplicationBootstrapperTests : IDisposable
     {
-        private static readonly LogSource Log = new LogSource();
         private const string ApplicationName = "Dapplo";
         private readonly string[] TestAssemblyDirectories = {
             FileLocations.StartupDirectory,

@@ -1,4 +1,4 @@
-﻿// This software is part of the Autofac IoC container
+// This software is part of the Autofac IoC container
 // Copyright © 2013 Autofac Contributors
 // http://autofac.org
 //
@@ -49,7 +49,7 @@ namespace Dapplo.Addons.Bootstrapper.AttributeMetaData
         {
             if (registration == null)
             {
-                throw new ArgumentNullException("registration");
+                throw new ArgumentNullException(nameof(registration));
             }
             foreach (var property in GetMetadata(registration.Activator.LimitType))
             {
@@ -74,12 +74,12 @@ namespace Dapplo.Addons.Bootstrapper.AttributeMetaData
         {
             if (target == null)
             {
-                throw new ArgumentNullException("target");
+                throw new ArgumentNullException(nameof(target));
             }
 
             if (instanceType == null)
             {
-                throw new ArgumentNullException("instanceType");
+                throw new ArgumentNullException(nameof(instanceType));
             }
 
             if (target is IMetadataProvider asProvider)
@@ -110,7 +110,7 @@ namespace Dapplo.Addons.Bootstrapper.AttributeMetaData
         {
             if (targetType == null)
             {
-                throw new ArgumentNullException("targetType");
+                throw new ArgumentNullException(nameof(targetType));
             }
             var propertyList = new List<KeyValuePair<string, object>>();
 
@@ -121,29 +121,6 @@ namespace Dapplo.Addons.Bootstrapper.AttributeMetaData
             }
 
             return propertyList;
-        }
-
-        /// <summary>
-        /// Given a component type, interrogates the metadata attributes to retrieve
-        /// a set of property name/value metadata pairs provided by a specific
-        /// metadata provider.
-        /// </summary>
-        /// <typeparam name="TMetadataType">Metadata type to look for in the list of attributes.</typeparam>
-        /// <param name="targetType">Type to interrogate.</param>
-        /// <returns>Enumerable set of property names and associated values found.</returns>
-        /// <exception cref="System.ArgumentNullException">
-        /// Thrown if <paramref name="targetType" /> is <see langword="null" />.
-        /// </exception>
-        private static IEnumerable<KeyValuePair<string, object>> GetMetadata<TMetadataType>(Type targetType)
-        {
-            if (targetType == null)
-            {
-                throw new ArgumentNullException("targetType");
-            }
-            var attribute =
-                (from p in targetType.GetCustomAttributes(typeof(TMetadataType), true) select p).FirstOrDefault();
-
-            return attribute != null ? GetProperties(attribute, targetType) : new List<KeyValuePair<string, object>>();
         }
     }
 }

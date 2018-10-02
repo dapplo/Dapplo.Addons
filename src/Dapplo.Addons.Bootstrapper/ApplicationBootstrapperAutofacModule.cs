@@ -24,7 +24,6 @@
 #endregion
 
 using Autofac;
-using Dapplo.Addons.Bootstrapper.AttributeMetaData;
 using Dapplo.Addons.Bootstrapper.Services;
 
 namespace Dapplo.Addons.Bootstrapper
@@ -36,7 +35,7 @@ namespace Dapplo.Addons.Bootstrapper
     {
         /// <inheritdoc />
         protected override void Load(ContainerBuilder builder)
-        {;
+        {
             // Provide the startup & shutdown functionality
             builder.RegisterType<ServiceStartupShutdown>().AsSelf().IfNotRegistered(typeof(ServiceStartupShutdown)).SingleInstance();
         }

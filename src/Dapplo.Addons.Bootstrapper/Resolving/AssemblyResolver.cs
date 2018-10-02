@@ -32,7 +32,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Dapplo.Addons.Bootstrapper.Extensions;
-using Dapplo.Addons.Bootstrapper.AttributeMetaData;
+using Dapplo.Addons.Bootstrapper.Internal;
 using Dapplo.Log;
 
 namespace Dapplo.Addons.Bootstrapper.Resolving

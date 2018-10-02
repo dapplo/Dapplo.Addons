@@ -37,9 +37,9 @@ namespace Dapplo.Addons.Services
     public class ServiceNode<TService>
     {
         private bool _isStartupCalled;
-        private readonly TaskCompletionSource<object> _startupTaskCompletionSource = new TaskCompletionSource<object>();
+        private readonly TaskCompletionSource<object> _startupTaskCompletionSource = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
         private bool _isShutdownCalled;
-        private readonly TaskCompletionSource<object> _shutdownTaskCompletionSource = new TaskCompletionSource<object>();
+        private readonly TaskCompletionSource<object> _shutdownTaskCompletionSource = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         /// <summary>
         /// 

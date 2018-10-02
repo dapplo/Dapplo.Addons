@@ -58,8 +58,8 @@ namespace Dapplo.Addons.TestAddon
         /// </summary>
         private bool ThrowStartupException { get;}
 
-        public async Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken)) => await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+        public async Task ShutdownAsync(CancellationToken cancellationToken = default) => await Task.Delay(100, cancellationToken).ConfigureAwait(false);
 
-        public async Task StartupAsync(CancellationToken cancellationToken = new CancellationToken()) => await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+        public async Task StartupAsync(CancellationToken cancellationToken = default) => await Task.Delay(100, cancellationToken).ConfigureAwait(false);
     }
 }

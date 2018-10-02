@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -30,7 +30,7 @@ using System.Threading;
 
 #endregion
 
-namespace Dapplo.Addons.Bootstrapper.AttributeMetaData
+namespace Dapplo.Addons.Bootstrapper.Internal
 {
     /// <summary>
     ///     Create a scope in which code doesn't have a SynchronizationContext, dispose this to leave the scope
