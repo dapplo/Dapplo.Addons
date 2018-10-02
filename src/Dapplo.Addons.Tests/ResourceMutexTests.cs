@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -84,21 +84,21 @@ namespace Dapplo.Addons.Tests
         }
 
         [Fact]
-        public void TestMutex_LockTwice()
+        public async Task TestMutex_LockTwice()
         {
             var mutexId = Guid.NewGuid().ToString();
             using (var resourceMutex = ResourceMutex.Create(mutexId, "FirstCall"))
             {
                 Assert.NotNull(resourceMutex);
                 Assert.True(resourceMutex.IsLocked);
-                Task.Factory.StartNew(() =>
+                await Task.Factory.StartNew(() =>
                 {
                     using (var resourceMutex2 = ResourceMutex.Create(mutexId, "SecondCall"))
                     {
                         Assert.NotNull(resourceMutex2);
                         Assert.False(resourceMutex2.IsLocked);
                     }
-                }, default(CancellationToken)).Wait();
+                }, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
                 Log.Info().WriteLine("Finished task");
             }
         }
