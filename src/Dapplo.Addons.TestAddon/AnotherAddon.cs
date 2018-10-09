@@ -25,6 +25,7 @@
 
 #region Usings
 
+using Dapplo.Addons.TestAddon.Config;
 using System;
 using System.Threading;
 using System.Threading.Tasks;

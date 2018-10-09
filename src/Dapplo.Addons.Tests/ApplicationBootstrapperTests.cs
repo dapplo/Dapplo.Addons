@@ -30,9 +30,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
-using Dapplo.Addons.Config;
 using Dapplo.Addons.Tests.Utils;
-using Dapplo.Ini;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
 using Dapplo.Utils;
@@ -44,7 +42,7 @@ using Xunit.Abstractions;
 namespace Dapplo.Addons.Tests
 {
     [Collection("IniConfig")]
-    public sealed class ApplicationBootstrapperTests : IDisposable
+    public sealed class ApplicationBootstrapperTests
     {
         private const string ApplicationName = "Dapplo";
         private readonly string[] TestAssemblyDirectories = {
@@ -63,11 +61,6 @@ namespace Dapplo.Addons.Tests
             LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
         }
 
-        public void Dispose()
-        {
-            IniConfig.Delete(ApplicationName, ApplicationName);
-        }
-
         [Fact]
         public async Task Test_StartupException()
         {
@@ -77,8 +70,6 @@ namespace Dapplo.Addons.Tests
             var applicationConfig = ApplicationConfigBuilder
                 .Create()
                 .WithApplicationName(ApplicationName)
-                .WithConfigSupport()
-                .WithIniSectionResolving()
                 .WithScanDirectories(
                     TestAssemblyDirectories
                 )

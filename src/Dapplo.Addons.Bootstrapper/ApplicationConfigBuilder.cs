@@ -69,7 +69,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <summary>
         /// Factory
         /// </summary>
-        /// <returns>ApplicationConfig</returns>
+        /// <returns>ApplicationConfigBuilder</returns>
         [Pure]
         public static ApplicationConfigBuilder Create() => new ApplicationConfigBuilder();
 
@@ -278,13 +278,6 @@ namespace Dapplo.Addons.Bootstrapper
 
             return this;
         }
-
-        /// <summary>
-        /// This is a shortcut to add the loading of the assembly Dapplo.Addons.Config, which enables Dapplo.Ini and Dapplo.Language
-        /// These assemblies ofcourse needs to be available...
-        /// </summary>
-        /// <returns>ApplicationConfigBuilder</returns>
-        public ApplicationConfigBuilder WithConfigSupport() => WithAssemblyNames("Dapplo.Addons.Config");
 
         /// <summary>
         /// Add assembly name(s)

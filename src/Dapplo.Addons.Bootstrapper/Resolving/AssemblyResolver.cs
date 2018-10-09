@@ -349,7 +349,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 return null;
             }
 
-
             if (LoadedAssemblies.TryGetValue(assemblyName.Name, out var assemblyResult))
             {
                 if (Log.IsVerboseEnabled())

@@ -1,4 +1,5 @@
 using Autofac;
+using Dapplo.Addons.TestAddon.Config;
 
 namespace Dapplo.Addons.TestAddon
 {
@@ -6,6 +7,12 @@ namespace Dapplo.Addons.TestAddon
     {
         protected override void Load(ContainerBuilder builder)
         {
+            builder
+                .RegisterType<ThisIsConfiguration>()
+                .As<IThisIsConfiguration>()
+                .As<IThisIsSubConfiguration>()
+                .SingleInstance();
+
             builder
                 .RegisterType<SomeAddon>()
                 .WithMetadata("Name", nameof(SomeAddon))

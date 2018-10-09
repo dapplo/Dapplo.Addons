@@ -3,23 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons", "Dapplo.Addons\Dapplo.Addons.csproj", "{BD6B2425-92E5-48C4-82BD-C2AAFE454DF2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapplo.Addons", "Dapplo.Addons\Dapplo.Addons.csproj", "{BD6B2425-92E5-48C4-82BD-C2AAFE454DF2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.TestAddon", "Dapplo.Addons.TestAddon\Dapplo.Addons.TestAddon.csproj", "{450BA0DC-F37C-45F5-B250-0B20F4B1D594}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapplo.Addons.TestAddon", "Dapplo.Addons.TestAddon\Dapplo.Addons.TestAddon.csproj", "{450BA0DC-F37C-45F5-B250-0B20F4B1D594}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.NuGet", "Dapplo.Addons.NuGet\Dapplo.Addons.NuGet.csproj", "{B835F9A9-3778-43F3-8A2A-81F1608FBC67}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapplo.Addons.NuGet", "Dapplo.Addons.NuGet\Dapplo.Addons.NuGet.csproj", "{B835F9A9-3778-43F3-8A2A-81F1608FBC67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.Bootstrapper", "Dapplo.Addons.Bootstrapper\Dapplo.Addons.Bootstrapper.csproj", "{F1F6C18F-1FBC-4D0B-AAC4-6C53110EEA15}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapplo.Addons.Bootstrapper", "Dapplo.Addons.Bootstrapper\Dapplo.Addons.Bootstrapper.csproj", "{F1F6C18F-1FBC-4D0B-AAC4-6C53110EEA15}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.Tests", "Dapplo.Addons.Tests\Dapplo.Addons.Tests.csproj", "{4ECE26AD-6832-4A19-982A-65F5E3D2AFDE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapplo.Addons.Tests", "Dapplo.Addons.Tests\Dapplo.Addons.Tests.csproj", "{4ECE26AD-6832-4A19-982A-65F5E3D2AFDE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.Tests.TestAssembly", "Dapplo.Addons.Tests.TestAssembly\Dapplo.Addons.Tests.TestAssembly.csproj", "{1D0DD792-A80D-4D12-9BC5-B7F7D6AD1B5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapplo.Addons.Tests.TestAssembly", "Dapplo.Addons.Tests.TestAssembly\Dapplo.Addons.Tests.TestAssembly.csproj", "{1D0DD792-A80D-4D12-9BC5-B7F7D6AD1B5F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.TestAddonWithCostura", "Dapplo.Addons.TestAddonWithCostura\Dapplo.Addons.TestAddonWithCostura.csproj", "{BBD995D1-4CEE-4FE9-AECB-EC4D9C071AE6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapplo.Addons.TestAddonWithCostura", "Dapplo.Addons.TestAddonWithCostura\Dapplo.Addons.TestAddonWithCostura.csproj", "{BBD995D1-4CEE-4FE9-AECB-EC4D9C071AE6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.Config", "Dapplo.Addons.Config\Dapplo.Addons.Config.csproj", "{6746A1D7-E693-4B37-B045-61557B60143A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapplo.Addons.DemoConsoleApp", "Dapplo.Addons.DemoConsoleApp\Dapplo.Addons.DemoConsoleApp.csproj", "{F144A183-DA9B-49D2-8DB0-4CDF31A0F44B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Addons.DemoConsoleApp", "Dapplo.Addons.DemoConsoleApp\Dapplo.Addons.DemoConsoleApp.csproj", "{F144A183-DA9B-49D2-8DB0-4CDF31A0F44B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapplo.Addons.DotNetCoreDemoConsoleApp", "Dapplo.Addons.DotNetCoreDemoConsoleApp\Dapplo.Addons.DotNetCoreDemoConsoleApp.csproj", "{7A3CD7F6-84D5-476B-B553-BF95A4CC950C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,14 +55,14 @@ Global
 		{BBD995D1-4CEE-4FE9-AECB-EC4D9C071AE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BBD995D1-4CEE-4FE9-AECB-EC4D9C071AE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BBD995D1-4CEE-4FE9-AECB-EC4D9C071AE6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6746A1D7-E693-4B37-B045-61557B60143A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6746A1D7-E693-4B37-B045-61557B60143A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6746A1D7-E693-4B37-B045-61557B60143A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6746A1D7-E693-4B37-B045-61557B60143A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F144A183-DA9B-49D2-8DB0-4CDF31A0F44B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F144A183-DA9B-49D2-8DB0-4CDF31A0F44B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F144A183-DA9B-49D2-8DB0-4CDF31A0F44B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F144A183-DA9B-49D2-8DB0-4CDF31A0F44B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A3CD7F6-84D5-476B-B553-BF95A4CC950C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3CD7F6-84D5-476B-B553-BF95A4CC950C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A3CD7F6-84D5-476B-B553-BF95A4CC950C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A3CD7F6-84D5-476B-B553-BF95A4CC950C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

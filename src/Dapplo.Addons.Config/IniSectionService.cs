@@ -25,16 +25,20 @@
 
 using System.Threading;
 using System.Threading.Tasks;
-using Dapplo.Ini;
+using System.Collections.Generic;
 
 namespace Dapplo.Addons.Config
 {
     /// <summary>
     /// A service for loading and unloading the Ini configuration
     /// </summary>
-    [Service(nameof(IniSectionService))]
-    public class IniSectionService : IStartupAsync, IShutdownAsync
+    [Service(nameof(ConfigLoadSaveService))]
+    public class ConfigLoadSaveService : IStartupAsync, IShutdownAsync
     {
+        public ConfigLoadSaveService(IEnumerable<IConfiguration>)
+        {
+
+        }
         /// <inheritdoc />
         public Task StartupAsync(CancellationToken cancellationToken = default)
         {

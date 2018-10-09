@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="4.8.1" />
+    <PackageReference Include="Dapplo.HttpExtensions" Version="0.9.6" />
+    <PackageReference Include="Dapplo.Log" Version="1.3.11" />
+    <PackageReference Include="Dapplo.Log.Loggers" Version="1.3.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dapplo.Addons\Dapplo.Addons.csproj" />
+    <ProjectReference Include="..\Dapplo.Addons.Bootstrapper\Dapplo.Addons.Bootstrapper.csproj" />
+  </ItemGroup>
+
+</Project>
