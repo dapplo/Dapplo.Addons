@@ -231,6 +231,21 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
+        /// Disable strict checking
+        /// </summary>
+        /// <returns>ApplicationConfig</returns>
+        public ApplicationConfigBuilder WithoutStrictChecking()
+        {
+            if (IsBuild)
+            {
+                throw new NotSupportedException(ApplicationconfigAlreadyBuild);
+            }
+
+            _applicationConfig.UseStrictChecking = false;
+            return this;
+        }
+
+        /// <summary>
         /// Specify that a mutex needs to be used
         /// </summary>
         /// <param name="mutex">string</param>

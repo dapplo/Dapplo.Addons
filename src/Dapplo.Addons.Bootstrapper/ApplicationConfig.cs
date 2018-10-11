@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -97,5 +97,11 @@ namespace Dapplo.Addons.Bootstrapper
         /// Test if a mutex is set
         /// </summary>
         public bool HasMutex => !string.IsNullOrEmpty(Mutex);
+
+        /// <summary>
+        /// Strict checking, especially useful to prevent wrong configurations.
+        /// Currently this forces a check for the ScanDirectories
+        /// </summary>
+        public bool UseStrictChecking { get; internal set; } = true;
     }
 }

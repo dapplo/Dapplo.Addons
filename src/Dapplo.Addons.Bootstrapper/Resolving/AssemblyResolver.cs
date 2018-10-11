@@ -133,6 +133,16 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 }
             }
 
+            if (_applicationConfig.UseStrictChecking)
+            {
+                foreach (var applicationConfigScanDirectory in _applicationConfig.ScanDirectories)
+                {
+                    if (!Directory.Exists(applicationConfigScanDirectory))
+                    {
+                        throw new DirectoryNotFoundException(applicationConfigScanDirectory);
+                    }
+                }
+            }
             foreach (var fileLocation in FileLocations.Scan(_applicationConfig.ScanDirectories, _assemblyFilenameRegex, SearchOption.TopDirectoryOnly))
             {
                 assemblies.Add(new AssemblyLocationInformation(fileLocation.Item2.Groups["assembly"].Value, fileLocation.Item1));
