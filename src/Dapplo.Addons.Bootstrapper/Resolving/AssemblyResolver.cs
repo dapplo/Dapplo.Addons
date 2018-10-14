@@ -290,9 +290,14 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 return assembly;
             }
 
-            if (_applicationConfig.CopyAssembliesToProbingPath && FileLocations.AddonsLocation != null)
+            var destination = $@"{FileLocations.AddonsLocation}\{assemblyName.Name}.dll";
+            var destinationIsNotSource = !destination.Equals(additionalInformation.Filename, StringComparison.OrdinalIgnoreCase);
+            if (Log.IsDebugEnabled() && !destinationIsNotSource)
             {
-                var destination = $@"{FileLocations.AddonsLocation}\{assemblyName.Name}.dll";
+                Log.Debug().WriteLine("Skipping copy, as destination and source would be the same.");
+            }
+            if (_applicationConfig.CopyAssembliesToProbingPath && FileLocations.AddonsLocation != null && destinationIsNotSource)
+            {
                 try
                 {
                     if (ShouldWrite(additionalInformation, destination))
