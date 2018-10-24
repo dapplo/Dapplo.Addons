@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Dapplo.Addons.Bootstrapper.Resolving;
@@ -41,7 +42,7 @@ namespace Dapplo.Addons.Bootstrapper
     {
         private const string ApplicationconfigAlreadyBuild = "The ApplicationConfig was already build.";
 
-        private readonly HashSet<string> _scanDirectories = new HashSet<string>(FileLocations.AssemblyResolveDirectories, StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _scanDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _assemblyNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<Regex> _assemblyNamePatterns = new HashSet<Regex>();
         private readonly HashSet<string> _extensions = new HashSet<string>(new[] { ".dll", ".dll.compressed", ".dll.gz" }, StringComparer.OrdinalIgnoreCase);
@@ -64,6 +65,13 @@ namespace Dapplo.Addons.Bootstrapper
         /// </summary>
         private ApplicationConfigBuilder()
         {
+            foreach(var resolveDirectory in FileLocations.AssemblyResolveDirectories)
+            {
+                if (Directory.Exists(resolveDirectory))
+                {
+                    _scanDirectories.Add(resolveDirectory);
+                }
+            }
         }
 
         /// <summary>
