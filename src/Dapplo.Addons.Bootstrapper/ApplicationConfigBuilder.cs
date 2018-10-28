@@ -170,6 +170,7 @@ namespace Dapplo.Addons.Bootstrapper
             return this;
         }
 
+#if !NETSTANDARD2_0
         /// <summary>
         /// Disable the copying of assemblies to the probing path, this is risky as it could introduce assembly load context issues
         /// </summary>
@@ -183,7 +184,7 @@ namespace Dapplo.Addons.Bootstrapper
             _applicationConfig.CopyAssembliesToProbingPath = false;
             return this;
         }
-
+#endif
         /// <summary>
         /// The extensions to use for loading the assemblies
         /// </summary>

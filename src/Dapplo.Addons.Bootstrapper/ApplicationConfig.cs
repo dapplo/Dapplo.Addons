@@ -51,8 +51,10 @@ namespace Dapplo.Addons.Bootstrapper
         /// <summary>
         /// Specifies if assemblies outside the probing path can be copied to the probing path
         /// </summary>
-        public bool CopyAssembliesToProbingPath { get; internal set; } = true;
-
+        public bool CopyAssembliesToProbingPath { get; internal set; }
+#if !NETSTANDARD2_0
+            = true;
+#endif
         /// <summary>
         /// This specifies if the loading of assemblies can be done async
         /// </summary>
