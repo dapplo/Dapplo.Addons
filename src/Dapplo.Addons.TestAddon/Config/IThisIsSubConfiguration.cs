@@ -26,16 +26,14 @@
 #region Usings
 
 using System.ComponentModel;
-using Dapplo.Ini;
 
 #endregion
 
-namespace Dapplo.Addons.TestAddon
+namespace Dapplo.Addons.TestAddon.Config
 {
-    [IniSection("MySectionName")]
-    public interface IThisIsConfiguration : IIniSection, IThisIsSubConfiguration
+    public interface IThisIsSubConfiguration
     {
-        [DefaultValue("Robin")]
-        string Name { get; set; }
+        [DefaultValue("Dapplo")]
+        string Company { get; set; }
     }
 }

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
 	<Description>A bootstrapper which loads Dapplo.Addons addons</Description>
     <AssemblyTitle>Dapplo.Addons.Bootstrapper</AssemblyTitle>
     <AssemblyName>Dapplo.Addons.Bootstrapper</AssemblyName>
@@ -27,9 +27,7 @@
   </ItemGroup>
   
   <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
-    <Reference Include="System.ComponentModel.Composition">
-      <HintPath>..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.1\System.ComponentModel.Composition.dll</HintPath>
-    </Reference>
+    <Reference Include="System.ComponentModel.Composition"/>
   </ItemGroup>
   
 </Project>

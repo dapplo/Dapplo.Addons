@@ -29,7 +29,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Dapplo.Ini;
+using Dapplo.Addons.TestAddon.Config;
+using Dapplo.Config.Ini;
 using Dapplo.Log;
 
 #endregion
@@ -57,7 +58,7 @@ namespace Dapplo.Addons.TestAddon
         /// </summary>
         private bool ThrowStartupException { get; }
 
-        public async Task ShutdownAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task ShutdownAsync(CancellationToken cancellationToken = default)
         {
             await Task.Delay(100, cancellationToken).ConfigureAwait(false);
             Log.Debug().WriteLine("ShutdownAsync called!");

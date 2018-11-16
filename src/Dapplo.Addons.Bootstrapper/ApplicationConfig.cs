@@ -1,4 +1,4 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2018 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2018 Dapplo
@@ -51,8 +51,10 @@ namespace Dapplo.Addons.Bootstrapper
         /// <summary>
         /// Specifies if assemblies outside the probing path can be copied to the probing path
         /// </summary>
-        public bool CopyAssembliesToProbingPath { get; internal set; } = true;
-
+        public bool CopyAssembliesToProbingPath { get; internal set; }
+#if !NETSTANDARD2_0
+            = true;
+#endif
         /// <summary>
         /// This specifies if the loading of assemblies can be done async
         /// </summary>
@@ -97,5 +99,11 @@ namespace Dapplo.Addons.Bootstrapper
         /// Test if a mutex is set
         /// </summary>
         public bool HasMutex => !string.IsNullOrEmpty(Mutex);
+
+        /// <summary>
+        /// Strict checking, especially useful to prevent wrong configurations.
+        /// Currently this forces a check for the ScanDirectories
+        /// </summary>
+        public bool UseStrictChecking { get; internal set; } = true;
     }
 }

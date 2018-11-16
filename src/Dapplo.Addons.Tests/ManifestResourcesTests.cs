@@ -29,6 +29,7 @@ using System;
 using System.Drawing;
 using System.IO.Packaging;
 using System.Linq;
+using System.Reflection;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Addons.Tests.TestFiles;
@@ -133,6 +134,19 @@ namespace Dapplo.Addons.Tests
                     Assert.True(bitmap.Width > 0);
                 }
             }
+        }
+
+
+        /// <summary>
+        ///     Test if finding and loading from the manifest via pack uris work
+        /// </summary>
+        [Fact]
+        public void Test_Resources()
+        {
+            var assembly = Assembly.Load("MahApps.Metro");
+            var packUri = new Uri($@"{PackUriHelper.UriSchemePack}://application:,,,/MahApps.Metro;component/Styles/Accents/Yellow.xaml", UriKind.RelativeOrAbsolute);
+
+            Assert.True(_resolver.Resources.EmbeddedResourceExists(packUri));
         }
     }
 }

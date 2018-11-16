@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
 	<Description>Interfaces for addons loaded by Dapplo.Addons.Bootstrapper</Description>
 	<PackageTags>dapplo autofac addon</PackageTags>
 	<AssemblyTitle>Dapplo.Addons</AssemblyTitle>

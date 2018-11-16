@@ -343,6 +343,8 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <returns>bool with true if there is a matching resource</returns>
         public bool HasEmbeddedDotResourcesResource(Assembly assembly, string filePath, bool ignoreCase = true)
         {
+            var alternativeFile = filePath.Replace("xaml", "baml");
+
             var resourceNames = GetCachedManifestResourceNames(assembly);
             foreach (var resourcesFile in resourceNames.Where(x => x.EndsWith(".g.resources")))
             {
@@ -359,10 +361,31 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
 
                     using (var resourceReader = new ResourceReader(resourceStream))
                     {
-                        // Check if it contains the filename
-                        return resourceReader.OfType<DictionaryEntry>()
-                               .Select(x => x.Key as string)
-                               .Any(x => string.Equals(x, filePath, ignoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture));
+                        foreach (var dictionaryEntry in resourceReader.OfType<DictionaryEntry>())
+                        {
+                            var resourceName = dictionaryEntry.Key as string;
+                            if (string.IsNullOrEmpty(resourceName))
+                            {
+                                continue;
+                            }
+                            if (resourceName.EndsWith("baml") ?
+                                string.Equals(resourceName, alternativeFile, ignoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture)
+                                :
+                                string.Equals(resourceName, filePath, ignoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture)
+
+                                )
+                            {
+                                if (Log.IsVerboseEnabled())
+                                {
+                                    Log.Verbose().WriteLine("Found embedded resource {0}", resourceName);
+                                }
+                                return true;
+                            }
+                            if (Log.IsVerboseEnabled())
+                            {
+                                Log.Verbose().WriteLine("No match {0}", resourceName);
+                            }
+                        }
                     }
                 }
             }

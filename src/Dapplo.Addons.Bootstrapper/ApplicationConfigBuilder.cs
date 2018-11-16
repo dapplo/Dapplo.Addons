@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Dapplo.Addons.Bootstrapper.Resolving;
@@ -41,7 +42,7 @@ namespace Dapplo.Addons.Bootstrapper
     {
         private const string ApplicationconfigAlreadyBuild = "The ApplicationConfig was already build.";
 
-        private readonly HashSet<string> _scanDirectories = new HashSet<string>(FileLocations.AssemblyResolveDirectories, StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _scanDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _assemblyNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<Regex> _assemblyNamePatterns = new HashSet<Regex>();
         private readonly HashSet<string> _extensions = new HashSet<string>(new[] { ".dll", ".dll.compressed", ".dll.gz" }, StringComparer.OrdinalIgnoreCase);
@@ -64,12 +65,19 @@ namespace Dapplo.Addons.Bootstrapper
         /// </summary>
         private ApplicationConfigBuilder()
         {
+            foreach(var resolveDirectory in FileLocations.AssemblyResolveDirectories)
+            {
+                if (Directory.Exists(resolveDirectory))
+                {
+                    _scanDirectories.Add(resolveDirectory);
+                }
+            }
         }
 
         /// <summary>
         /// Factory
         /// </summary>
-        /// <returns>ApplicationConfig</returns>
+        /// <returns>ApplicationConfigBuilder</returns>
         [Pure]
         public static ApplicationConfigBuilder Create() => new ApplicationConfigBuilder();
 
@@ -162,6 +170,7 @@ namespace Dapplo.Addons.Bootstrapper
             return this;
         }
 
+#if !NETSTANDARD2_0
         /// <summary>
         /// Disable the copying of assemblies to the probing path, this is risky as it could introduce assembly load context issues
         /// </summary>
@@ -175,7 +184,7 @@ namespace Dapplo.Addons.Bootstrapper
             _applicationConfig.CopyAssembliesToProbingPath = false;
             return this;
         }
-
+#endif
         /// <summary>
         /// The extensions to use for loading the assemblies
         /// </summary>
@@ -231,6 +240,21 @@ namespace Dapplo.Addons.Bootstrapper
         }
 
         /// <summary>
+        /// Disable strict checking
+        /// </summary>
+        /// <returns>ApplicationConfig</returns>
+        public ApplicationConfigBuilder WithoutStrictChecking()
+        {
+            if (IsBuild)
+            {
+                throw new NotSupportedException(ApplicationconfigAlreadyBuild);
+            }
+
+            _applicationConfig.UseStrictChecking = false;
+            return this;
+        }
+
+        /// <summary>
         /// Specify that a mutex needs to be used
         /// </summary>
         /// <param name="mutex">string</param>
@@ -278,13 +302,6 @@ namespace Dapplo.Addons.Bootstrapper
 
             return this;
         }
-
-        /// <summary>
-        /// This is a shortcut to add the loading of the assembly Dapplo.Addons.Config, which enables Dapplo.Ini and Dapplo.Language
-        /// These assemblies ofcourse needs to be available...
-        /// </summary>
-        /// <returns>ApplicationConfigBuilder</returns>
-        public ApplicationConfigBuilder WithConfigSupport() => WithAssemblyNames("Dapplo.Addons.Config");
 
         /// <summary>
         /// Add assembly name(s)

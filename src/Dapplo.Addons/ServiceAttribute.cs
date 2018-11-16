@@ -51,6 +51,14 @@ namespace Dapplo.Addons
         /// Specify the name of the service and an optional a service this depends on
         /// </summary>
         /// <param name="name">string</param>
+        public ServiceAttribute(string name) : this (name, null)
+        {
+        }
+
+        /// <summary>
+        /// Specify the name of the service and an optional a service this depends on
+        /// </summary>
+        /// <param name="name">string</param>
         /// <param name="prerequisites">string, optional</param>
         public ServiceAttribute(string name, params string[] prerequisites)
         {

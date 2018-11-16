@@ -133,6 +133,16 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 }
             }
 
+            if (_applicationConfig.UseStrictChecking)
+            {
+                foreach (var applicationConfigScanDirectory in _applicationConfig.ScanDirectories)
+                {
+                    if (!Directory.Exists(applicationConfigScanDirectory))
+                    {
+                        throw new DirectoryNotFoundException(applicationConfigScanDirectory);
+                    }
+                }
+            }
             foreach (var fileLocation in FileLocations.Scan(_applicationConfig.ScanDirectories, _assemblyFilenameRegex, SearchOption.TopDirectoryOnly))
             {
                 assemblies.Add(new AssemblyLocationInformation(fileLocation.Item2.Groups["assembly"].Value, fileLocation.Item1));
@@ -280,9 +290,14 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 return assembly;
             }
 
-            if (_applicationConfig.CopyAssembliesToProbingPath && FileLocations.AddonsLocation != null)
+            var destination = $@"{FileLocations.AddonsLocation}\{assemblyName.Name}.dll";
+            var destinationIsNotSource = !destination.Equals(additionalInformation.Filename, StringComparison.OrdinalIgnoreCase);
+            if (Log.IsDebugEnabled() && !destinationIsNotSource)
             {
-                var destination = $@"{FileLocations.AddonsLocation}\{assemblyName.Name}.dll";
+                Log.Debug().WriteLine("Skipping copy, as destination and source would be the same.");
+            }
+            if (_applicationConfig.CopyAssembliesToProbingPath && FileLocations.AddonsLocation != null && destinationIsNotSource)
+            {
                 try
                 {
                     if (ShouldWrite(additionalInformation, destination))
@@ -348,7 +363,6 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 Log.Warn().WriteLine("Ignoring recursive resolve event for {0}", assemblyName.Name);
                 return null;
             }
-
 
             if (LoadedAssemblies.TryGetValue(assemblyName.Name, out var assemblyResult))
             {
