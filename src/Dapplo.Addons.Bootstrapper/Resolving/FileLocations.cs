@@ -33,7 +33,9 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Dapplo.Addons.Bootstrapper.Extensions;
 using Dapplo.Log;
+#if NET461
 using System.Xml.Linq;
+#endif
 
 #endregion
 

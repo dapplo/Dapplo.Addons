@@ -46,9 +46,9 @@ namespace Dapplo.Addons.Tests
     {
         private const string ScanDirectory =
 #if DEBUG
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net461"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net471"
 #else
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net461"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net471"
 #endif
         ;
 

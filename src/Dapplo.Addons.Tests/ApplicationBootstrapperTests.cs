@@ -49,10 +49,10 @@ namespace Dapplo.Addons.Tests
             FileLocations.StartupDirectory,
 #if DEBUG
                     @"..\..\..\..\Dapplo.Addons.TestAddon\bin\Debug\net461",
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net461"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net471"
 #else
                     @"..\..\..\..\Dapplo.Addons.TestAddon\bin\Release\net461",
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net461"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net471"
 #endif
         };
 

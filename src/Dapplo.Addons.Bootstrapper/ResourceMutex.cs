@@ -24,8 +24,12 @@
 #endregion
 
 using System;
+
+#if NET461
 using System.Security.AccessControl;
 using System.Security.Principal;
+#endif
+
 using System.Threading;
 using Dapplo.Log;
 

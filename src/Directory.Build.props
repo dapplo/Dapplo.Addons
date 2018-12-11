@@ -17,7 +17,7 @@
 	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   
-  <PropertyGroup>
+  <PropertyGroup Condition="('$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net471') And !$(MSBuildProjectName.Contains('Tests'))">
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Dapplo.Addons.snk</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
