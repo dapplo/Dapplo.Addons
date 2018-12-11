@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net461</TargetFrameworks>
+    <TargetFrameworks>net471</TargetFrameworks>
     <AssemblyTitle>Dapplo.Addons.Tests</AssemblyTitle>
     <AssemblyName>Dapplo.Addons.Tests</AssemblyName>
 	<Version>1.0.0</Version>
