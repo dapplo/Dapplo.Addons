@@ -45,7 +45,7 @@ namespace Dapplo.Addons.Tests.Entities
         }
 
         /// <inheritdoc />
-        public async Task StartupAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task StartupAsync(CancellationToken cancellationToken = default)
         {
             await Task.Delay(_delay, cancellationToken);
         }

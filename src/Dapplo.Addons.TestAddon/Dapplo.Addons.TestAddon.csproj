@@ -11,10 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="4.8.1" />
-    <PackageReference Include="Dapplo.Config.Ini" Version="1.0.9" />
+    <PackageReference Include="Autofac" Version="4.9.2" />
+    <PackageReference Include="AutoProperties.Fody" Version="1.21.0" />
+    <PackageReference Include="Dapplo.Config.Ini" Version="1.0.11" />
     <PackageReference Include="Dapplo.Log" Version="1.3.11" />
-    <PackageReference Include="Fody" Version="3.3.3">
+    <PackageReference Include="Fody" Version="5.0.6">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
