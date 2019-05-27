@@ -14,8 +14,8 @@ environment:
   CoverallsRepoToken:
     secure: hmXmadCb4cGSBxriCSnrIAtRJF5Jz42rEKKfzJR8HdvY/PFIFUhWZu1xSgN237Se
 install:
-- cmd: "C:\Program Files\Git\mingw64\bin\curl" -O https://download.microsoft.com/download/9/0/1/901B684B-659E-4CBD-BEC8-B3F06967C2E7/NDP471-DevPack-ENU.exe
-- cmd: NDP471-DevPack-ENU.exe /q /norestart
+- cmd: "C:\\Program Files\\Git\\mingw64\\bin\\curl" -O https://download.microsoft.com/download/9/0/1/901B684B-659E-4CBD-BEC8-B3F06967C2E7/NDP471-DevPack-ENU.exe
+- cmd: ".\\NDP471-DevPack-ENU.exe" /q /norestart
 build_script:
 - ps: .\build.ps1 --settings_skipverification=true
 artifacts:
