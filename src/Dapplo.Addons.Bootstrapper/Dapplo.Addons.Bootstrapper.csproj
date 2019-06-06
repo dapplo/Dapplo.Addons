@@ -7,9 +7,6 @@
     <AssemblyName>Dapplo.Addons.Bootstrapper</AssemblyName>
     <PackageId>Dapplo.Addons.Bootstrapper</PackageId>
 	<PackageTags>dapplo autofac addons bootstrapper</PackageTags>
-	<Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

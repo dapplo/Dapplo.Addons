@@ -1,7 +1,7 @@
-#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2019 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016-2018 Dapplo
+// Copyright (C) 2016-2019 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -87,7 +87,7 @@ namespace Dapplo.Addons.Bootstrapper
         public string ApplicationName => _applicationConfig.ApplicationName;
 
         /// <summary>
-        /// Log all autofac activations, must be set before the container is build
+        /// Log all Autofac activations, must be set before the container is build
         /// </summary>
         public bool EnableActivationLogging { get; set; }
 
@@ -128,7 +128,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// Add the disposable to a list, everything in there is disposed when the bootstrapper is disposed.
         /// </summary>
         /// <param name="disposable">IDisposable</param>
-        public ApplicationBootstrapper RegisterForDisposal(IDisposable disposable)
+        public IApplicationBootstrapper RegisterForDisposal(IDisposable disposable)
         {
             if (disposable == null)
             {
@@ -141,7 +141,7 @@ namespace Dapplo.Addons.Bootstrapper
         /// <summary>
         /// Configure the Bootstrapper
         /// </summary>
-        public virtual ApplicationBootstrapper Configure()
+        public virtual IApplicationBootstrapper Configure()
         {
             // It's no problem when the builder is already created, skip recreating!
             if (_builder != null)
@@ -160,8 +160,12 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 _builder.Properties[propertiesKey] = _applicationConfig.Properties[propertiesKey];
             }
+            // Provide the IAssemblyResolver
+            _builder.RegisterInstance<IAssemblyResolver>(Resolver).ExternallyOwned();
             // Provide the IResourceProvider
-            _builder.RegisterInstance(Resolver.Resources).As<IResourceProvider>().ExternallyOwned();
+            _builder.RegisterInstance(Resolver.Resources).ExternallyOwned();
+            // Provide the IApplicationBootstrapper
+            _builder.RegisterInstance<IApplicationBootstrapper>(this).ExternallyOwned();
             return this;
         }
 
@@ -236,7 +240,6 @@ namespace Dapplo.Addons.Bootstrapper
 
             Configure();
             _builder.Properties[nameof(EnableActivationLogging)] = EnableActivationLogging.ToString();
-
             // Process all assemblies, while doing this more might be loaded, so process those again
             var processedAssemblies = new HashSet<string>();
             int countBefore;
@@ -280,7 +283,7 @@ namespace Dapplo.Addons.Bootstrapper
             }
             catch (Exception ex)
             {
-                Log.Error().WriteLine(ex, "Coudn't create the container.");
+                Log.Error().WriteLine(ex, "Couldn't create the container.");
                 throw;
             }
 

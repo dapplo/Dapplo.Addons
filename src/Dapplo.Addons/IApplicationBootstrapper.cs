@@ -1,7 +1,7 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+﻿#region Dapplo 2016-2019 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016-2018 Dapplo
+// Copyright (C) 2016-2019 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -83,38 +83,6 @@ namespace Dapplo.Addons
         /// </summary>
         /// <param name="disposable">IDisposable</param>
         IApplicationBootstrapper RegisterForDisposal(IDisposable disposable);
-
-        /// <summary>
-        /// Add an additional scan directory
-        /// </summary>
-        /// <param name="scanDirectory">string</param>
-        IApplicationBootstrapper AddScanDirectory(string scanDirectory);
-
-        /// <summary>
-        /// Add additional scan directories
-        /// </summary>
-        /// <param name="scanDirectories">IEnumerable</param>
-        IApplicationBootstrapper AddScanDirectories(IEnumerable<string> scanDirectories);
-
-        /// <summary>
-        /// Find a certain assembly in the available scan directories and load this
-        /// </summary>
-        /// <param name="pattern">string with the pattern for the files</param>
-        /// <param name="extensions">IEnumerable with the extensions to process, default is .dll</param>
-        /// <param name="allowEmbedded">bool which specifies if the </param>
-        IApplicationBootstrapper FindAndLoadAssemblies(string pattern, IEnumerable<string> extensions = null, bool allowEmbedded = true);
-
-        /// <summary>
-        /// Load the specified assembly files
-        /// </summary>
-        /// <param name="assemblyFiles">string array with assembly files</param>
-        IApplicationBootstrapper LoadAssemblies(params string[] assemblyFiles);
-
-        /// <summary>
-        /// Load the specified assembly files
-        /// </summary>
-        /// <param name="assemblyFiles">IEnumerable of string</param>
-        IApplicationBootstrapper LoadAssemblies(IEnumerable<string> assemblyFiles);
 
         /// <summary>
         /// Configure the Bootstrapper

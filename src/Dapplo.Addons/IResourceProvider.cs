@@ -1,7 +1,7 @@
-﻿#region Dapplo 2016-2018 - GNU Lesser General Public License
+﻿#region Dapplo 2016-2019 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016-2018 Dapplo
+// Copyright (C) 2016-2019 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -37,8 +37,8 @@ namespace Dapplo.Addons
     public interface IResourceProvider
     {
         /// <summary>
-        /// Get a resource as stream, the resource is offsetted to the namespace of the assembly
-        ///     It will automatically uncompress if the file-ending is .gz or .compressed
+        /// Get a resource as stream, the resource is with offset to the namespace of the assembly
+        ///     It will automatically un-compress if the file-ending is .gz or .compressed
         ///     Note: a GZipStream is not seekable, this might cause issues.
         /// </summary>
         /// <param name="type">The type whose namespace is used to scope the manifest resource name.</param>
@@ -48,7 +48,7 @@ namespace Dapplo.Addons
 
         /// <summary>
         /// Get a resource as stream
-        ///     It will automatically uncompress if the file-ending is .gz or .compressed
+        ///     It will automatically un-compress if the file-ending is .gz or .compressed
         ///     Note: a GZipStream is not seekable, this might cause issues.
         /// </summary>
         /// <param name="assembly">Assembly containing the resource</param>
@@ -57,8 +57,8 @@ namespace Dapplo.Addons
         Stream AbsoluteResourceAsStream(Assembly assembly, params string[] segments);
 
         /// <summary>
-        /// Get a resource as stream, the resource is offsetted to the namespace of the assembly
-        ///     It will automatically uncompress if the file-ending is .gz or .compressed
+        /// Get a resource as stream, the resource is with offset to the namespace of the assembly
+        ///     It will automatically un-compress if the file-ending is .gz or .compressed
         ///     Note: a GZipStream is not seekable, this might cause issues.
         /// </summary>
         /// <param name="assembly">Assembly containing the resource</param>
@@ -68,7 +68,7 @@ namespace Dapplo.Addons
 
         /// <summary>
         ///     Get the stream for a assembly manifest resource based on the filePath
-        ///     It will automatically uncompress if the file-ending is .gz or .compressed
+        ///     It will automatically un-compress if the file-ending is .gz or .compressed
         ///     Note: a GZipStream is not seekable, this might cause issues.
         /// </summary>
         /// <param name="assembly">Assembly to look into</param>
@@ -118,8 +118,8 @@ namespace Dapplo.Addons
         Stream ResourceAsStream(Uri applicationPackUri);
 
         /// <summary>
-        ///     Test if there is an embedded resourcefor the Pack-Uri
-        ///     This is work in progress, as most of the times the files are compiled from xaml to baml, and won't be recognized
+        ///     Test if there is an embedded resource for the Pack-Uri
+        ///     This is work in progress, as most of the times the files are compiled from XAML to BAML, and won't be recognized
         ///     when you specify a pack uri ending on .xaml
         /// </summary>
         /// <param name="packUri">Uri</param>

@@ -1,7 +1,7 @@
-#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2019 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016-2018 Dapplo
+// Copyright (C) 2016-2019 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -37,7 +37,11 @@ namespace Dapplo.Addons.Bootstrapper
         protected override void Load(ContainerBuilder builder)
         {
             // Provide the startup & shutdown functionality
-            builder.RegisterType<ServiceStartupShutdown>().AsSelf().IfNotRegistered(typeof(ServiceStartupShutdown)).SingleInstance();
+            builder
+                .RegisterType<ServiceStartupShutdown>()
+                .AsSelf()
+                .IfNotRegistered(typeof(ServiceStartupShutdown))
+                .SingleInstance();
         }
     }
 }

@@ -1,7 +1,7 @@
-#region Dapplo 2016-2018 - GNU Lesser General Public License
+#region Dapplo 2016-2019 - GNU Lesser General Public License
 
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016-2018 Dapplo
+// Copyright (C) 2016-2019 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -55,12 +55,12 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public Regex AssembliesToIgnore { get; } = new Regex(@"^(autofac.*|microsoft\..*|mscorlib|UIAutomationProvider|PresentationFramework|PresentationCore|WindowsBase|system.*|.*resources)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
-        /// A dictionary with all the loaded assemblies, for caching and analysing
+        /// A dictionary with all the loaded assemblies, for caching and analyzing
         /// </summary>
         public IDictionary<string, AssemblyLocationInformation> AvailableAssemblies { get; } = new ConcurrentDictionary<string, AssemblyLocationInformation>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        /// A dictionary with all the loaded assemblies, for caching and analysing
+        /// A dictionary with all the loaded assemblies, for caching and analyzing
         /// </summary>
         public IDictionary<string, Assembly> LoadedAssemblies { get; } = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
 
