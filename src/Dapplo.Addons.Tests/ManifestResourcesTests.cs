@@ -143,7 +143,7 @@ namespace Dapplo.Addons.Tests
         [Fact]
         public void Test_Resources()
         {
-            var assembly = Assembly.Load("MahApps.Metro");
+             Assembly.Load("MahApps.Metro");
             var packUri = new Uri($@"{PackUriHelper.UriSchemePack}://application:,,,/MahApps.Metro;component/Styles/Accents/Yellow.xaml", UriKind.RelativeOrAbsolute);
 
             Assert.True(_resolver.Resources.EmbeddedResourceExists(packUri));

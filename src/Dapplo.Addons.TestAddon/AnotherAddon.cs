@@ -39,25 +39,15 @@ namespace Dapplo.Addons.TestAddon
     /// </summary>
     public class AnotherAddon : IStartupAsync, IShutdownAsync
     {
-        // ReSharper disable once NotAccessedField.Local
-        private readonly IThisIsConfiguration _myConfig;
-
-        public AnotherAddon(IThisIsConfiguration myConfig, IThisIsSubConfiguration mysubConfig, bool throwStartupException = false)
+        // ReSharper disable once UnusedParameter.Local
+        public AnotherAddon(IThisIsConfiguration myConfig, IThisIsSubConfiguration mysubConfig)
         {
             if (!string.Equals("Dapplo", mysubConfig.Company))
             {
                 throw new NotSupportedException();
             }
-
-            _myConfig = myConfig;
-
-            ThrowStartupException = throwStartupException;
         }
 
-        /// <summary>
-        ///     This imports a bool which is set in the test case and specifies if this addon needs to throw a startup exception
-        /// </summary>
-        private bool ThrowStartupException { get;}
 
         public async Task ShutdownAsync(CancellationToken cancellationToken = default) => await Task.Delay(100, cancellationToken).ConfigureAwait(false);
 
