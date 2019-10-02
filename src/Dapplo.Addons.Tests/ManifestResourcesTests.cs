@@ -1,6 +1,4 @@
-﻿#region Dapplo 2016-2019 - GNU Lesser General Public License
-
-// Dapplo - building blocks for .NET applications
+﻿// Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2019 Dapplo
 // 
 // For more information see: http://dapplo.net/
@@ -21,10 +19,6 @@
 // You should have a copy of the GNU Lesser General Public License
 // along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-#endregion
-
-#region Usings
-
 using System;
 using System.Drawing;
 using System.IO.Packaging;
@@ -38,8 +32,6 @@ using Dapplo.Log.XUnit;
 using Xunit;
 using Xunit.Abstractions;
 
-#endregion
-
 namespace Dapplo.Addons.Tests
 {
     public class ManifestResourcesTests
@@ -51,8 +43,7 @@ namespace Dapplo.Addons.Tests
             LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
 
             // Add the pack scheme
-            // ReSharper disable once UnusedVariable
-            var packScheme = PackUriHelper.UriSchemePack;
+            var _ = PackUriHelper.UriSchemePack;
         }
 
         /// <summary>
@@ -144,7 +135,7 @@ namespace Dapplo.Addons.Tests
         public void Test_Resources()
         {
              Assembly.Load("MahApps.Metro");
-            var packUri = new Uri($@"{PackUriHelper.UriSchemePack}://application:,,,/MahApps.Metro;component/Styles/Accents/Yellow.xaml", UriKind.RelativeOrAbsolute);
+            var packUri = new Uri($@"{PackUriHelper.UriSchemePack}://application:,,,/MahApps.Metro;component/Styles/Controls.xaml", UriKind.RelativeOrAbsolute);
 
             Assert.True(_resolver.Resources.EmbeddedResourceExists(packUri));
         }

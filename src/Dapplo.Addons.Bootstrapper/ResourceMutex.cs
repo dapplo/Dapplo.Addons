@@ -1,6 +1,4 @@
-﻿#region Dapplo 2016-2019 - GNU Lesser General Public License
-
-// Dapplo - building blocks for .NET applications
+﻿// Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2019 Dapplo
 // 
 // For more information see: http://dapplo.net/
@@ -20,8 +18,6 @@
 // 
 // You should have a copy of the GNU Lesser General Public License
 // along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
-
-#endregion
 
 using System;
 
@@ -97,7 +93,7 @@ namespace Dapplo.Addons.Bootstrapper
             // check whether there's an local instance running already, but use local so this works in a multi-user environment
             try
             {
-#if NET461
+#if NET461 || NETCOREAPP3_0
                 // Added Mutex Security, hopefully this prevents the UnauthorizedAccessException more gracefully
                 var sid = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
                 var mutexsecurity = new MutexSecurity();
@@ -152,8 +148,6 @@ namespace Dapplo.Addons.Bootstrapper
             return IsLocked;
         }
 
-#region IDisposable Support
-
         //  To detect redundant Dispose calls
         private bool _disposedValue;
 
@@ -187,8 +181,6 @@ namespace Dapplo.Addons.Bootstrapper
             }
             _applicationMutex = null;
         }
-
-#endregion
     }
 
 }

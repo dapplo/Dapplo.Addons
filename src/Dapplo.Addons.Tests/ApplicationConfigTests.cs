@@ -1,6 +1,4 @@
-﻿#region Dapplo 2016-2019 - GNU Lesser General Public License
-
-// Dapplo - building blocks for .NET applications
+﻿// Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2019 Dapplo
 // 
 // For more information see: http://dapplo.net/
@@ -21,10 +19,6 @@
 // You should have a copy of the GNU Lesser General Public License
 // along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-#endregion
-
-#region Usings
-
 using System;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
@@ -32,8 +26,6 @@ using Dapplo.Log;
 using Dapplo.Log.XUnit;
 using Xunit;
 using Xunit.Abstractions;
-
-#endregion
 
 namespace Dapplo.Addons.Tests
 {

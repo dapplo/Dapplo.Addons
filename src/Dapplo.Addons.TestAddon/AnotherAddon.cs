@@ -1,5 +1,3 @@
-#region Dapplo 2016-2019 - GNU Lesser General Public License
-
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2019 Dapplo
 // 
@@ -21,16 +19,10 @@
 // You should have a copy of the GNU Lesser General Public License
 // along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-#endregion
-
-#region Usings
-
 using Dapplo.Addons.TestAddon.Config;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-
-#endregion
 
 namespace Dapplo.Addons.TestAddon
 {
@@ -40,9 +32,9 @@ namespace Dapplo.Addons.TestAddon
     public class AnotherAddon : IStartupAsync, IShutdownAsync
     {
         // ReSharper disable once UnusedParameter.Local
-        public AnotherAddon(IThisIsConfiguration myConfig, IThisIsSubConfiguration mysubConfig)
+        public AnotherAddon(IThisIsConfiguration myConfig, IThisIsSubConfiguration mySubConfig)
         {
-            if (!string.Equals("Dapplo", mysubConfig.Company))
+            if (!string.Equals("Dapplo", mySubConfig.Company))
             {
                 throw new NotSupportedException();
             }

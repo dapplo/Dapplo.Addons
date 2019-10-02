@@ -1,5 +1,3 @@
-#region Dapplo 2016-2019 - GNU Lesser General Public License
-
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2019 Dapplo
 // 
@@ -21,10 +19,6 @@
 // You should have a copy of the GNU Lesser General Public License
 // along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-#endregion
-
-#region Usings
-
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -32,8 +26,6 @@ using System.Threading.Tasks;
 using Dapplo.Addons.TestAddon.Config;
 using Dapplo.Config.Ini;
 using Dapplo.Log;
-
-#endregion
 
 namespace Dapplo.Addons.TestAddon
 {

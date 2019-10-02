@@ -1,5 +1,3 @@
-#region Dapplo 2016-2019 - GNU Lesser General Public License
-
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2019 Dapplo
 // 
@@ -21,10 +19,6 @@
 // You should have a copy of the GNU Lesser General Public License
 // along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-#endregion
-
-#region Usings
-
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,8 +27,6 @@ using Dapplo.Log;
 using Dapplo.Log.XUnit;
 using Xunit;
 using Xunit.Abstractions;
-
-#endregion
 
 namespace Dapplo.Addons.Tests
 {
@@ -91,14 +83,14 @@ namespace Dapplo.Addons.Tests
             {
                 Assert.NotNull(resourceMutex);
                 Assert.True(resourceMutex.IsLocked);
-                await Task.Factory.StartNew(() =>
+                await Task.Run(() =>
                 {
                     using (var resourceMutex2 = ResourceMutex.Create(mutexId, "SecondCall"))
                     {
                         Assert.NotNull(resourceMutex2);
                         Assert.False(resourceMutex2.IsLocked);
                     }
-                }, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+                });
                 Log.Info().WriteLine("Finished task");
             }
         }

@@ -1,6 +1,4 @@
-﻿#region Dapplo 2016-2019 - GNU Lesser General Public License
-
-// Dapplo - building blocks for .NET applications
+﻿// Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2019 Dapplo
 // 
 // For more information see: http://dapplo.net/
@@ -21,10 +19,6 @@
 // You should have a copy of the GNU Lesser General Public License
 // along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-#endregion
-
-#region Usings
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -37,8 +31,6 @@ using Dapplo.Log;
 using System.Xml.Linq;
 #endif
 
-#endregion
-
 namespace Dapplo.Addons.Bootstrapper.Resolving
 {
     /// <summary>
@@ -49,7 +41,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         private static readonly LogSource Log = new LogSource();
 
         /// <summary>
-        ///     Get the startup location, which is either the location of the entry assemby, or the executing assembly
+        ///     Get the startup location, which is either the location of the entry assembly, or the executing assembly
         /// </summary>
         /// <returns>string with the directory of where the running code/applicationName was started</returns>
         public static string StartupDirectory { get; } = FileTools.NormalizeDirectory(AppDomain.CurrentDomain.BaseDirectory);
@@ -70,10 +62,11 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             .Concat(AppDomain.CurrentDomain.SetupInformation.PrivateBinPath?.Split(';')
             .Select(path => Path.Combine(StartupDirectory, path)) ?? Enumerable.Empty<string>())
 #endif
+            .Distinct()
         ;
 
         /// <summary>
-        /// Returns the directory where the addon assemblies are stored, this is the location specified by 
+        /// Returns the directory where the add-on assemblies are stored, this is the location specified by 
         /// </summary>
         public static string AddonsLocation { get; } = ProbingPath?.Split(';').Where(path => path.StartsWith("Addons")).Select(FileTools.NormalizeDirectory).FirstOrDefault() ?? AssemblyResolveBaseDirectory;
 
@@ -104,7 +97,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <summary>
         ///     Get the roaming AppData directory
         /// </summary>
-        /// <returns>string with the directory the appdata roaming directory</returns>
+        /// <returns>string with the directory the AppData roaming directory</returns>
         public static string RoamingAppDataDirectory(string applicationName)
         {
             return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), applicationName);

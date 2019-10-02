@@ -1,5 +1,3 @@
-#region Dapplo 2016-2019 - GNU Lesser General Public License
-
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2019 Dapplo
 // 
@@ -20,8 +18,6 @@
 // 
 // You should have a copy of the GNU Lesser General Public License
 // along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
-
-#endregion
 
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -61,7 +57,7 @@ namespace Dapplo.Addons.Bootstrapper
         public bool UseAsyncAssemblyLoading { get; internal set; } = true;
 
         /// <summary>
-        /// The directories to scan for addons
+        /// The directories to scan for add-ons
         /// </summary>
         public IReadOnlyList<string> ScanDirectories { get; internal set; }
 

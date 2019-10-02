@@ -1,5 +1,3 @@
-#region Dapplo 2016-2019 - GNU Lesser General Public License
-
 // Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2019 Dapplo
 // 
@@ -21,10 +19,6 @@
 // You should have a copy of the GNU Lesser General Public License
 // along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-#endregion
-
-#region Usings
-
 using System;
 using System.Threading.Tasks;
 using Autofac;
@@ -33,11 +27,8 @@ using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Addons.Tests.Utils;
 using Dapplo.Log;
 using Dapplo.Log.XUnit;
-using Dapplo.Utils;
 using Xunit;
 using Xunit.Abstractions;
-
-#endregion
 
 namespace Dapplo.Addons.Tests
 {
@@ -45,7 +36,7 @@ namespace Dapplo.Addons.Tests
     public sealed class ApplicationBootstrapperTests
     {
         private const string ApplicationName = "Dapplo";
-        private readonly string[] TestAssemblyDirectories = {
+        private readonly string[] _testAssemblyDirectories = {
             FileLocations.StartupDirectory,
 #if DEBUG
                     @"..\..\..\..\Dapplo.Addons.TestAddon\bin\Debug\net461",
@@ -71,7 +62,7 @@ namespace Dapplo.Addons.Tests
                 .Create()
                 .WithApplicationName(ApplicationName)
                 .WithScanDirectories(
-                    TestAssemblyDirectories
+                    _testAssemblyDirectories
                 )
                 // Add all file starting with Dapplo and ending on .dll
                 .WithAssemblyPatterns("Dapplo*")
@@ -136,7 +127,7 @@ namespace Dapplo.Addons.Tests
             var applicationConfig = ApplicationConfigBuilder
                 .Create()
                 .WithApplicationName(ApplicationName)
-                .WithScanDirectories(TestAssemblyDirectories)
+                .WithScanDirectories(_testAssemblyDirectories)
                 // Add all assemblies starting with Dapplo
                 .WithAssemblyPatterns("Dapplo*")
                 .BuildApplicationConfig();

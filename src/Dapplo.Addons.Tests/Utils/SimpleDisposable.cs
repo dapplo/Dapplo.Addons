@@ -1,4 +1,4 @@
-// Dapplo - building blocks for .NET applications
+﻿// Dapplo - building blocks for .NET applications
 // Copyright (C) 2016-2019 Dapplo
 // 
 // For more information see: http://dapplo.net/
@@ -19,13 +19,30 @@
 // You should have a copy of the GNU Lesser General Public License
 // along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-namespace Dapplo.Addons.Tests.TestModules
+using System;
+
+namespace Dapplo.Addons.Tests.Utils
 {
-    [Service(nameof(ServiceFour), nameof(ServiceThree))]
-    public class ServiceFour : AbstractAsyncService
+    public class SimpleDisposable : IDisposable
     {
-        public ServiceFour(OrderProvider orderProvider) : base(orderProvider)
+        private readonly Action _action;
+        private bool _isDisposed;
+
+        private SimpleDisposable(Action action)
         {
+            _action = action;
+        }
+
+        public static IDisposable Create(Action action)
+        {
+            return new SimpleDisposable(action);
+        }
+
+        public void Dispose()
+        {
+            if (_isDisposed) return;
+            _isDisposed = true;
+            _action?.Invoke();
         }
     }
 }
