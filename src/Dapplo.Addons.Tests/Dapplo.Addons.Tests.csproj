@@ -5,9 +5,13 @@
     <AssemblyTitle>Dapplo.Addons.Tests</AssemblyTitle>
     <AssemblyName>Dapplo.Addons.Tests</AssemblyName>
     <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
-	<UseWindowsForms>true</UseWindowsForms>
+    <UseWindowsForms>true</UseWindowsForms>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="TestFiles\embedded-dapplo.png" />
@@ -29,6 +33,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Xunit.StaFact" Version="0.3.18" />
   </ItemGroup>
   
   <ItemGroup>

@@ -75,7 +75,10 @@ namespace Dapplo.Addons.Tests
             Assert.True(resourceMutex.IsLocked);
         }
 
-        [Fact]
+        /// <summary>
+        /// This test needs a SynchronizationContext to work correctly 
+        /// </summary>
+        [WpfFact]
         public async Task TestMutex_LockTwice()
         {
             var mutexId = Guid.NewGuid().ToString();
@@ -83,14 +86,26 @@ namespace Dapplo.Addons.Tests
             {
                 Assert.NotNull(resourceMutex);
                 Assert.True(resourceMutex.IsLocked);
-                await Task.Run(() =>
+
+                var taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                var thread = new Thread(() =>
                 {
-                    using (var resourceMutex2 = ResourceMutex.Create(mutexId, "SecondCall"))
+                    try
                     {
-                        Assert.NotNull(resourceMutex2);
-                        Assert.False(resourceMutex2.IsLocked);
+                        using (var resourceMutex2 = ResourceMutex.Create(mutexId, "SecondCall"))
+                        {
+                            Assert.NotNull(resourceMutex2);
+                            Assert.False(resourceMutex2.IsLocked);
+                        }
+                        taskCompletionSource.TrySetResult(true);
+                    }
+                    catch (Exception e)
+                    {
+                        taskCompletionSource.TrySetException(e);
                     }
                 });
+                thread.Start();
+                await taskCompletionSource.Task;
                 Log.Info().WriteLine("Finished task");
             }
         }

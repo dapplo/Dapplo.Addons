@@ -73,9 +73,9 @@ namespace Dapplo.Addons.Bootstrapper
             {
                 throw new ArgumentNullException(nameof(mutexId));
             }
-            var applicationMutex = new ResourceMutex((global ? @"Global\" : @"Local\") + mutexId, resourceName);
-            applicationMutex.Lock();
-            return applicationMutex;
+            var resourceMutex = new ResourceMutex((global ? @"Global\" : @"Local\") + mutexId, resourceName);
+            resourceMutex.Lock();
+            return resourceMutex;
         }
 
         /// <summary>
@@ -86,7 +86,7 @@ namespace Dapplo.Addons.Bootstrapper
         {
             if (Log.IsVerboseEnabled())
             {
-                Log.Verbose().WriteLine("{0} is trying to get Mutex {1}", _resourceName, _mutexId);
+                Log.Verbose().WriteLine("{0} is trying to get Mutex {1} on Thread {2}", _resourceName, _mutexId, Thread.CurrentThread.ManagedThreadId);
             }
 
             IsLocked = true;
@@ -171,13 +171,13 @@ namespace Dapplo.Addons.Bootstrapper
                 {
                     _applicationMutex.ReleaseMutex();
                     IsLocked = false;
-                    Log.Info().WriteLine("Released Mutex {0} for {1}", _mutexId, _resourceName);
+                    Log.Info().WriteLine("Released Mutex {0} for {1} from Thread {2}", _mutexId, _resourceName, Thread.CurrentThread.ManagedThreadId);
                 }
                 _applicationMutex.Dispose();
             }
             catch (Exception ex)
             {
-                Log.Error().WriteLine(ex, "Error releasing Mutex {0} for {1}", _mutexId, _resourceName);
+                Log.Error().WriteLine(ex, "Error releasing Mutex {0} for {1} from Thread {2}", _mutexId, _resourceName, Thread.CurrentThread.ManagedThreadId);
             }
             _applicationMutex = null;
         }
