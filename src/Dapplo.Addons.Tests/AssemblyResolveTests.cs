@@ -36,6 +36,8 @@ namespace Dapplo.Addons.Tests
     /// </summary>
     public class AssemblyResolveTests
     {
+        private static readonly LogSource Log = new LogSource();
+
         private const string ScanDirectory =
 #if DEBUG
                     @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net471"
@@ -67,6 +69,9 @@ namespace Dapplo.Addons.Tests
                 // Add Dapplo.Addons.TestAddonWithCostura
                 .WithAssemblyNames("Dapplo.Addons.TestAddonWithCostura")
                 .BuildApplicationConfig();
+            Log.Debug().WriteLine("Current: {0}", System.IO.Directory.GetCurrentDirectory());
+            Log.Debug().WriteLine("ScanDirectory: {0}", ScanDirectory);
+            Log.Debug().WriteLine("Where: {0}", System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), ScanDirectory));
 
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
