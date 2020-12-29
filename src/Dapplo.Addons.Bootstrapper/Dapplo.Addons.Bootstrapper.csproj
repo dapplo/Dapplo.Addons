@@ -1,17 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
-	<Description>A bootstrapper which loads Dapplo.Addons addons</Description>
+    <TargetFrameworks>netstandard2.0;net471;netcoreapp3.1;net5.0-windows</TargetFrameworks>
+    <Description>A bootstrapper which loads Dapplo.Addons addons</Description>
     <AssemblyTitle>Dapplo.Addons.Bootstrapper</AssemblyTitle>
     <AssemblyName>Dapplo.Addons.Bootstrapper</AssemblyName>
     <PackageId>Dapplo.Addons.Bootstrapper</PackageId>
-	<PackageTags>dapplo autofac addons bootstrapper</PackageTags>
+	  <PackageTags>dapplo autofac addons bootstrapper</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="4.9.4" />
-    <PackageReference Include="Dapplo.Log" Version="1.3.26" />
+    <PackageReference Include="Autofac" Version="6.1.0" />
+    <PackageReference Include="Dapplo.Log" Version="1.4.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,10 +20,10 @@
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="System.Threading" Version="4.3.0" />
-    <PackageReference Include="System.ComponentModel.Composition" Version="4.6.0" />
+    <PackageReference Include="System.ComponentModel.Composition" Version="5.0.0" />
   </ItemGroup>
   
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net471' ">
     <Reference Include="System.ComponentModel.Composition" />
   </ItemGroup>
   

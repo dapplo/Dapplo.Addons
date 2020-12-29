@@ -29,6 +29,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel.Composition;
+using Autofac.Core.Registration;
 
 namespace Dapplo.Addons.Bootstrapper.AttributeMetaData
 {
@@ -45,7 +46,7 @@ namespace Dapplo.Addons.Bootstrapper.AttributeMetaData
         /// registrations - ordering is not important.</remarks>
         /// <param name="componentRegistry">The component registry.</param>
         /// <param name="registration">The registration to attach functionality to.</param>
-        protected override void AttachToComponentRegistration(IComponentRegistry componentRegistry, IComponentRegistration registration)
+        protected override void AttachToComponentRegistration(IComponentRegistryBuilder componentRegistry, IComponentRegistration registration)
         {
             if (registration == null)
             {
@@ -55,6 +56,7 @@ namespace Dapplo.Addons.Bootstrapper.AttributeMetaData
             {
                 registration.Metadata[property.Key] = property.Value;
             }
+            base.AttachToComponentRegistration(componentRegistry, registration);
         }
 
         /// <summary>

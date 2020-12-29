@@ -7,7 +7,7 @@ using Dapplo.Addons.Bootstrapper.Services;
 using Dapplo.Log;
 using Dapplo.Log.Loggers;
 
-namespace Dapplo.Addons.DotNetCoreConsole
+namespace Dapplo.Addons.DotNetCoreDemoConsoleApp
 {
     internal static class Program
     {
@@ -24,8 +24,7 @@ namespace Dapplo.Addons.DotNetCoreConsole
 #else
                     @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\netstandard2.0",
 #endif
-                    FileLocations.StartupDirectory,
-                    @"MyOtherLibs"
+                    FileLocations.StartupDirectory
                 )
                 .WithAssemblyNames("Dapplo.HttpExtensions", "Dapplo.Addons.TestAddonWithCostura").BuildApplicationConfig();
 

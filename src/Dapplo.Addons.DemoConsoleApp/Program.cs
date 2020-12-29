@@ -20,11 +20,10 @@ namespace Dapplo.Addons.DemoConsoleApp
                 .WithApplicationName("DemoConsoleApp")
                 .WithScanDirectories(
                     FileLocations.StartupDirectory,
-                    @"MyOtherLibs",
 #if DEBUG
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net461"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net471"
 #else
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net461"
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net471"
 #endif
                 )
                 .WithAssemblyNames("Dapplo.HttpExtensions", "Dapplo.Addons.TestAddonWithCostura").BuildApplicationConfig();

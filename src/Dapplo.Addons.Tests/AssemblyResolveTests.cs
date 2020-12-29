@@ -95,8 +95,8 @@ namespace Dapplo.Addons.Tests
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
                 await bootstrapper.InitializeAsync().ConfigureAwait(false);
-                var jiraAssembly = Assembly.Load("Svg");
-                Assert.NotNull(jiraAssembly);
+                var svgAssembly = Assembly.Load("Svg");
+                Assert.NotNull(svgAssembly);
             }
         }
 

@@ -93,7 +93,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             AppDomain.CurrentDomain.AssemblyLoad += AssemblyLoad;
             // Register assembly resolving
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolve;
-            AppDomain.CurrentDomain.ProcessExit += (sender, args) => RemoveCopiedAssemblies();
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => RemoveCopiedAssemblies();
 
             ScanForAssemblies();
         }
@@ -453,14 +453,16 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 }
                 catch (Exception)
                 {
-                    stream.Seek(0, SeekOrigin.Begin);
+                    stream.Close();
+                    using var stream2 = Resources.AbsoluteResourceAsStream(assemblyLocationInformation.ContainingAssembly,
+                        assemblyLocationInformation.Filename);
                     var appdataDirectory = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\{_applicationConfig.ApplicationName}";
                     assemblyFileName = $@"{appdataDirectory}\{assemblyLocationInformation.Name}.dll";
                     if (ShouldWrite(assemblyLocationInformation, assemblyFileName))
                     {
                         using (var fileStream = new FileStream(assemblyFileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
                         {
-                            stream.CopyTo(fileStream);
+                            stream2.CopyTo(fileStream);
                         }
                         // Register delete on exit, this is done by calling a command
                         _assembliesToDeleteAtExit.Add(assemblyFileName);
@@ -482,7 +484,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// <param name="source">AssemblyLocationInformation</param>
         /// <param name="destination">string with destination path</param>
         /// <returns>bool</returns>
-        private bool ShouldWrite(AssemblyLocationInformation source, string destination)
+        private static bool ShouldWrite(AssemblyLocationInformation source, string destination)
         {
             if (source.Filename.Equals(destination))
             {
