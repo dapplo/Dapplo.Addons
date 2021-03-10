@@ -78,7 +78,7 @@ namespace Dapplo.Addons.Tests
         /// <summary>
         /// This test needs a SynchronizationContext to work correctly 
         /// </summary>
-        [WpfFact]
+        [StaFact]
         public async Task TestMutex_LockTwice()
         {
             var mutexId = Guid.NewGuid().ToString();

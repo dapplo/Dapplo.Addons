@@ -64,7 +64,11 @@ namespace Dapplo.Addons.Bootstrapper.Internal
             {
                 if (IsEmbedded)
                 {
-                    return File.GetLastWriteTime(!string.IsNullOrEmpty(ContainingAssembly.Location) ? ContainingAssembly.Location : Assembly.GetEntryAssembly().Location);
+                    var location = !string.IsNullOrEmpty(ContainingAssembly.Location) ? ContainingAssembly.Location : Assembly.GetEntryAssembly()?.Location;
+                    if (location != null)
+                    {
+                        return File.GetLastWriteTime(location);
+                    }
                 }
 
                 return File.GetLastWriteTime(Filename);

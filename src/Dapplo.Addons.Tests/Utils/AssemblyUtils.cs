@@ -40,7 +40,7 @@ namespace Dapplo.Addons.Tests.Utils
             {
                 return;
             }
-#if NET461
+#if NET471
             var manager = new AppDomainManager();
             var entryAssemblyfield = manager.GetType().GetField("m_entryAssembly", BindingFlags.Instance | BindingFlags.NonPublic);
             if (entryAssemblyfield != null)

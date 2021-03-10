@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net471;net5.0-windows</TargetFrameworks>
     <AssemblyTitle>Dapplo.Addons.Tests.TestAssembly</AssemblyTitle>
     <AssemblyName>Dapplo.Addons.Tests.TestAssembly</AssemblyName>
   </PropertyGroup>

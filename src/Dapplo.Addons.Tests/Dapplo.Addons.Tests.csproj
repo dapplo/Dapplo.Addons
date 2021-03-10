@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFrameworks>net471;net5.0-windows</TargetFrameworks>
     <AssemblyTitle>Dapplo.Addons.Tests</AssemblyTitle>
     <AssemblyName>Dapplo.Addons.Tests</AssemblyName>
     <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
@@ -27,20 +27,24 @@
     <PackageReference Include="Autofac" Version="6.1.0" />
     <PackageReference Include="Dapplo.Log" Version="1.4.1" />
     <PackageReference Include="Dapplo.Log.XUnit" Version="1.4.1" />
-    <PackageReference Include="MahApps.Metro" Version="2.4.3" />
+    <PackageReference Include="MahApps.Metro" Version="2.4.4" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Xunit.StaFact" Version="1.0.37" />
-    <PackageReference Include="coverlet.msbuild" Version="2.9.0">
+    <PackageReference Include="coverlet.msbuild" Version="3.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.1" />
   </ItemGroup>
-  
+
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <Reference Include="System.ComponentModel.Composition" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Dapplo.Addons\Dapplo.Addons.csproj" />
     <ProjectReference Include="..\Dapplo.Addons.Bootstrapper\Dapplo.Addons.Bootstrapper.csproj" />

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFrameworks>net471;net5.0-windows</TargetFrameworks>
     <AssemblyTitle>Dapplo.Addons.TestAddon</AssemblyTitle>
     <AssemblyName>Dapplo.Addons.TestAddon</AssemblyName>
     <PackageId>Dapplo.Addons.TestAddon</PackageId>
@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Autofac" Version="6.1.0" />
-    <PackageReference Include="Dapplo.Config.Ini" Version="2.1.0" />
+    <PackageReference Include="Dapplo.Config.Ini" Version="2.2.0" />
     <PackageReference Include="Dapplo.Log" Version="1.4.1" />
   </ItemGroup>
   <ItemGroup>

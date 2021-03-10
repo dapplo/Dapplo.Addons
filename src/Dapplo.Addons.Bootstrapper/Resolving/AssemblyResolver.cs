@@ -370,20 +370,25 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 return assemblyResult;
             }
 
+            _resolving.Add(assemblyName.Name);
+            if (!AvailableAssemblies.TryGetValue(assemblyName.Name, out var assemblyLocationInformation))
+            {
+                return null;
+            }
+
+            if (Log.IsVerboseEnabled())
+            {
+                Log.Verbose().WriteLine("Found {0} at {1}.", assemblyName.Name, assemblyLocationInformation.ToString());
+            }
+
             try
             {
-                _resolving.Add(assemblyName.Name);
-                if (!AvailableAssemblies.TryGetValue(assemblyName.Name, out var assemblyLocationInformation))
-                {
-                    return null;
-                }
-
-                if (Log.IsVerboseEnabled())
-                {
-                    Log.Verbose().WriteLine("Found {0} at {1}.", assemblyName.Name, assemblyLocationInformation.ToString());
-                }
-
                 return LoadAssembly(assemblyLocationInformation);
+            }
+            catch (Exception ex)
+            {
+                Log.Error().WriteLine(ex, "Couldn't load {0} from {1}.", assemblyName.Name, assemblyLocationInformation.ToString());
+                throw;
             }
             finally
             {
@@ -443,19 +448,23 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                     }
 
                     // Get the assembly name from the file
-                    var assemblyName = AssemblyName.GetAssemblyName(assemblyFileName);
                     if (Log.IsVerboseEnabled())
                     {
                         Log.Verbose().WriteLine("Loading {0} from {1}", assemblyLocationInformation.Name, assemblyFileName);
                     }
+#if !NET471
+                    return Assembly.LoadFrom(assemblyFileName);
+#else
                     // Use load, as it's now in the probing path
+                    var assemblyName = AssemblyName.GetAssemblyName(assemblyFileName);
                     return Assembly.Load(assemblyName);
+#endif
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    Log.Error().WriteLine(ex, "First try failed.");
                     stream.Close();
-                    using var stream2 = Resources.AbsoluteResourceAsStream(assemblyLocationInformation.ContainingAssembly,
-                        assemblyLocationInformation.Filename);
+                    using var stream2 = Resources.AbsoluteResourceAsStream(assemblyLocationInformation.ContainingAssembly, assemblyLocationInformation.Filename);
                     var appdataDirectory = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\{_applicationConfig.ApplicationName}";
                     assemblyFileName = $@"{appdataDirectory}\{assemblyLocationInformation.Name}.dll";
                     if (ShouldWrite(assemblyLocationInformation, assemblyFileName))

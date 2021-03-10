@@ -27,7 +27,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Dapplo.Addons.Bootstrapper.Extensions;
 using Dapplo.Log;
-#if NET461
+#if NET471
 using System.Xml.Linq;
 #endif
 
@@ -58,7 +58,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         public static IEnumerable<string> AssemblyResolveDirectories { get; } = new[] { StartupDirectory }
             .Concat(ProbingPath?.Split(';')
             .Select(path => Path.Combine(StartupDirectory, path)) ?? Enumerable.Empty<string>())
-#if NET461
+#if NET471
             .Concat(AppDomain.CurrentDomain.SetupInformation.PrivateBinPath?.Split(';')
             .Select(path => Path.Combine(StartupDirectory, path)) ?? Enumerable.Empty<string>())
 #endif
@@ -75,7 +75,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// </summary>
         private static string ProbingPath {
             get {
-#if NET461
+#if NET471
                 var configFile = XElement.Load(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile);
                 var probingElement = (
                         from runtime

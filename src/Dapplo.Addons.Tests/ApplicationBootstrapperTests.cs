@@ -39,11 +39,11 @@ namespace Dapplo.Addons.Tests
         private readonly string[] _testAssemblyDirectories = {
             FileLocations.StartupDirectory,
 #if DEBUG
-                    @"..\..\..\..\Dapplo.Addons.TestAddon\bin\Debug\netcoreapp3.1",
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\netstandard2.0"
+                    @"..\..\..\..\Dapplo.Addons.TestAddon\bin\Debug\net5.0-windows",
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net5.0-windows"
 #else
-                    @"..\..\..\..\Dapplo.Addons.TestAddon\bin\Release\netcoreapp3.1",
-                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\netstandard2.0"
+                    @"..\..\..\..\Dapplo.Addons.TestAddon\bin\Release\net5.0-windows",
+                    @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net5.0-windows"
 #endif
         };
 

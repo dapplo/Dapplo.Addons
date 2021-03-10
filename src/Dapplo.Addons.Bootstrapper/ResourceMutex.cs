@@ -21,7 +21,7 @@
 
 using System;
 
-#if NET461
+#if !NETSTANDARD2_0
 using System.Security.AccessControl;
 using System.Security.Principal;
 #endif
@@ -93,7 +93,7 @@ namespace Dapplo.Addons.Bootstrapper
             // check whether there's an local instance running already, but use local so this works in a multi-user environment
             try
             {
-#if NET461 || NETCOREAPP3_0
+#if NET471
                 // Added Mutex Security, hopefully this prevents the UnauthorizedAccessException more gracefully
                 var sid = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
                 var mutexsecurity = new MutexSecurity();
