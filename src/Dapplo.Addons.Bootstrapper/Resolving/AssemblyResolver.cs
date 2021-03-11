@@ -1,5 +1,5 @@
 // Dapplo - building blocks for .NET applications
-// Copyright (C) 2016-2019 Dapplo
+// Copyright (C) 2016-2021 Dapplo
 // 
 // For more information see: http://dapplo.net/
 // Dapplo repositories are hosted on GitHub: https://github.com/dapplo
@@ -106,7 +106,8 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
             var assemblies = new HashSet<AssemblyLocationInformation>();
             if (_applicationConfig.ScanForEmbeddedAssemblies)
             {
-                foreach (var loadedAssembly in LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value).ToList())
+                var assembliesToAnalyze = LoadedAssemblies.Where(pair => !AssembliesToIgnore.IsMatch(pair.Key)).Select(pair => pair.Value).ToList();
+                foreach (var loadedAssembly in assembliesToAnalyze)
                 {
                     string[] resources;
                     try

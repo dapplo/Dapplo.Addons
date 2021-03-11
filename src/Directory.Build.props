@@ -1,6 +1,6 @@
 ﻿<Project>
   <PropertyGroup>
-    <Copyright>Copyright © Dapplo 2016-2020</Copyright>
+    <Copyright>Copyright © Dapplo 2016-2021</Copyright>
     <Authors>Dapplo</Authors>
     <PackageIcon>icon.png</PackageIcon>
     <RepositoryUrl>https://github.com/dapplo/Dapplo.Addons</RepositoryUrl>

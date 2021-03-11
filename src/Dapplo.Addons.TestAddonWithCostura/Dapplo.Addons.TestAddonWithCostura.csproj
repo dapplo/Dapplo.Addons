@@ -1,14 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net5.0-windows</TargetFrameworks>
+    <TargetFrameworks>net471;net5.0-windows</TargetFrameworks>
     <AssemblyTitle>Dapplo.Addons.TestAddonWithCostura</AssemblyTitle>
     <AssemblyName>Dapplo.Addons.TestAddonWithCostura</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Autofac" Version="6.1.0" />
-    <PackageReference Include="Costura.Fody" Version="4.1.0" />
+    <PackageReference Include="Costura.Fody" Version="5.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Dapplo.HttpExtensions" Version="1.0.8" />
     <PackageReference Include="Dapplo.Jira" Version="1.1.38" />
     <PackageReference Include="Dapplo.Jira.SvgWinForms" Version="1.1.38" />
