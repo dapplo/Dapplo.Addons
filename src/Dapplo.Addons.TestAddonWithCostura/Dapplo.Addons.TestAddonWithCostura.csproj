@@ -10,7 +10,6 @@
     <PackageReference Include="Autofac" Version="6.1.0" />
     <PackageReference Include="Costura.Fody" Version="5.0.2">
       <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Dapplo.HttpExtensions" Version="1.0.8" />
     <PackageReference Include="Dapplo.Jira" Version="1.1.38" />
