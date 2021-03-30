@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net471;netcoreapp3.1;net5.0-windows</TargetFrameworks>
-	<Description>Interfaces for addons loaded by Dapplo.Addons.Bootstrapper</Description>
-	<PackageTags>dapplo autofac addon</PackageTags>
-	<AssemblyTitle>Dapplo.Addons</AssemblyTitle>
+    <Description>Interfaces for addons loaded by Dapplo.Addons.Bootstrapper</Description>
+    <PackageTags>dapplo autofac addon</PackageTags>
+    <AssemblyTitle>Dapplo.Addons</AssemblyTitle>
     <AssemblyName>Dapplo.Addons</AssemblyName>
     <PackageId>Dapplo.Addons</PackageId>
   </PropertyGroup>
