@@ -607,6 +607,11 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
                 Arguments = "/C choice /C Y /N /D Y /T 3 & Del " + string.Join(" ", _assembliesToDeleteAtExit),
                 WindowStyle = ProcessWindowStyle.Hidden,
                 CreateNoWindow = true,
+#if NETFRAMEWORK
+                UseShellExecute = true,
+#else
+                UseShellExecute = false,
+#endif
                 FileName = "cmd.exe"
             };
             _assembliesToDeleteAtExit.Clear();
@@ -618,7 +623,7 @@ namespace Dapplo.Addons.Bootstrapper.Resolving
         /// </summary>
         public void Dispose()
         {
-            // Unregister assembly loading
+            // Un-register assembly loading
             AppDomain.CurrentDomain.AssemblyLoad -= AssemblyLoad;
             // Register assembly resolving
             AppDomain.CurrentDomain.AssemblyResolve -= AssemblyResolve;

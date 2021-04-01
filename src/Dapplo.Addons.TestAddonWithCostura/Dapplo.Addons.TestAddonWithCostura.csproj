@@ -2,21 +2,19 @@
 
   <PropertyGroup>
     <TargetFrameworks>net471;net5.0-windows</TargetFrameworks>
-    <AssemblyTitle>Dapplo.Addons.TestAddonWithCostura</AssemblyTitle>
-    <AssemblyName>Dapplo.Addons.TestAddonWithCostura</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="6.1.0" />
-    <PackageReference Include="Costura.Fody" Version="5.1.0">
+    <PackageReference Include="Autofac" Version="[5.0.0,)" />
+    <PackageReference Include="Costura.Fody" Version="[5.1.0,)">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Dapplo.HttpExtensions" Version="1.0.8" />
-    <PackageReference Include="Dapplo.Jira" Version="1.1.38" />
-    <PackageReference Include="Dapplo.Jira.SvgWinForms" Version="1.1.38" />
+    <PackageReference Include="Dapplo.HttpExtensions" Version="[1.0.10,)" />
+    <PackageReference Include="Dapplo.Jira" Version="[1.1.38,)" />
+    <PackageReference Include="Dapplo.Jira.SvgWinForms" Version="[1.1.38,)" />
     <PackageReference Include="Dapplo.Log" Version="1.4.1" />
-    <PackageReference Include="Dapplo.Windows" Version="0.11.27" />
-    <PackageReference Include="Dapplo.Windows.EmbeddedBrowser" Version="0.11.27" />
+    <PackageReference Include="Dapplo.Windows" Version="[0.11.29,)" />
+    <PackageReference Include="Dapplo.Windows.EmbeddedBrowser" Version="[0.11.29,)" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.ComponentModel.Composition" />

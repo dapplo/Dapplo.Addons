@@ -2,14 +2,11 @@
 
   <PropertyGroup>
     <TargetFrameworks>net471;net5.0-windows</TargetFrameworks>
-    <AssemblyTitle>Dapplo.Addons.TestAddon</AssemblyTitle>
-    <AssemblyName>Dapplo.Addons.TestAddon</AssemblyName>
-    <PackageId>Dapplo.Addons.TestAddon</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="6.1.0" />
-    <PackageReference Include="Dapplo.Config.Ini" Version="2.2.0" />
+    <PackageReference Include="Autofac" Version="[5.0.0,)" />
+    <PackageReference Include="Dapplo.Config.Ini" Version="2.3.0" />
     <PackageReference Include="Dapplo.Log" Version="1.4.1" />
   </ItemGroup>
   <ItemGroup>

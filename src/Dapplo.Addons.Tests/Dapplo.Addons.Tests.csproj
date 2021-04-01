@@ -2,8 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>net471;net5.0-windows</TargetFrameworks>
-    <AssemblyTitle>Dapplo.Addons.Tests</AssemblyTitle>
-    <AssemblyName>Dapplo.Addons.Tests</AssemblyName>
     <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
     <UseWindowsForms>true</UseWindowsForms>
     <UseWPF>true</UseWPF>

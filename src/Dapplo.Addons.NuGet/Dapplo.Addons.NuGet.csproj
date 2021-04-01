@@ -2,11 +2,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>net471</TargetFrameworks>
-	  <Description>Addon services where missing dependencies can be loaded</Description>
-    <AssemblyTitle>Dapplo.Addons.NuGet</AssemblyTitle>
-    <AssemblyName>Dapplo.Addons.NuGet</AssemblyName>
-    <PackageId>Dapplo.Addons.NuGet</PackageId>
-	<PackageTags>dapplo autofac addons nuget</PackageTags>
+    <Description>Addon services where missing dependencies can be loaded</Description>
+    <PackageTags>dapplo autofac addons nuget</PackageTags>
   </PropertyGroup>
   
   <ItemGroup>

@@ -20,8 +20,10 @@
 // along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
 #if !NET5_0
+using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Autofac;
 using Dapplo.Addons.Bootstrapper;
 using Dapplo.Addons.Bootstrapper.Resolving;
 using Dapplo.Addons.Tests.TestAssembly;
@@ -38,7 +40,7 @@ namespace Dapplo.Addons.Tests
     /// </summary>
     public class AssemblyResolveTests
     {
-        private static readonly LogSource Log = new LogSource();
+        private static readonly LogSource Log = new();
 
         private const string ScanDirectory =
 #if NET471
@@ -54,6 +56,7 @@ namespace Dapplo.Addons.Tests
             @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net5.0-windows";
 #endif
 #endif
+
 
         /// <summary>
         /// </summary>
@@ -82,9 +85,8 @@ namespace Dapplo.Addons.Tests
             Log.Debug().WriteLine("Current: {0}", System.IO.Directory.GetCurrentDirectory());
             Log.Debug().WriteLine("ScanDirectory passed: {0}", FileTools.NormalizeDirectory(ScanDirectory));
             Log.Debug().WriteLine("ScanDirectories: {0}", string.Join(",", applicationConfig.ScanDirectories));
-            
-            Log.Debug().WriteLine("Where: {0}", System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), ScanDirectory));
 
+            Log.Debug().WriteLine("Where: {0}", System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), ScanDirectory));
             using (var bootstrapper = new ApplicationBootstrapper(applicationConfig))
             {
                 await bootstrapper.InitializeAsync();
@@ -130,6 +132,7 @@ namespace Dapplo.Addons.Tests
                 Assert.NotNull(jiraAssembly);
             }
         }
+
     }
 }
 #endif
