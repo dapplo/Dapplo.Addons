@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net471;net5.0-windows</TargetFrameworks>
+    <TargetFrameworks>net471;net6.0-windows</TargetFrameworks>
     <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
     <UseWindowsForms>true</UseWindowsForms>
     <UseWPF>true</UseWPF>
@@ -23,8 +23,8 @@
 
   <ItemGroup>
     <PackageReference Include="Autofac" Version="6.4.0" />
-    <PackageReference Include="Dapplo.Log" Version="1.4.1" />
-    <PackageReference Include="Dapplo.Log.XUnit" Version="1.4.1" />
+    <PackageReference Include="Dapplo.Log" Version="2.0.1" />
+    <PackageReference Include="Dapplo.Log.XUnit" Version="2.0.1" />
     <PackageReference Include="MahApps.Metro" Version="2.4.9" />
     <PackageReference Include="xunit" Version="2.4.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">

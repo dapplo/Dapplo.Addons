@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net471;net5.0-windows</TargetFrameworks>
+    <TargetFrameworks>net471;net6.0-windows</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,7 +12,7 @@
     <PackageReference Include="Dapplo.HttpExtensions" Version="1.0.18" />
     <PackageReference Include="Dapplo.Jira" Version="1.1.44" />
     <PackageReference Include="Dapplo.Jira.SvgWinForms" Version="1.1.44" />
-    <PackageReference Include="Dapplo.Log" Version="1.4.1" />
+    <PackageReference Include="Dapplo.Log" Version="2.0.1" />
     <PackageReference Include="Dapplo.Windows" Version="1.0.27" />
     <PackageReference Include="Dapplo.Windows.EmbeddedBrowser" Version="1.0.27" />
   </ItemGroup>
