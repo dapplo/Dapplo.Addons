@@ -19,7 +19,7 @@
 // You should have a copy of the GNU Lesser General Public License
 // along with Dapplo.Addons. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
-#if !NET5_0
+#if !NET6_0
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -51,9 +51,9 @@ namespace Dapplo.Addons.Tests
 #endif
 #else
 #if DEBUG
-            @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net5.0-windows";
+            @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Debug\net6.0-windows";
 #else
-            @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net5.0-windows";
+            @"..\..\..\..\Dapplo.Addons.TestAddonWithCostura\bin\Release\net6.0-windows";
 #endif
 #endif
 
