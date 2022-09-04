@@ -1,0 +1,161 @@
+﻿<!DOCTYPE html>
+<!--[if IE]><![endif]-->
+<html>
+  
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Dapplo.Addons | Dapplo.Addons </title>
+    <meta name="viewport" content="width=device-width">
+    <meta name="title" content="Dapplo.Addons | Dapplo.Addons ">
+    <meta name="generator" content="docfx 2.59.3.0">
+    
+    <link rel="shortcut icon" href="../images/favicon.ico">
+    <link rel="stylesheet" href="../styles/docfx.vendor.css">
+    <link rel="stylesheet" href="../styles/docfx.css">
+    <link rel="stylesheet" href="../styles/main.css">
+    <meta property="docfx:navrel" content="../toc">
+    <meta property="docfx:tocrel" content="toc">
+    
+    
+    
+  </head>
+  <body data-spy="scroll" data-target="#affix" data-offset="120">
+    <div id="wrapper">
+      <header>
+        
+        <nav id="autocollapse" class="navbar navbar ng-scope" role="navigation">
+          <div class="container">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              
+              <a class="navbar-brand" href="../index.html">
+                <img id="logo" class="svg" src="../images/d.svg" alt="">
+              </a>
+            </div>
+            <div class="collapse navbar-collapse" id="navbar">
+              <form class="navbar-form navbar-right" role="search" id="search">
+                <div class="form-group">
+                  <input type="text" class="form-control" id="search-query" placeholder="Search" autocomplete="off">
+                </div>
+              </form>
+                <ul class="nav level1 navbar-nav">
+                  <li class="active">
+                    <a href="../articles/intro.html" title="Articles" class="active">Articles</a>
+                  </li>
+                  <li class="">
+                    <a href="../api/" title="Api Documentation" class="">Api Documentation</a>
+                  </li>
+                </ul>
+            </div>
+          </div>
+        </nav>        
+        <div class="subnav navbar navbar-default">
+          <div class="container hide-when-search" id="breadcrumb">
+            <ul class="breadcrumb">
+              <li></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+      <div role="main" class="container body-content hide-when-search">
+        <div class="sidenav hide-when-search">
+          <a class="btn toc-toggle collapse" data-toggle="collapse" href="#sidetoggle" aria-expanded="false" aria-controls="sidetoggle">Show / Hide Table of Contents</a>
+          <div class="sidetoggle collapse" id="sidetoggle">
+            <div>
+              <div class="sidefilter">
+                <form class="toc-filter">
+                  <span class="glyphicon glyphicon-filter filter-icon"></span>
+                  <input type="text" id="toc_filter_input" placeholder="Enter here to filter..." onkeypress="if(event.keyCode==13) {return false;}">
+                </form>
+              </div>
+              <div class="sidetoc">
+                <div class="toc" id="toc">
+                  
+                  <ul class="nav level1">
+                    <li class="active">
+                      <a href="intro.html" title="Introduction" class="active">Introduction</a>
+                    </li>
+                    <li class="">
+                      <a href="csharp_coding_standards.html" title="Coding standards" class="">Coding standards</a>
+                    </li>
+                    <li class="">
+                      <a href="composition.html" title="Composition" class="">Composition</a>
+                    </li>
+                    <li class="">
+                      <a href="costura.html" title="Costura support" class="">Costura support</a>
+                    </li>
+                  </ul>        </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="article row grid-right">
+          <div class="col-md-10">
+            <article class="content wrap" id="_content" data-uid="">
+<h1 id="dapploaddons">Dapplo.Addons</h1>
+
+<div class="WARNING"><h5>Warning</h5><p>This is still work in progress</p>
+</div>
+<p>This project will help you to quickly make your application support dependency injection, with composition or addons.</p>
+<p>Look <a href="https://github.com/dapplo/Dapplo.Addons/blob/master/src/Dapplo.Addons.Tests/ApplicationBootstrapperTests.cs#L152">here</a> for an example Test-Case on how to use this.</p>
+<p>The project introduces some interfaces and attributes to support making your application modular:</p>
+<ol>
+<li>@Dapplo.Addons.IAsyncStartupAction or @Dapplo.Addons.IStartupAction (non async variant) for having something start together with your application. Your service will need to implement this interface, and apply a @Dapplo.Addons.StartupActionAttribute to the class.</li>
+<li>@Dapplo.Addons.IAsyncShutdownAction or @Dapplo.Addons.IShutdownAction (non async variant) for having something shutdown together with your application. Your service will need to implement this interface, and apply a @Dapplo.Addons.ShutdownActionAttribute to the class.</li>
+<li>@Dapplo.Addons.IServiceExporter can be used in your components to export other components at runtime, for instance you only want certain features to be available depending on system capabilities or user rights.</li>
+<li>@Dapplo.Addons.IServiceRepository can be used in your components to have the framework load modules/components.</li>
+<li>@Dapplo.Addons.IMefServiceLocator can be used in your components to find imports at runtime.</li>
+<li>@Dapplo.Addons.IBootstrapper is the base interface for all the bootstrapper, it takes care that many interfaces are implemented. It also makes sure the bootstrappers implement Microsoft.Practices.ServiceLocation.IServiceLocator which makes it possible to use the Dapplo Bootstrappers with different frameworks.</li>
+</ol>
+<p>The bootstrappers:</p>
+<ol>
+<li>@Dapplo.Addons.CompositionBootstrapper is the basic bootstrapper, to setup the MEF container and load &amp; supply components.</li>
+<li>@Dapplo.Addons.StartupShutdownBootstrapper extends the @Dapplo.Addons.CompositionBootstrapper with startup and shutdown functionality.</li>
+<li>@Dapplo.Addons.ApplicationBootstrapper, which implements @Dapplo.Addons.IApplicationBootstrapper, and extends the @Dapplo.Addons.StartupShutdownBootstrapper with application functionality. It brings the concept of an application name, which is important for configuration / translations and adds mutex support (a single instance of your application).</li>
+</ol>
+</article>
+          </div>
+          
+          <div class="hidden-sm col-md-2" role="complementary">
+            <div class="sideaffix">
+              <div class="contribution">
+                <ul class="nav">
+                  <li>
+                    <a href="https://github.com/dapplo/Dapplo.Addons/blob/master/doc/articles/intro.md/#L1" class="contribution-link">Improve this Doc</a>
+                  </li>
+                </ul>
+              </div>
+              <nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix" id="affix">
+                <h5>In This Article</h5>
+                <div></div>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <footer>
+        <div class="grad-bottom"></div>
+        <div class="footer">
+          <div class="container">
+            <span class="pull-right">
+              <a href="#top">Back to top</a>
+            </span>
+            Copyright © 2017 Dapplo
+            
+          </div>
+        </div>
+      </footer>
+    </div>
+    
+    <script type="text/javascript" src="../styles/docfx.vendor.js"></script>
+    <script type="text/javascript" src="../styles/docfx.js"></script>
+    <script type="text/javascript" src="../styles/main.js"></script>
+  </body>
+</html>
