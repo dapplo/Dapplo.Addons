@@ -59,14 +59,14 @@ stages:
         SourceFolder: '$(System.DefaultWorkingDirectory)'
         Contents: |
           **\bin\$(buildConfiguration)\*.nupkg
-          **\coverage*
+          **\coverage.*
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
         flattenFolders: true
 
     - task: PublishCodeCoverageResults@1
       inputs:
         codeCoverageTool: Cobertura
-        summaryFileLocation: 'src/**/coverage.net5.0-windows.cobertura.xml'
+        summaryFileLocation: 'src/**/coverage.*.xml'
         failIfCoverageEmpty: true
 
     - powershell: |
